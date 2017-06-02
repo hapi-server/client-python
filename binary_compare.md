@@ -1,4 +1,4 @@
-[Table description](https://github.com/hapi-server/matlab-client/binary_compare.md).
+[Table description](https://github.com/hapi-server/matlab-client/blob/master/binary_compare.md).
 
 ```
 fbin w/ints total: 0.0020s
