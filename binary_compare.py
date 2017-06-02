@@ -7,8 +7,29 @@ from datetime import datetime
 file = 'scalar'
 base = 'http://mag.gmu.edu/TestData/hapi';
 urllib.urlretrieve(base + '/data/?id=TestData&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fbinary',file + '.fbin')
+urllib.urlretrieve(base + '/data/?id=TestData&parameters=' + file + 'int' + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fbinary',file + 'int' + '.fbin')
 urllib.urlretrieve(base + '/data/?id=TestData&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=binary',file + '.bin')
 
+# Using mixed double and int data in fbinary
+tic = time.time()
+f = open(file+'int'+'.fbin', 'rb')
+t = f.read(21)
+n = int(t[0])
+dt = datetime.strptime(t[1:20], '%Y-%m-%dT%H:%M:%S')
+zerotime = dt.toordinal()
+f.seek(21, os.SEEK_SET)
+dt = [('time', '<d'),('data','<i4')]
+dtype = np.dtype(dt)
+data2  = np.fromfile(f, dtype)
+f.close
+data2 = data2.astype( [('time', '<f8'),('data','<f8')]).view('<f8')
+size = 2
+data2 = np.reshape(data2, [len(data2) / size, size])
+toc = time.time()
+tf = toc-tic;
+print 'fbin2 total:      %.4f' % (toc-tic)
+
+# Using double only data in fbinary
 tic = time.time()
 f = open(file+'.fbin', 'rb')
 t = f.read(21)
