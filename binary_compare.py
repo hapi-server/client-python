@@ -26,8 +26,8 @@ data2 = data2.astype( [('time', '<f8'),('data','<f8')]).view('<f8')
 size = 2
 data2 = np.reshape(data2, [len(data2) / size, size])
 toc = time.time()
-tf = toc-tic;
-print 'fbin2 total:      %.4f' % (toc-tic)
+tf0 = toc-tic;
+print 'fbin w/ints total: %.4fs' % (toc-tic)
 
 # Using double only data in fbinary
 tic = time.time()
@@ -43,7 +43,7 @@ size = 2
 data = np.reshape(data, [len(data) / size, size])
 toc = time.time()
 tf = toc-tic;
-print 'fbin total:       %.4f' % (toc-tic)
+print 'fbin total:        %.4fs' % (toc-tic)
 
 xt = [0,0,0];
 dt = np.dtype([('year','S4'),('dash1','S1'),('month','S2'),('dash2','S1'),('day','S2'),('T','S1'),('hour','S2'),('colon1','S1'),('minute','S2'),('colon2','S1'),('second','S6'),('null','S1'),('data','double')])
@@ -51,7 +51,7 @@ tic = time.time()
 fpo = np.memmap(file+'.bin', dt, mode='r', shape=86400,offset=0)
 toc = time.time()
 xt[0] = toc-tic
-print 'bin memmap:       %.4f' % (toc-tic)
+print 'bin memmap:        %.4fs' % (toc-tic)
 
 tic = time.time()
 zt = []
@@ -70,12 +70,16 @@ for i in range(len(yr)):
     #zt[i] = ... add fraction of day using hr, mn, sec.
 toc = time.time()
 xt[1] = toc-tic
-print 'bin extract time: %.4f' % (toc-tic)
+print 'bin extract time:  %.4fs' % (toc-tic)
 
 tic = time.time()
 d = fpo['data']
 toc = time.time()
 xt[2] = toc-tic
-print 'bin extract data: %.4f' % (toc-tic)
+print 'bin extract data:  %.4fs' % (toc-tic)
 
-print 'bin/fbin speed:   %.4f' % ((xt[0] + xt[1] + xt[2])/tf)
+print 'bin total:         %.4fs' % (xt[0] + xt[1] + xt[2])
+
+print ''
+print 'bin/fbin         : %.4f' % ((xt[0] + xt[1] + xt[2])/tf)
+print 'bin/(fbin w/ints): %.4f' % ((xt[0] + xt[1] + xt[2])/tf0)
