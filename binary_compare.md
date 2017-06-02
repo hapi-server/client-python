@@ -1,5 +1,4 @@
-
-Typical results for speed difference between "binary" and "sensiblebinary":
+[Table description](https://github.com/hapi-server/matlab-client/binary_compare.md).
 
 ```
 fbin w/ints total: 0.0020s
@@ -12,5 +11,3 @@ bin total:         0.4522s
 bin/fbin         : 273.7278
 bin/(fbin w/ints): 228.0462
 ```
-
-Description of ["sensible binary"](https://github.com/hapi-server/matlab-client/binary_compare.md).
