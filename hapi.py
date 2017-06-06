@@ -191,19 +191,22 @@ def hapi(*args,**kwargs):
             if DOPTS['logging']: print 'Downloading %s ... ' % urlbin,
             urllib.urlretrieve(urlbin, fnamebin)
             if DOPTS['logging']: print 'Done.'
+            if DOPTS['logging']: print 'Reading %s ... ' % fnamebin,
 
             dt   = []
             dt.append(('Time', 'S' + str(meta["parameters"][0]["length"]), 1))
+            print len(meta["parameters"])
             for i in xrange(1,len(meta["parameters"])):
                 name = meta["parameters"][i]["name"]
                 size = meta["parameters"][i]["size"][0] # Assumes no N-d structures
                 type = meta["parameters"][i]["type"]
-                if type == 'double':  type = (str(name), '<d', size)
-                if type == 'integer': type = (str(name), np.int32, size)
+                if type == 'double':  typet = (str(name), '<d', size)
+                if type == 'integer': typet = (str(name), np.int32, size)
                 #if type == 'string': type = (str(name),  'S' + str(meta["parameters"][i]["length"]), size)
-                dt.append(type)
-
+                dt.append(typet)
+                #import pdb;pdb.set_trace();
             data = np.fromfile(fnamebin, dtype=dt)
+            if DOPTS['logging']: print 'Done.'
         else:
             # HAPI CSV
             if DOPTS['logging']: print 'Downloading %s ... ' % urlcsv,

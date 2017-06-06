@@ -8,20 +8,18 @@ plt.close("all")
 
 # Specify format to use (for testing only; by default it will check 
 # response from /capabilities and use binary if avaialble).
-#format = 'binary'
-format = 'csv'
+#format = 'csv'
 
+server     = 'http://mag.gmu.edu/TestData/hapi';
+#server     = 'http://localhost:8999/hapi'
+dataset    = 'TestData'
 start      = '1970-01-01'
-stop       = '1970-01-01T01:00:00'
+stop       = '1970-01-02T00:00:00'
+opts       = {'format': format, 'logging': True, 'use_cache': False}
 
 #############################################################################
 # Scalar example
-server     = 'http://mag.gmu.edu/TestData/hapi';
-server     = 'http://localhost:8999/hapi'
-dataset    = 'TestData'
 parameters = 'scalar'
-opts       = {'format': format, 'logging': True, 'use_cache': False}
-
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
 # data is numpy.ndarray with fields of Time and scalar
 # data['Time']
@@ -30,14 +28,9 @@ data,meta = hapi(server, dataset, parameters, start, stop, **opts)
 hapiplot(meta,data,"Demo 1")
 #############################################################################
 
-
 #############################################################################
 # Scalar and vector example
-server     = 'http://mag.gmu.edu/TestData/hapi';
-server     = 'http://localhost:8999/hapi'
-dataset    = 'TestData'
 parameters = 'vector'
-opts       = {'format': format, 'logging': True, 'use_cache': False}
 
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
 # data is numpy.ndarray with fields of Time and scalar
@@ -48,15 +41,9 @@ data,meta = hapi(server, dataset, parameters, start, stop, **opts)
 hapiplot(meta,data,"Demo 2")
 #############################################################################
 
-
-
 #############################################################################
 # Scalar and vector example
-server     = 'http://mag.gmu.edu/TestData/hapi';
-server     = 'http://localhost:8999/hapi'
-dataset    = 'TestData'
 parameters = 'scalar,vector'
-opts       = {'format': format, 'logging': True, 'use_cache': False}
 
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
 # data is numpy.ndarray with fields of Time and scalar
@@ -69,12 +56,7 @@ hapiplot(meta,data,"Demo 2")
 
 #############################################################################
 # Integer scalar example
-server     = 'http://mag.gmu.edu/TestData/hapi';
-server     = 'http://localhost:8999/hapi'
-dataset    = 'TestData'
 parameters = 'scalarint'
-opts       = {'format': format, 'logging': True, 'use_cache': False}
-
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
 # data is numpy.ndarray with fields of Time and scalar
 # data['Time']
@@ -87,6 +69,7 @@ hapiplot(meta,data,"Demo 3")
 # Metadata request examples
 sn = 2 # Server number in servers.txt
 dn = 0 # Dataset number from server sn
+pn = 1 # Parameter number in Dataset dn
 
 # Default parameters
 opts = {'update_script': False,'logging': False,
@@ -124,6 +107,6 @@ metap1 = hapi(Servers[sn], metad['catalog'][dn]['id'], metap["parameters"][2]["n
 # or
 # metap1 = hapi(Servers[sn], metad['catalog'][dn]['id'], metap["parameters"][2]["name"],**opts)
 
-print "First parameter in datataset number " + str(dn) + " from server " + str(sn)
+print "Parameter " + str(pn) + " in datataset number " + str(dn) + " from server " + str(sn)
 print json.dumps(metap1, sort_keys=True, indent=4)
 #############################################################################
