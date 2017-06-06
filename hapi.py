@@ -1,3 +1,42 @@
+'''
+HAPI - Interface to Heliophysics Data Environment API
+
+   hapi.py is used to get metadata and data from a HAPI v1.1 compliant
+   data server (https://github.com/hapi-server/). 
+
+   See hapi_demo.py for usage examples.
+
+   Servers = HAPI() or HAPI() returns a list of data server URLs from
+   https://github.com/hapi-server/data-specification/blob/master/servers.txt
+
+   Dataset = HAPI(Server) returns an dictionary of datasets available from a
+   URL given by the string Server.  The dictionary structure follows the
+   HAPI JSON structure.
+
+   Parameters = HAPI(Server, Dataset) returns a dictionary of parameters
+   in the string Dataset.  The dictionary structure follows the HAPI JSON
+   structure.
+
+   Metadata = HAPI(Server, Dataset, Parameters) or HAPI(...) returns metadata
+   associated each parameter in the comma-separated string Parameters.
+
+   Data = HAPI(Server, Dataset, Parameters, Start, Stop) returns a dictionary with
+   elements corresponding to Parameters, e.g., if Parameters='scalar,vector' and
+   the number of records returned is N, then
+
+   Data['Time'] is a NumPy array of datetimes with shape (N)
+   Data['scalar'] is a NumPy array of shape (N)
+   Data['vector'] is a NumPy array of shape (N,3)
+
+   Options are set by passing a keywords of
+
+       logging (default False) - Log to console
+       cache_hapi (default True) - Save downloaded files in ./hapi-data directory
+       use_cache (default True) - Use cache files in ./hapi-data directory if found
+       serverlist (default https://raw.githubusercontent.com/hapi-server/data-specification/master/servers.txt)
+'''
+# TODO: Use mark-up for docs: https://docs.python.org/devguide/documenting.html 
+
 """
 Author: R.S Weigel <rweigel@gmu.edu>
 License: This is free and unencumbered software released into the public domain.
