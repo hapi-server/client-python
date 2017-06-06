@@ -14,8 +14,38 @@ import json
 import urllib
 import urllib2
 import numpy as np
+import pandas
+
 from datetime import datetime
 
+def iso2format(Time,format):
+
+    from datetime import datetime
+
+    allowed = ['Unix']
+
+    if format == 'Unix':
+        TimeNew = np.zeros(len(Time),dtype=np.int32)
+        currentStr="1970-01-01"
+        t1970 = datetime.strptime(currentStr, "%Y-%m-%d").toordinal()-719163
+        currentDay= t1970*86400
+        i = 0
+        for isostr in Time:
+             if (isostr[0:10] == currentStr):
+                  TimeNew[i] = currentDay + int(isostr[11:13])*3600 + int(isostr[14:16])*60 + float(isostr[17:23])
+             else:
+                 currentStr = isostr[0:10]
+                 t1970 = datetime.strptime(currentStr, "%Y-%m-%d").toordinal()-719163
+                 currentDay = t1970*86400
+                 TimeNew[i] = currentDay + int(isostr[11:13])*3600 + int(isostr[14:16])*60 + float(isostr[17:23])
+        
+             i = i + 1
+    else:
+        print 'timeformat not recognized.  Allowed formats %s' % allowed.split(', ') 
+
+    return TimeNew    
+
+ 
 def hapi(*args,**kwargs):
     
     nin = len(args)
@@ -38,7 +68,7 @@ def hapi(*args,**kwargs):
     DOPTS.update({'use_cache': False})
     DOPTS.update({'server_list': 'https://raw.githubusercontent.com/hapi-server/data-specification/master/servers.txt'})
     DOPTS.update({'script_url': 'https://raw.githubusercontent.com/hapi-server/python-client/master/hapi.py'})
-    DOPTS.update({'format': 'binary'})
+    DOPTS.update({'format': 'binary'}) # Will use CSV if binary not available
 
     # Override defaults
     for key, value in kwargs.iteritems():
@@ -152,101 +182,28 @@ def hapi(*args,**kwargs):
         res = urllib2.urlopen(SERVER + '/capabilities')
         caps = json.load(res)
         formats = caps["outputFormats"]
+        
         if (not (DOPTS['format'] in formats)):
             print 'Warning: Requested transport format "%s" not avaiable from %s.  Available options: %s' % (DOPTS['format'], SERVER, ', '.join(formats))
-                        
-        if (not strparams) and (DOPTS['format'] == 'fbinary') and ('fbinary' in formats):
-            # Fast Binary
-            if DOPTS['logging']: print 'Downloading %s ... ' % urlfbin,
-            urllib.urlretrieve(urlfbin, fnamefbin)
+
+        if (not strparams) and (DOPTS['format'] == 'binary') and ('binary' in formats):
+            # HAPI Binary
+            if DOPTS['logging']: print 'Downloading %s ... ' % urlbin,
+            urllib.urlretrieve(urlbin, fnamebin)
             if DOPTS['logging']: print 'Done.'
-    
-            if DOPTS['logging']: print 'Reading %s ... ' % fnamefbin,        
+
             dt   = []
-            dt.append(('Time', '<d', 1)) # Time is integer (stored as double) from offset here
-            ss = 1 # sum of sizes
+            dt.append(('Time', 'S' + str(meta["parameters"][0]["length"]), 1))
             for i in xrange(1,len(meta["parameters"])):
                 name = meta["parameters"][i]["name"]
                 size = meta["parameters"][i]["size"][0] # Assumes no N-d structures
                 type = meta["parameters"][i]["type"]
                 if type == 'double':  type = (str(name), '<d', size)
                 if type == 'integer': type = (str(name), np.int32, size)
+                #if type == 'string': type = (str(name),  'S' + str(meta["parameters"][i]["length"]), size)
                 dt.append(type)
-                ss = ss + size
 
-            f = open(fnamefbin, 'rb')
-            # This fbinary format has the zerotime and time unit in first 21 bytes.
-            # Probably this will change.
-            time = f.read(21)
-            n = float(time[0]) # 0 = seconds, 1 = milliseconds, etc.
-            # TODO: Note strptime ignores time part.
-            zt = datetime.strptime(time[1:11], '%Y-%m-%d')
-            # zerotime is Proleptic Gregorian ordinal of the date,
-            # where January 1 of year 1 has ordinal 1
-            # See: https://docs.python.org/2/library/datetime.html            
-            zerotime = zt.toordinal()
-            
-            # TODO: Find better Python date/time parsing library
-            hr = float(time[13:14])
-            mn = float(time[16:17])
-            sc = float(time[19:20])
-            
-            # Seek to start of data
-            f.seek(21, os.SEEK_SET)
-            dt = np.dtype(dt)
-            data = np.fromfile(f, dt) # Read rest of file
-            f.close
-            n = 10.**n
-            # Fractional Proleptic Gregorian ordinal of the date, where January 1 of year 1 has ordinal 1 
-            data['Time'] = zerotime + (hr*60.*60.*n + mn*60.*n + sc*n + data['Time'])/(86400.*n)                        
-            # Data structure is
-            # data['Time']
-            # data['Parameter1']
-            # data['Parameter2']
-            # etc.
-            # TODO: Put fraction time in data['FractionalTime']
-            #       and keep data['Time'] unchanged.
-            if DOPTS['logging']: print 'Done.'
-        elif (not strparams) and (DOPTS['format'] == 'binary') and ('binary' in formats):
-            # HAPI Binary
-            if DOPTS['logging']: print 'Downloading %s ... ' % urlbin,
-            urllib.urlretrieve(urlbin, fnamebin)
-            if DOPTS['logging']: print 'Done.'
-            # TODO: Insert code from binary_compare.py here
-        elif (not strparams) and (DOPTS['format'] == 'fcsv') and ('fcsv' in formats):
-            # Fast CSV
-            # TODO: Put proper start time here when we decide if/how to do this.
-            dt = datetime.strptime('1970-01-01', '%Y-%m-%d')
-            zerotime = float(dt.toordinal())
-            # TODO: Put proper increment here when we decide if/how to do this.
-            ppd = 86400.
-            if DOPTS['logging']: print 'Downloading %s ... ' % urlfcsv,
-            urllib.urlretrieve(urlfcsv, fnamefcsv)
-            if DOPTS['logging']: print 'Done.'
-            
-            if DOPTS['logging']: print 'Reading %s ... ' % fnamefcsv,
-            if DOPTS['logging']: print 'Done.'
-            import pandas
-            # TODO: Pass data types to read_csv ...
-            df = pandas.read_csv(fnamefcsv, sep=',')
-            # ... so this is not needed
-            datafcsv = df.astype('<d').values
-
-            datafcsv[:,0] = zerotime + datafcsv[:,0]/ppd
-            #import pdb;pdb.set_trace()
-            cols = np.zeros([len(meta["parameters"]),2],dtype=np.int32)
-            ss = 1 # sum of sizes
-            data = {}
-            data["Time"] = datafcsv[:,0]
-            for i in xrange(1,len(meta["parameters"])):
-                name = str(meta["parameters"][i]["name"])
-                cols[i][0] = ss
-                # Assumes no N-d structures
-                cols[i][1] = ss + meta["parameters"][i]["size"][0] - 1
-                type = str(meta["parameters"][i]["type"])
-                # TODO: Recast base on type
-                data[name] = datafcsv[:,np.arange(cols[i][0],cols[i][1]+1)]
-
+            data = np.fromfile(fnamebin, dtype=dt)
         else:
             # HAPI CSV
             if DOPTS['logging']: print 'Downloading %s ... ' % urlcsv,
@@ -254,51 +211,50 @@ def hapi(*args,**kwargs):
             if DOPTS['logging']: print 'Done.'
             if DOPTS['logging']: print 'Reading %s ... ' % fnamecsv,
 
-            name = []
-            size = []
-            type = []
-            name.append("Time")
-            type.append("double")
+            dt   = []
+            names = ['Time']
+            dt.append(('Time', 'S' + str(meta["parameters"][0]["length"]), 1))
+            for i in xrange(1,len(meta["parameters"])):
+                name = meta["parameters"][i]["name"]
+                names.append(str(name))
+                size = meta["parameters"][i]["size"][0] # Assumes no N-d structures
+                type = meta["parameters"][i]["type"]
+                if type == 'double':  type = (str(name), '<d', size)
+                if type == 'integer': type = (str(name), np.int32, size)
+                #if type == 'string': type = (str(name),  'S' + str(meta["parameters"][i]["length"]), size)
+                dt.append(type)
+
+            # Seems like this should work ...
+            # df = pandas.read_csv(fnamecsv,dtype=dt,names=names,sep=',')
+            # If it worked, is there a way to avoid following copy loop?
+            # Can pandas.read_csv output a ndarray?
+            #data = np.ndarray(shape=(len(df)),dtype=dt)
+            #for i in xrange(0,len(meta["parameters"])):
+            #    data[names[i]] = df[names[i]].values
+
+            df = pandas.read_csv(fnamecsv,sep=',')
+            datacsv = df.values
+            data = np.ndarray(shape=(len(df)),dtype=dt)
+            
+            data["Time"] = datacsv[:,0]
             cols = np.zeros([len(meta["parameters"]),2],dtype=np.int32)
-            cols[0,0] = 0
-            cols[0,1] = 0            
             ss = 1 # sum of sizes
             for i in xrange(1,len(meta["parameters"])):
-                name.append(str(meta["parameters"][i]["name"]))
+                name = str(meta["parameters"][i]["name"])
                 cols[i][0] = ss
                 # Assumes no N-d structures
                 cols[i][1] = ss + meta["parameters"][i]["size"][0] - 1
-                type.append(str(meta["parameters"][i]["type"]))
-                ss = 1 + cols[i][1]
-            
-            with open(fnamecsv, 'rb') as csvfile:
-                csvreader = csv.reader(csvfile, delimiter=',')
-                datalist = list(csvreader)           
-            datacsv = np.zeros([len(datalist),ss])
-            for i in range(len(datacsv)):
-                for j in xrange(1,ss):
-                    datacsv[i,j] = float(datalist[i][j])
-                    
-                dt = datetime.strptime(datalist[i][0], '%Y-%m-%dT%H:%M:%S.%f')
-                tt = dt.timetuple()
-                datacsv[i,0] = dt.toordinal()
-                hr = tt.tm_hour
-                mn = tt.tm_min
-                sc = tt.tm_sec
-                #ms = tt.time_ms Does not exist?!
-                fs = re.sub(r'.*\.','','.' + datalist[i][0])
-                if (len(fs) > 1):
-                    fs = float(fs);
+                type = str(meta["parameters"][i]["type"])
+                #import pdb;pdb.set_trace()
+                # TODO: Recast base on type
+                if (cols[i][0] == cols[i][1]):
+                    # TODO: Why is this if statment needed? 
+                    # Without special treatment of scalars,
+                    # get "could not broadcast input
+                    # array from shape (n,1) into shape (n)"
+                    data[name] = datacsv[:,cols[i][0]]
                 else:
-                    fs = 0.
-                sod = 3600*hr + 60*mn + sc + fs; # fractional second of day
-                datacsv[i,0] = datacsv[i,0] + float(sod)/86400.
-
-            data = {}
-            data["Time"] = datacsv[:,0]
-            for i in xrange(1,len(meta["parameters"])):
-                # TODO: Recast based on type
-                data[name[i]] = datacsv[:,np.arange(cols[i][0],cols[i][1]+1)]
+                    data[name] = datacsv[:,np.arange(cols[i][0],cols[i][1]+1)]
 
             if DOPTS['logging']: print 'Done.'
 

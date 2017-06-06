@@ -1,25 +1,42 @@
 from hapi import hapi
+from hapi import iso2format
 from hapiplot import hapiplot
 import matplotlib.pyplot as plt 
 import json
 
 plt.close("all")
 
-#format = 'binary' # Not yet implemented
-
-# Should all give the same plot
-format = 'fbinary'
+# Specify format to use (for testing only; by default it will check 
+# response from /capabilities and use binary if avaialble).
+#format = 'binary'
 format = 'csv'
-format = 'fcsv'
+
+start      = '1970-01-01'
+stop       = '1970-01-01T01:00:00'
+
+#############################################################################
+# Scalar example
+server     = 'http://mag.gmu.edu/TestData/hapi';
+server     = 'http://localhost:8999/hapi'
+dataset    = 'TestData'
+parameters = 'scalar'
+opts       = {'format': format, 'logging': True, 'use_cache': False}
+
+data,meta = hapi(server, dataset, parameters, start, stop, **opts)
+# data is numpy.ndarray with fields of Time and scalar
+# data['Time']
+# data['scalar']
+
+hapiplot(meta,data,"Demo 1")
+#############################################################################
+
 
 #############################################################################
 # Scalar and vector example
 server     = 'http://mag.gmu.edu/TestData/hapi';
 server     = 'http://localhost:8999/hapi'
 dataset    = 'TestData'
-parameters = 'scalar,vector'
-start      = '1970-01-01'
-stop       = '1970-01-01T00:20:00'
+parameters = 'vector'
 opts       = {'format': format, 'logging': True, 'use_cache': False}
 
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
@@ -31,22 +48,7 @@ data,meta = hapi(server, dataset, parameters, start, stop, **opts)
 hapiplot(meta,data,"Demo 2")
 #############################################################################
 
-#############################################################################
-# Scalar example
-server     = 'http://mag.gmu.edu/TestData/hapi';
-server     = 'http://localhost:8999/hapi'
-dataset    = 'TestData'
-parameters = 'scalar'
-start      = '1970-01-01'
-stop       = '1970-01-01T00:20:00'
-opts       = {'format': 'fbinary', 'logging': True, 'use_cache': False}
 
-data,meta = hapi(server, dataset, parameters, start, stop, **opts)
-# data is numpy.ndarray with fields of Time and scalar
-# data['Time']
-# data['scalar']
-hapiplot(meta,data,"Demo 1")
-#############################################################################
 
 #############################################################################
 # Scalar and vector example
@@ -54,8 +56,6 @@ server     = 'http://mag.gmu.edu/TestData/hapi';
 server     = 'http://localhost:8999/hapi'
 dataset    = 'TestData'
 parameters = 'scalar,vector'
-start      = '1970-01-01'
-stop       = '1970-01-01T00:20:00'
 opts       = {'format': format, 'logging': True, 'use_cache': False}
 
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
@@ -73,8 +73,6 @@ server     = 'http://mag.gmu.edu/TestData/hapi';
 server     = 'http://localhost:8999/hapi'
 dataset    = 'TestData'
 parameters = 'scalarint'
-start      = '1970-01-01'
-stop       = '1970-01-01T00:20:00'
 opts       = {'format': format, 'logging': True, 'use_cache': False}
 
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)

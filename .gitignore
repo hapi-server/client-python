@@ -1,2 +1,4 @@
 hapi-data/
-hapi.pyc
+*.pyc
+tmp/
+*~
