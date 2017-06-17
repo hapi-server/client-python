@@ -107,7 +107,9 @@ def hapi(*args,**kwargs):
     DOPTS.update({'use_cache': False})
     DOPTS.update({'server_list': 'https://raw.githubusercontent.com/hapi-server/data-specification/master/servers.txt'})
     DOPTS.update({'script_url': 'https://raw.githubusercontent.com/hapi-server/python-client/master/hapi.py'})
-    DOPTS.update({'format': 'binary'}) # Will use CSV if binary not available
+    # For testing, change to a different format to force it to be used. 
+    # Will use CSV if binary not available
+    DOPTS.update({'format': 'binary'})
 
     # Override defaults
     for key, value in kwargs.iteritems():
@@ -130,7 +132,8 @@ def hapi(*args,**kwargs):
         return data        
 
     if nin == 1:
-        # Could use cached result here.
+        # Could use cache result here.  Probably not needed as catalog
+        # metadata requests offline are unlikely to be performed.
         url = SERVER + '/catalog'
         if DOPTS['logging']: print 'Downloading %s ... ' % url, 
         res = urllib2.urlopen(url)
@@ -218,6 +221,10 @@ def hapi(*args,**kwargs):
             if meta["parameters"][i]["type"] == "string":
                 strparams = True
 
+        if strparams:
+            print 'One of the request parameters has type = string. String parameters not yet supported.'
+            return {},meta
+
         res = urllib2.urlopen(SERVER + '/capabilities')
         caps = json.load(res)
         formats = caps["outputFormats"]
@@ -225,7 +232,7 @@ def hapi(*args,**kwargs):
         if (not (DOPTS['format'] in formats)):
             print 'Warning: Requested transport format "%s" not avaiable from %s.  Available options: %s' % (DOPTS['format'], SERVER, ', '.join(formats))
 
-        if (not strparams) and (DOPTS['format'] == 'binary') and ('binary' in formats):
+        if (DOPTS['format'] == 'binary') and ('binary' in formats):
             # HAPI Binary
             if DOPTS['logging']: print 'Downloading %s ... ' % urlbin,
             urllib.urlretrieve(urlbin, fnamebin)
