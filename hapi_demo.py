@@ -13,7 +13,7 @@ server     = 'http://mag.gmu.edu/TestData/hapi';
 #server     = 'http://localhost:8999/hapi'
 dataset    = 'dataset1'
 start      = '1970-01-01'
-stop       = '1970-01-01T00:01:00'
+stop       = '1970-01-01T00:00:10'
 opts       = {'format': format, 'logging': True, 'use_cache': False}
 
 #############################################################################

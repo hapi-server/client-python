@@ -258,6 +258,8 @@ def hapi(*args,**kwargs):
             data = np.ndarray(shape=(len(df)),dtype=dt)
             for i in xrange(0,len(pnames)):
                 shape = np.append(len(data),psizes[i])
+                # In numpy 1.8.2, this throws an error for no apparent reason.
+                # Works as expected in numpy 1.10.4
                 data[pnames[i]] = np.squeeze( np.reshape( df.values[:,np.arange(cols[i][0],cols[i][1]+1)], shape ) )
             if DOPTS['logging']: print 'Done.'
 

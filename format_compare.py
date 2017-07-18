@@ -4,17 +4,14 @@ import re
 import numpy as np
 import urllib
 from datetime import datetime
-#import matplotlib.pyplot as plt 
 import matplotlib.dates as mdates
-#from matplotlib.pyplot import *
 import pandas
 import csv
 from datetick import *
 
-#file = 'vector'
 file = 'vector'
-#base = 'http://mag.gmu.edu/TestData/hapi';
-base = 'http://localhost:8999/hapi'
+base = 'http://mag.gmu.edu/TestData/hapi';
+#base = 'http://localhost:8999/hapi'
 START = '1970-01-01'
 size = 1;
 
@@ -23,8 +20,6 @@ filefcsv  = './tmp/' + file + '.fcsv'
 filebin   = './tmp/' + file + '.bin'
 filefbin  = './tmp/' + file + '.fbin'
 filefbin2 = './tmp/' + file + '.fbin2'
-
-#urllib.urlretrieve(base + '/data/?id=dataset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=csv',filecsv)
 
 if not os.path.exists('./tmp/'):
     os.makedirs('./tmp')
