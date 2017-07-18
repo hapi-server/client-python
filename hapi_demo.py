@@ -1,5 +1,4 @@
 from hapi import hapi
-from hapi import iso2format
 from hapiplot import hapiplot
 import matplotlib.pyplot as plt 
 import json
@@ -8,61 +7,81 @@ plt.close("all")
 
 # Specify format to use (for testing only; by default it will check 
 # response from /capabilities and use binary if avaialble).
-#format = 'csv'
+format = 'csv'
 
 server     = 'http://mag.gmu.edu/TestData/hapi';
 #server     = 'http://localhost:8999/hapi'
-dataset    = 'TestData'
+dataset    = 'dataset1'
 start      = '1970-01-01'
-stop       = '1970-01-02T00:00:00'
+stop       = '1970-01-01T00:01:00'
 opts       = {'format': format, 'logging': True, 'use_cache': False}
 
 #############################################################################
-# Scalar example
+# Scalar
 parameters = 'scalar'
+
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
-# data is numpy.ndarray with fields of Time and scalar
-# data['Time']
-# data['scalar']
+print data['scalar'].dtype
+print data['scalar'].shape
 
-hapiplot(meta,data,"Demo 1")
+hapiplot(data,meta)
 #############################################################################
 
 #############################################################################
-# Scalar and vector example
+# Scalar with integer type
+parameters = 'scalar'
+
+data,meta = hapi(server, dataset, parameters, start, stop, **opts)
+print data['scalar'].dtype
+print data['scalar'].shape
+
+hapiplot(data,meta)
+#############################################################################
+
+#############################################################################
+# Scalar with string type
+parameters = 'scalarstr'
+
+data,meta = hapi(server, dataset, parameters, start, stop, **opts)
+print data['scalarstr'].dtype
+print data['scalarstr'].shape
+
+hapiplot(data,meta)
+#############################################################################
+
+#############################################################################
+# Scalar with isotime type
+parameters = 'scalariso'
+
+data,meta = hapi(server, dataset, parameters, start, stop, **opts)
+print data['scalariso'].dtype
+print data['scalariso'].shape
+
+#hapiplot(data,meta)
+#############################################################################
+
+#############################################################################
+# Vector
 parameters = 'vector'
 
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
-# data is numpy.ndarray with fields of Time and scalar
-# data['Time']
-# data['scalar']
-# data['vector']
+print data['vector'].dtype
+print data['vector'].shape
 
-hapiplot(meta,data,"Demo 2")
+hapiplot(data,meta)
 #############################################################################
 
 #############################################################################
-# Scalar and vector example
+# Two parameters
 parameters = 'scalar,vector'
 
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
-# data is numpy.ndarray with fields of Time and scalar
-# data['Time']
-# data['scalar']
-# data['vector']
+print data['scalar'].dtype
+print data['scalar'].shape
+print data['vector'].dtype
+print data['vector'].shape
 
-hapiplot(meta,data,"Demo 2")
-#############################################################################
-
-#############################################################################
-# Integer scalar example
-parameters = 'scalarint'
-data,meta = hapi(server, dataset, parameters, start, stop, **opts)
-# data is numpy.ndarray with fields of Time and scalar
-# data['Time']
-# data['scalarint']
-
-hapiplot(meta,data,"Demo 3")
+#hapiplot(data,meta)
 #############################################################################
 
 #############################################################################
