@@ -4,13 +4,17 @@ import re
 import numpy as np
 import urllib
 from datetime import datetime
-import matplotlib.pyplot as plt 
+#import matplotlib.pyplot as plt 
+import matplotlib.dates as mdates
 #from matplotlib.pyplot import *
 import pandas
 import csv
+from datetick import *
 
-file = 'scalar'
-base = 'http://mag.gmu.edu/TestData/hapi';
+#file = 'vector'
+file = 'vector'
+#base = 'http://mag.gmu.edu/TestData/hapi';
+base = 'http://localhost:8999/hapi'
 START = '1970-01-01'
 size = 1;
 
@@ -19,83 +23,122 @@ filefcsv  = './tmp/' + file + '.fcsv'
 filebin   = './tmp/' + file + '.bin'
 filefbin  = './tmp/' + file + '.fbin'
 filefbin2 = './tmp/' + file + '.fbin2'
+
+#urllib.urlretrieve(base + '/data/?id=dataset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=csv',filecsv)
+
 if not os.path.exists('./tmp/'):
     os.makedirs('./tmp')
-    
 if not os.path.isfile(filecsv):
-    urllib.urlretrieve(base + '/data/?id=TestData&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=csv',filecsv)
+    urllib.urlretrieve(base + '/data/?id=dataset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=csv',filecsv)
 if not os.path.isfile(filefcsv):
-    urllib.urlretrieve(base + '/data/?id=TestData&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fcsv',filefcsv)
+    urllib.urlretrieve(base + '/data/?id=dataset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fcsv',filefcsv)
 if not os.path.isfile(filebin):
-    urllib.urlretrieve(base + '/data/?id=TestData&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=binary',filebin)
+    urllib.urlretrieve(base + '/data/?id=datset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=binary',filebin)
 if not os.path.isfile(filefbin):
-    urllib.urlretrieve(base + '/data/?id=TestData&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fbinary',filefbin)
+    urllib.urlretrieve(base + '/data/?id=datset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fbinary',filefbin)
 if not os.path.isfile(filefbin2):
-    urllib.urlretrieve(base + '/data/?id=TestData&parameters=' + file + 'int' + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fbinary',filefbin2)
+    urllib.urlretrieve(base + '/data/?id=dataset1&parameters=' + file + 'int' + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fbinary',filefbin2)
 
 plt.figure(0);plt.clf()
 
 ###############################################################################
-# Read and plot HAPI CSV (jeremy)
-tic= time.time()
-currentStr="1970-01-01"
-t1970= datetime.strptime(currentStr, "%Y-%m-%d").toordinal()-719163
-currentDay= t1970 * 86400
-r = np.zeros(86400,dtype=np.int32)
-d = np.zeros(86400,dtype='d')
-i = 0
-for line in open(filecsv):
-     d[i] = line.split(',')[1]
-     if ( line[0:10]==currentStr ):
-          r[i] = currentDay + int(line[11:13])*3600 + int(line[14:16])*60 + float(line[17:23])
-     else:
-         currentStr=line[0:10]
-         t1970= datetime.strptime(currentStr, "%Y-%m-%d").toordinal()-719163
-         currentDay= t1970 * 86400
-         r[i] = currentDay + int(line[11:13])*3600 + int(line[14:16])*60 + float(line[17:23])
-     i = i+1
-toc = time.time()
-tcsvj = toc-tic;
-print 'csv (faden)        %.4fs\t# HAPI CSV' % tcsvj
-plt.figure(0)
-plt.plot(r,d,color='red')
-plt.draw()
-plt.show(block=False)
-plt.xlabel('Seconds since ' + START)
-###############################################################################
-
-###############################################################################
-# Read and plot HAPI CSV (pandas)
+# Read Fast CSV
+# See also https://softwarerecs.stackexchange.com/questions/7463/fastest-python-library-to-read-a-csv-file
 tic = time.time()
-df = pandas.read_csv(filecsv,names=['Time', 'scalar'],date_parser=[0], sep=',')
-z = pandas.to_datetime(df['Time'],infer_datetime_format=True)
-t = z.values.view('<i8')
-scalar = df['scalar'].values.view()
-toc = time.time()
-tcsvp = toc-tic;
-print 'csv (pandas)       %.4fs\t# HAPI CSV' % tcsvp
+dtype = [('Time','<d',1),('scalar','<d',1)]
+datafcsv1 = pandas.read_csv(filefcsv,dtype=dtype,names=['Time','scalar'],sep=',')
+zero = datetime.strptime('1970-01-01', "%Y-%m-%d").toordinal()
+Time = zero + datafcsv1['Time']/86400.
+tfcsv = [time.time()-tic];
+print 'fcsv (pandas.read_csv)                 %.4fs # Fast CSV' % tfcsv[0]
+#Time = mdates.num2date(zero + datafcsv1['Time']/86400., tz=None)
+
 plt.figure(0)
-plt.plot(t/1e9,scalar,color='red')
-plt.draw()
-plt.show(block=False)
-plt.xlabel('Seconds since ' + START)
+plt.plot(Time, datafcsv1['scalar'], '-')
+datetick()
+plt.show()
 ###############################################################################
 
 ###############################################################################
-# Read and plot HAPI CSV (pandas2)
+# Read Fast CSV
+tic = time.time()
+datafcsv2 = np.loadtxt(filefcsv, delimiter=',')
+toc = time.time()
+zero = datetime.strptime('1970-01-01', "%Y-%m-%d").toordinal()
+Time = zero + datafcsv2[:,0]/86400.
+tfcsv = [time.time()-tic] + tfcsv
+print 'fcsv (np.loadtxt)                      %.4fs # Fast CSV' % tfcsv[0]
+
+plt.figure(0)
+plt.plot(Time, datafcsv2[:,1], '-')
+datetick()
+plt.show()
+###############################################################################
+
+###############################################################################
+# Read CSV
+tic= time.time()
+Time = np.zeros(86400,dtype='d')
+data = np.zeros(86400,dtype='d')
+DS = "1970-01-01"
+DN = float(datetime.strptime(DS, "%Y-%m-%d").toordinal())
+i = 0
+f = open(filecsv)
+for line in f:
+     data[i] = line.split(',')[1]
+     if (line[0:10] != DS):
+         DS = line[0:10]
+         DN = float(datetime.strptime(DS, "%Y-%m-%d").toordinal()) 
+     Time[i] = DN + float(line[11:13])/24. + float(line[14:16])/(24.*60.) + float(line[17:23])/(24.*3600.)
+     i = i+1
+tcsv = [time.time()-tic]
+print 'csv (line by line + faden/datenum)     %.4fs # HAPI CSV' % tcsv[0]
+f.close()
+
+plt.figure(0)
+plt.plot(Time, data, '-')
+datetick()
+plt.show()
+###############################################################################
+
+###############################################################################
+# Read HAPI CSV
 tic = time.time()
 dt = [('Time','|S24',1),('scalar','<d',1)]
 df = pandas.read_csv(filecsv,dtype=dt,names=['Time','scalar'],sep=',')
-toc = time.time()
-tcsvp2 = toc-tic;
-from hapi import iso2format
-t = iso2format(df['Time'].values,'Unix')
-print 'csv (pandas2)      %.4fs\t# HAPI CSV' % tcsvp2
+v = df['Time'].values
+data = df['scalar'].values
+i = 0
+for line in v:
+     if (line[0:10] != DS):
+         DS = line[0:10]
+         DN = float(datetime.strptime(DS, "%Y-%m-%d").toordinal()) 
+     Time[i] = DN + float(line[11:13])/24. + float(line[14:16])/(24.*60.) + float(line[17:23])/(24.*3600.)
+     i = i+1
+tcsv = tcsv + [time.time()-tic]
+print 'csv (pandas.read_csv + faden/datenum)  %.4fs # HAPI CSV' % tcsv[1]
 plt.figure(0)
-plt.plot(t,df['scalar'].values,color='red')
-plt.draw()
-plt.show(block=False)
-plt.xlabel('Seconds since ' + START)
+plt.plot(Time,data,color='red')
+datetick()
+plt.show()
+###############################################################################
+
+###############################################################################
+# Read HAPI CSV
+tic = time.time()
+df = pandas.read_csv(filecsv,names=['Time', 'scalar'],date_parser=[0], sep=',')
+z  = pandas.to_datetime(df['Time'],infer_datetime_format=True,utc=True)
+Time = z.values.astype('d')
+Time = Time/86400.0e9 + float(datetime.strptime("1970-01-01", "%Y-%m-%d").toordinal())
+
+data  = df['scalar'].values.view()
+tcsv = tcsv + [time.time()-tic];
+print 'csv (pandas.read_csv)                  %.4fs # HAPI CSV' % tcsv[2]
+
+plt.figure(0)
+plt.plot(Time, data, '-')
+datetick()
+plt.show()
 ###############################################################################
 
 ###############################################################################
@@ -103,18 +146,20 @@ plt.xlabel('Seconds since ' + START)
 tic = time.time()
 dt = [('Time','|S24',1),('scalar','<d',1)]
 df = np.genfromtxt(filecsv,dtype=dt, delimiter=',')
-from hapi import iso2format
-t = iso2format(df['Time'],'Unix')
-toc = time.time()
-tcsvg = toc-tic;
-print 'csv (genfromtext)  %.4fs\t# HAPI CSV' % tcsvg
-plt.figure(0)
-plt.plot(t,df['scalar'],color='red')
-plt.draw()
-plt.show(block=False)
-plt.xlabel('Seconds since ' + START)
+i = 0
+v = df['Time']
+for line in v:
+     if (line[0:10] != DS):
+         DS = line[0:10]
+         DN = float(datetime.strptime(DS, "%Y-%m-%d").toordinal()) 
+     Time[i] = DN + float(line[11:13])/24. + float(line[14:16])/(24.*60.) + float(line[17:23])/(24.*3600.)
+     i = i+1
+tcsv = tcsv + [time.time()-tic]
+print 'csv (genfromtext + faden/datenum)      %.4fs # HAPI CSV' % tcsv[3]
+
 ###############################################################################
 
+stop
 if False: # Far too slow.
     ###############################################################################
     # Read and plot HAPI CSV
@@ -154,25 +199,6 @@ if False: # Far too slow.
     plt.show(block=False)
     plt.xlabel('Hours since ' + START)
     ###############################################################################
-
-###############################################################################
-# Read and plot fast CSV
-# See also https://softwarerecs.stackexchange.com/questions/7463/fastest-python-library-to-read-a-csv-file
-tic = time.time()
-# Far too slow.
-#datafcsv = np.loadtxt(filefcsv, delimiter=',')
-dt = [('Time','<d',1),('scalar','<d',1)]
-df = pandas.read_csv(filefcsv,dtype=dt,names=['Time','scalar'],sep=',')
-toc = time.time()
-tfcsv = toc-tic;
-print 'fcsv (pandas)      %.4fs\t# Fast CSV' % tfcsv
-
-plt.figure(0)
-plt.plot(df['Time'],df['scalar'],color='green')
-plt.draw()
-plt.show(block=False)
-plt.xlabel('Seconds since ' + START)
-###############################################################################
 
 ###############################################################################
 # Using double only data in fast binary
