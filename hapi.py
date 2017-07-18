@@ -44,7 +44,7 @@ Repository: https://github.com/hapi-server/python-client.git
 """
 
 # Written to match style/capabilities/interface of hapi.m at
-# https://github.com/hapi-server/matlab-client
+# https://github.com/hapi-server/client-matlab
 
 import os
 import re
@@ -54,36 +54,8 @@ import urllib
 import urllib2
 import numpy as np
 import pandas
-
 from datetime import datetime
-
-def iso2format(Time,format):
-
-    from datetime import datetime
-
-    allowed = ['Unix']
-
-    if format == 'Unix':
-        TimeNew = np.zeros(len(Time),dtype=np.int32)
-        currentStr="1970-01-01"
-        t1970 = datetime.strptime(currentStr, "%Y-%m-%d").toordinal()-719163
-        currentDay= t1970*86400
-        i = 0
-        for isostr in Time:
-             if (isostr[0:10] == currentStr):
-                  TimeNew[i] = currentDay + int(isostr[11:13])*3600 + int(isostr[14:16])*60 + float(isostr[17:23])
-             else:
-                 currentStr = isostr[0:10]
-                 t1970 = datetime.strptime(currentStr, "%Y-%m-%d").toordinal()-719163
-                 currentDay = t1970*86400
-                 TimeNew[i] = currentDay + int(isostr[11:13])*3600 + int(isostr[14:16])*60 + float(isostr[17:23])
-        
-             i = i + 1
-    else:
-        print 'timeformat not recognized.  Allowed formats %s' % allowed.split(', ') 
-
-    return TimeNew    
-
+import warnings
  
 def hapi(*args,**kwargs):
     
@@ -106,7 +78,7 @@ def hapi(*args,**kwargs):
     DOPTS.update({'cache_hapi': True})
     DOPTS.update({'use_cache': False})
     DOPTS.update({'server_list': 'https://raw.githubusercontent.com/hapi-server/data-specification/master/servers.txt'})
-    DOPTS.update({'script_url': 'https://raw.githubusercontent.com/hapi-server/python-client/master/hapi.py'})
+    DOPTS.update({'script_url': 'https://raw.githubusercontent.com/hapi-server/client-python/master/hapi.py'})
     # For testing, change to a different format to force it to be used. 
     # Will use CSV if binary not available
     DOPTS.update({'format': 'binary'})
@@ -215,42 +187,60 @@ def hapi(*args,**kwargs):
     
         if nin == 3:
             return meta
-       
-        strparams = False
-        for i in range(len(meta["parameters"])):
-            if meta["parameters"][i]["type"] == "string":
-                strparams = True
 
-        if strparams:
-            print 'One of the request parameters has type = string. String parameters not yet supported.'
-            return {},meta
+        cformats = ['csv','binary'] # client formats
+        if not DOPTS['format'] in cformats:
+            raise ValueError('This client does not handle transport format "%s".  Available options: %s' % (DOPTS['format'],', '.join(cformats)))
 
-        res = urllib2.urlopen(SERVER + '/capabilities')
-        caps = json.load(res)
-        formats = caps["outputFormats"]
-        
-        if (not (DOPTS['format'] in formats)):
-            print 'Warning: Requested transport format "%s" not avaiable from %s.  Available options: %s' % (DOPTS['format'], SERVER, ', '.join(formats))
+        if DOPTS['format'] != 'csv':
+            res = urllib2.urlopen(SERVER + '/capabilities')
+            caps = json.load(res)
+            sformats = caps["outputFormats"] # Server formats       
+            if not DOPTS['format'] in sformats:
+                warnings.warn('Requested transport format "%s" not avaiable from %s. Will use "csv". Available options: %s' % (DOPTS['format'], SERVER, ', '.join(sformats)))
+                DOPTS['format'] = 'csv'
 
-        if (DOPTS['format'] == 'binary') and ('binary' in formats):
+        pnames,psizes,dt = [],[],[]
+        cols = np.zeros([len(meta["parameters"]),2],dtype=np.int32)
+        ss = 0 # sum of sizes
+        for i in xrange(0,len(meta["parameters"])):        
+            ptype = str(meta["parameters"][i]["type"])
+            pnames.append(str(meta["parameters"][i]["name"]))
+            if 'size' in meta["parameters"][i]:
+                psizes.append(meta["parameters"][i]['size'])
+            else:
+                psizes.append(1)
+
+            # Interpret size = [1] as meaning same as if size not given
+            if type(psizes[i]) is list and len(psizes[i]) == 1 and psizes[i][0] == 1:
+                psizes[i] = 1
+            # Interpret size = N (N > 1) as meaning size = [N]
+            if type(psizes[i]) is int and psizes[i] > 1:
+                psizes[i] = [psizes[i]]
+                
+            cols[i][0] = ss
+            cols[i][1] = ss + np.prod(psizes[i]) - 1
+            ss = ss+1
+
+            if ptype == 'double': dtype = (pnames[i], '<d', psizes[i])
+            if ptype == 'integer': dtype = (pnames[i], np.int32, psizes[i])
+            if DOPTS['format'] == 'binary':
+                if ptype == 'string': dtype = (pnames[i],  'S' + str(meta["parameters"][i]["length"]), psizes[i])
+                if ptype == 'isotime': dtype = (pnames[i],  'S' + str(meta["parameters"][i]["length"]), psizes[i])
+            else:
+                if ptype == 'string': dtype = (pnames[i],  object, psizes[i])            
+                if ptype == 'isotime': dtype = (pnames[i],  object, 1)
+                # TODO: Use length if for CSV.  Will require less memory than
+                # if each element is an object.
+
+            dt.append(dtype)
+
+        if DOPTS['format'] == 'binary':
             # HAPI Binary
             if DOPTS['logging']: print 'Downloading %s ... ' % urlbin,
             urllib.urlretrieve(urlbin, fnamebin)
             if DOPTS['logging']: print 'Done.'
             if DOPTS['logging']: print 'Reading %s ... ' % fnamebin,
-
-            dt   = []
-            dt.append(('Time', 'S' + str(meta["parameters"][0]["length"]), 1))
-            print len(meta["parameters"])
-            for i in xrange(1,len(meta["parameters"])):
-                name = meta["parameters"][i]["name"]
-                size = meta["parameters"][i]["size"][0] # Assumes no N-d structures
-                type = meta["parameters"][i]["type"]
-                if type == 'double':  typet = (str(name), '<d', size)
-                if type == 'integer': typet = (str(name), np.int32, size)
-                #if type == 'string': type = (str(name),  'S' + str(meta["parameters"][i]["length"]), size)
-                dt.append(typet)
-                #import pdb;pdb.set_trace();
             data = np.fromfile(fnamebin, dtype=dt)
             if DOPTS['logging']: print 'Done.'
         else:
@@ -260,55 +250,22 @@ def hapi(*args,**kwargs):
             if DOPTS['logging']: print 'Done.'
             if DOPTS['logging']: print 'Reading %s ... ' % fnamecsv,
 
-            dt   = []
-            names = ['Time']
-            dt.append(('Time', 'S' + str(meta["parameters"][0]["length"]), 1))
-            for i in xrange(1,len(meta["parameters"])):
-                name = meta["parameters"][i]["name"]
-                names.append(str(name))
-                size = meta["parameters"][i]["size"][0] # Assumes no N-d structures
-                type = meta["parameters"][i]["type"]
-                if type == 'double':  type = (str(name), '<d', size)
-                if type == 'integer': type = (str(name), np.int32, size)
-                #if type == 'string': type = (str(name),  'S' + str(meta["parameters"][i]["length"]), size)
-                dt.append(type)
+            # Read file into Pandas DataFrame
+            df = pandas.read_csv(fnamecsv,sep=',',header=None)
 
-            # Seems like this should work ...
-            # df = pandas.read_csv(fnamecsv,dtype=dt,names=names,sep=',')
-            # If it worked, is there a way to avoid following copy loop?
-            # Can pandas.read_csv output a ndarray?
-            #data = np.ndarray(shape=(len(df)),dtype=dt)
-            #for i in xrange(0,len(meta["parameters"])):
-            #    data[names[i]] = df[names[i]].values
-
-            df = pandas.read_csv(fnamecsv,sep=',')
-            datacsv = df.values
+            # Allocate output N-D array (It is not possible to pass dtype=dt
+            # as computed to read_csv, so need to create new ND array.)
             data = np.ndarray(shape=(len(df)),dtype=dt)
-            
-            data["Time"] = datacsv[:,0]
-            cols = np.zeros([len(meta["parameters"]),2],dtype=np.int32)
-            ss = 1 # sum of sizes
-            for i in xrange(1,len(meta["parameters"])):
-                name = str(meta["parameters"][i]["name"])
-                cols[i][0] = ss
-                # Assumes no N-d structures
-                cols[i][1] = ss + meta["parameters"][i]["size"][0] - 1
-                type = str(meta["parameters"][i]["type"])
-                #import pdb;pdb.set_trace()
-                # TODO: Recast base on type
-                if (cols[i][0] == cols[i][1]):
-                    # TODO: Why is this if statment needed? 
-                    # Without special treatment of scalars,
-                    # get "could not broadcast input
-                    # array from shape (n,1) into shape (n)"
-                    data[name] = datacsv[:,cols[i][0]]
-                else:
-                    data[name] = datacsv[:,np.arange(cols[i][0],cols[i][1]+1)]
-
+            for i in xrange(0,len(pnames)):
+                shape = np.append(len(data),psizes[i])
+                data[pnames[i]] = np.squeeze( np.reshape( df.values[:,np.arange(cols[i][0],cols[i][1]+1)], shape ) )
             if DOPTS['logging']: print 'Done.'
 
         meta.update({u"x_server": SERVER})
         meta.update({u"x_dataset": DATASET})
+        meta.update({u"x_parameters": PARAMETERS})
+        meta.update({u"x_time.min": START})
+        meta.update({u"x_time.max": STOP})
         meta.update({u"x_requestURL": urlfbin})
         t = datetime.now().isoformat()
         meta.update({u"x_requestDate": t[0:19]})
