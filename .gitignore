@@ -1,4 +1,6 @@
 hapi-data/
 *.pyc
 tmp/
+misc/tmp/
 *~
+.DS_Store
