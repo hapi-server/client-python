@@ -48,7 +48,6 @@ Repository: https://github.com/hapi-server/python-client.git
 
 import os
 import re
-import csv
 import json
 import urllib.request, urllib.parse, urllib.error
 import urllib.request, urllib.error, urllib.parse
@@ -60,9 +59,7 @@ import warnings
 def hapi(*args,**kwargs):
     
     nin = len(args)
-    
-    if 'list' in kwargs: nargout = 0
-    
+        
     nin = len(args)
     if nin > 0:SERVER = args[0]
     if nin > 1:DATASET = args[1]
@@ -133,11 +130,9 @@ def hapi(*args,**kwargs):
             if nin == 5:
                 fname     = '%s_%s_%s_%s' % (DATASET,re.sub(',','-',PARAMETERS),re.sub(r'-|:|\.|Z','',START),re.sub(r'-|:|\.|Z','',STOP))
                 fnamecsv  = urld + os.path.sep + fname + '.csv'
-                fnamefcsv = urld + os.path.sep + fname + '.fcsv'
                 fnamebin  = urld + os.path.sep + fname + '.bin'
                 fnamefbin = urld + os.path.sep + fname + '.fbin'
                 urlcsv    = SERVER + '/data?id=' + DATASET + '&parameters=' + PARAMETERS + '&time.min=' + START + '&time.max=' + STOP
-                urlfcsv   = urlcsv + '&format=fcsv'
                 urlbin    = urlcsv + '&format=binary'
                 urlfbin   = urlcsv + '&format=fbinary'
                 fnamenpy  = urld + os.path.sep + fname + '.data.npy'                
