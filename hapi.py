@@ -20,9 +20,9 @@ HAPI - Interface to Heliophysics Data Environment API
    Metadata = HAPI(Server, Dataset, Parameters) or HAPI(...) returns metadata
    associated each parameter in the comma-separated string Parameters.
 
-   Data = HAPI(Server, Dataset, Parameters, Start, Stop) returns a dictionary with
-   elements corresponding to Parameters, e.g., if Parameters='scalar,vector' and
-   the number of records returned is N, then
+   Data = HAPI(Server, Dataset, Parameters, Start, Stop) returns a dictionary 
+   with elements corresponding to Parameters, e.g., if 
+   Parameters='scalar,vector' and the number of records returned is N, then
 
    Data['Time'] is a NumPy array of datetimes with shape (N)
    Data['scalar'] is a NumPy array of shape (N)
