@@ -1,7 +1,5 @@
 import matplotlib.pyplot as plt 
 import pandas
-import time
-import matplotlib
 import warnings
 #import matplotlib.dates as mdates
 
@@ -14,7 +12,7 @@ def hapiplot(data,meta):
     
     Time = pandas.to_datetime(data['Time'],infer_datetime_format=True)
     
-    for i in xrange(1,len(meta["parameters"])):
+    for i in range(1,len(meta["parameters"])):
         if meta["parameters"][i]["type"] != "double" and meta["parameters"][i]["type"] != "integer":
             warnings.warn("Plots for types double and integer only implemented.")
             continue

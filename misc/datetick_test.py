@@ -15,7 +15,7 @@ if not os.path.exists(tmpdir): os.makedirs(tmpdir)
 #    d2 = datetime.fromordinal(datetime.toordinal(d1) + i)
 
 # Test 1-second cadence labels
-for i in xrange(1,3600):
+for i in range(1,3600):
 #for i in xrange(1,2):
     d1 = datetime.datetime(1901, 1, 1) + datetime.timedelta(seconds=0)
     d2 = d1 + datetime.timedelta(seconds=i)
@@ -26,7 +26,7 @@ for i in xrange(1,3600):
     ######################################################################
     # Default plot
     figstr = tmpdir + "/dateplot_minutes_orig_%03d.png"
-    print "Writing %s" % figstr
+    print("Writing %s" % figstr)
     plt.figure("Original")
     plt.clf()
     plt.plot(x, y)
@@ -40,7 +40,7 @@ for i in xrange(1,3600):
     ######################################################################
     # New plot
     figstr = tmpdir + "/dateplot_minutes_new_%03d.png"
-    print "Writing %s" % figstr
+    print("Writing %s" % figstr)
     plt.figure("New")
     plt.clf()
     plt.plot(x, y)

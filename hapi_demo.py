@@ -21,8 +21,8 @@ opts       = {'format': format, 'logging': True, 'use_cache': False}
 parameters = 'scalar'
 
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
-print data['scalar'].dtype
-print data['scalar'].shape
+print(data['scalar'].dtype)
+print(data['scalar'].shape)
 
 hapiplot(data,meta)
 #############################################################################
@@ -32,8 +32,8 @@ hapiplot(data,meta)
 parameters = 'scalar'
 
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
-print data['scalar'].dtype
-print data['scalar'].shape
+print(data['scalar'].dtype)
+print(data['scalar'].shape)
 
 hapiplot(data,meta)
 #############################################################################
@@ -43,8 +43,8 @@ hapiplot(data,meta)
 parameters = 'scalarstr'
 
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
-print data['scalarstr'].dtype
-print data['scalarstr'].shape
+print(data['scalarstr'].dtype)
+print(data['scalarstr'].shape)
 
 hapiplot(data,meta)
 #############################################################################
@@ -54,8 +54,8 @@ hapiplot(data,meta)
 parameters = 'scalariso'
 
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
-print data['scalariso'].dtype
-print data['scalariso'].shape
+print(data['scalariso'].dtype)
+print(data['scalariso'].shape)
 
 #hapiplot(data,meta)
 #############################################################################
@@ -65,8 +65,8 @@ print data['scalariso'].shape
 parameters = 'vector'
 
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
-print data['vector'].dtype
-print data['vector'].shape
+print(data['vector'].dtype)
+print(data['vector'].shape)
 
 hapiplot(data,meta)
 #############################################################################
@@ -76,10 +76,10 @@ hapiplot(data,meta)
 parameters = 'scalar,vector'
 
 data,meta = hapi(server, dataset, parameters, start, stop, **opts)
-print data['scalar'].dtype
-print data['scalar'].shape
-print data['vector'].dtype
-print data['vector'].shape
+print(data['scalar'].dtype)
+print(data['scalar'].shape)
+print(data['vector'].dtype)
+print(data['vector'].shape)
 
 #hapiplot(data,meta)
 #############################################################################
@@ -104,28 +104,28 @@ hapi(logging=True)
 Servers = hapi();
 # or
 # Servers = hapi(**opts)
-print "Server list"
-print json.dumps(Servers, sort_keys=True, indent=4)
+print("Server list")
+print(json.dumps(Servers, sort_keys=True, indent=4))
 
 # Get structure of datasets from server sn
-print "Datasets from server number " + str(sn)
+print("Datasets from server number " + str(sn))
 metad = hapi(Servers[sn])
 # or
 # metad = hapi(Servers[sn],**opts)
-print json.dumps(metad, sort_keys=True, indent=4)
+print(json.dumps(metad, sort_keys=True, indent=4))
 
 # Get dictionary of all parameters in dataset dn
-print "Parameters in datataset number " + str(dn) + " from server " + str(sn)
+print("Parameters in datataset number " + str(dn) + " from server " + str(sn))
 metap = hapi(Servers[sn], metad['catalog'][dn]['id'])
 # or
 # metap = hapi(Servers[sn], metad['catalog'][dn]['id'], **opts)
-print json.dumps(metap, sort_keys=True, indent=3)
+print(json.dumps(metap, sort_keys=True, indent=3))
 
 # Get structure of first parameter in dataset dn
 metap1 = hapi(Servers[sn], metad['catalog'][dn]['id'], metap["parameters"][2]["name"])
 # or
 # metap1 = hapi(Servers[sn], metad['catalog'][dn]['id'], metap["parameters"][2]["name"],**opts)
 
-print "Parameter " + str(pn) + " in datataset number " + str(dn) + " from server " + str(sn)
-print json.dumps(metap1, sort_keys=True, indent=4)
+print("Parameter " + str(pn) + " in datataset number " + str(dn) + " from server " + str(sn))
+print(json.dumps(metap1, sort_keys=True, indent=4))
 #############################################################################

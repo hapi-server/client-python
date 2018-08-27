@@ -33,7 +33,7 @@ HAPI - Interface to Heliophysics Data Environment API
        logging (default False) - Log to console
        cache_hapi (default True) - Save downloaded files in ./hapi-data directory
        use_cache (default True) - Use cache files in ./hapi-data directory if found
-       serverlist (default https://raw.githubusercontent.com/hapi-server/data-specification/master/servers.txt)
+       serverlist (default https://raw.githubusercontent.com/hapi-server/servers/master/all.txt)
 '''
 # TODO: Use mark-up for docs: https://docs.python.org/devguide/documenting.html 
 
@@ -50,8 +50,8 @@ import os
 import re
 import csv
 import json
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 import numpy as np
 import pandas
 from datetime import datetime
@@ -77,50 +77,50 @@ def hapi(*args,**kwargs):
     DOPTS.update({'cache_npbin': True})
     DOPTS.update({'cache_hapi': True})
     DOPTS.update({'use_cache': False})
-    DOPTS.update({'server_list': 'https://raw.githubusercontent.com/hapi-server/data-specification/master/servers.txt'})
+    DOPTS.update({'server_list': 'https://raw.githubusercontent.com/hapi-server/servers/master/all.txt'})
     DOPTS.update({'script_url': 'https://raw.githubusercontent.com/hapi-server/client-python/master/hapi.py'})
     # For testing, change to a different format to force it to be used. 
     # Will use CSV if binary not available
     DOPTS.update({'format': 'binary'})
 
     # Override defaults
-    for key, value in kwargs.iteritems():
+    for key, value in kwargs.items():
         if key in DOPTS:
             DOPTS[key] = value
         else:
-            print 'Warning: Keyword option "%s" is not valid.' % key
+            print('Warning: Keyword option "%s" is not valid.' % key)
         
     if nin == 0:
-        if DOPTS['logging']: print 'Reading %s ... ' % DOPTS['server_list'],
-        data = urllib2.urlopen(DOPTS['server_list']).read().split('\n')
-        if DOPTS['logging']: print 'Done.'
+        if DOPTS['logging']: print('Reading %s ... ' % DOPTS['server_list'], end=' ')
+        data = urllib.request.urlopen(DOPTS['server_list']).read().decode('utf8').split('\n')
+        if DOPTS['logging']: print('Done.')
         # Remove empty items (if blank lines)
         data = [ x for x in data if x ]
         # Display server URLs to console.
         if DOPTS['logging']:
-            print 'List of HAPI servers in %s:' % DOPTS['server_list']
+            print('List of HAPI servers in %s:' % DOPTS['server_list'])
             for url in data:
-                print "   " + url
+                print("   " + url)
         return data        
 
     if nin == 1:
         # Could use cache result here.  Probably not needed as catalog
         # metadata requests offline are unlikely to be performed.
         url = SERVER + '/catalog'
-        if DOPTS['logging']: print 'Downloading %s ... ' % url, 
-        res = urllib2.urlopen(url)
+        if DOPTS['logging']: print('Downloading %s ... ' % url, end=' ') 
+        res = urllib.request.urlopen(url)
         meta = json.load(res)
-        if DOPTS['logging']: print 'Done.'
+        if DOPTS['logging']: print('Done.')
         data = meta
         return meta
 
     if nin == 2:
         # Could use cached result here.
         url = SERVER + '/info?id=' + DATASET
-        if DOPTS['logging']: print 'Downloading %s ... ' % url, 
-        res = urllib2.urlopen(url)
+        if DOPTS['logging']: print('Downloading %s ... ' % url, end=' ') 
+        res = urllib.request.urlopen(url)
         meta = json.load(res)
-        if DOPTS['logging']: print 'Done.'
+        if DOPTS['logging']: print('Done.')
         data = meta
         return meta
 
@@ -151,19 +151,19 @@ def hapi(*args,**kwargs):
             metaloaded = False
             if os.path.isfile(fnamepkl):
                 import pickle
-                if DOPTS['logging']: print 'Reading %s ... ' % fnamepkl,
+                if DOPTS['logging']: print('Reading %s ... ' % fnamepkl, end=' ')
                 f = open(fnamepkl,'rb')                 
                 meta = pickle.load(f) 
                 f.close()                       
-                if DOPTS['logging']: print 'Done.'
+                if DOPTS['logging']: print('Done.')
                 metaloaded = True
                 if nin == 3: return meta
             if metaloaded and os.path.isfile(fnamenpy):
-                if DOPTS['logging']: print 'Reading %s ... ' % fnamenpy,
+                if DOPTS['logging']: print('Reading %s ... ' % fnamenpy, end=' ')
                 f = open(fnamenpy,'rb')  
                 data = np.load(f)
                 f.close()
-                if DOPTS['logging']: print 'Done.'
+                if DOPTS['logging']: print('Done.')
                 return data, meta
 
         if (DOPTS["cache_npbin"] or DOPTS["cache_hapi"]):    
@@ -172,18 +172,18 @@ def hapi(*args,**kwargs):
             if not os.path.exists(urld):
                 os.makedirs(urld)
 
-        if DOPTS['logging']: print 'Downloading %s ... ' % urljson,
-        res = urllib2.urlopen(urljson)
+        if DOPTS['logging']: print('Downloading %s ... ' % urljson, end=' ')
+        res = urllib.request.urlopen(urljson)
         meta = json.load(res)
-        if DOPTS['logging']: print 'Done.'
+        if DOPTS['logging']: print('Done.')
     
         if DOPTS["cache_hapi"]:
             fnamej = re.sub('.csv','.json',fnamejson)
-            if DOPTS['logging']: print 'Writing %s ... ' % fnamejson,
+            if DOPTS['logging']: print('Writing %s ... ' % fnamejson, end=' ')
             f = open(fnamej, 'w')
             json.dump(meta,f,indent=4)
             f.close
-            if DOPTS["logging"]: print 'Done.'
+            if DOPTS["logging"]: print('Done.')
     
         if nin == 3:
             return meta
@@ -193,7 +193,7 @@ def hapi(*args,**kwargs):
             raise ValueError('This client does not handle transport format "%s".  Available options: %s' % (DOPTS['format'],', '.join(cformats)))
 
         if DOPTS['format'] != 'csv':
-            res = urllib2.urlopen(SERVER + '/capabilities')
+            res = urllib.request.urlopen(SERVER + '/capabilities')
             caps = json.load(res)
             sformats = caps["outputFormats"] # Server formats       
             if not DOPTS['format'] in sformats:
@@ -203,7 +203,7 @@ def hapi(*args,**kwargs):
         pnames,psizes,dt = [],[],[]
         cols = np.zeros([len(meta["parameters"]),2],dtype=np.int32)
         ss = 0 # sum of sizes
-        for i in xrange(0,len(meta["parameters"])):        
+        for i in range(0,len(meta["parameters"])):        
             ptype = str(meta["parameters"][i]["type"])
             pnames.append(str(meta["parameters"][i]["name"]))
             if 'size' in meta["parameters"][i]:
@@ -237,18 +237,18 @@ def hapi(*args,**kwargs):
 
         if DOPTS['format'] == 'binary':
             # HAPI Binary
-            if DOPTS['logging']: print 'Downloading %s ... ' % urlbin,
-            urllib.urlretrieve(urlbin, fnamebin)
-            if DOPTS['logging']: print 'Done.'
-            if DOPTS['logging']: print 'Reading %s ... ' % fnamebin,
+            if DOPTS['logging']: print('Downloading %s ... ' % urlbin, end=' ')
+            urllib.request.urlretrieve(urlbin, fnamebin)
+            if DOPTS['logging']: print('Done.')
+            if DOPTS['logging']: print('Reading %s ... ' % fnamebin, end=' ')
             data = np.fromfile(fnamebin, dtype=dt)
-            if DOPTS['logging']: print 'Done.'
+            if DOPTS['logging']: print('Done.')
         else:
             # HAPI CSV
-            if DOPTS['logging']: print 'Downloading %s ... ' % urlcsv,
-            urllib.urlretrieve(urlcsv, fnamecsv)
-            if DOPTS['logging']: print 'Done.'
-            if DOPTS['logging']: print 'Reading %s ... ' % fnamecsv,
+            if DOPTS['logging']: print('Downloading %s ... ' % urlcsv, end=' ')
+            urllib.request.urlretrieve(urlcsv, fnamecsv)
+            if DOPTS['logging']: print('Done.')
+            if DOPTS['logging']: print('Reading %s ... ' % fnamecsv, end=' ')
 
             # Read file into Pandas DataFrame
             df = pandas.read_csv(fnamecsv,sep=',',header=None)
@@ -256,34 +256,34 @@ def hapi(*args,**kwargs):
             # Allocate output N-D array (It is not possible to pass dtype=dt
             # as computed to read_csv, so need to create new ND array.)
             data = np.ndarray(shape=(len(df)),dtype=dt)
-            for i in xrange(0,len(pnames)):
+            for i in range(0,len(pnames)):
                 shape = np.append(len(data),psizes[i])
                 # In numpy 1.8.2, this throws an error for no apparent reason.
                 # Works as expected in numpy 1.10.4
                 data[pnames[i]] = np.squeeze( np.reshape( df.values[:,np.arange(cols[i][0],cols[i][1]+1)], shape ) )
-            if DOPTS['logging']: print 'Done.'
+            if DOPTS['logging']: print('Done.')
 
-        meta.update({u"x_server": SERVER})
-        meta.update({u"x_dataset": DATASET})
-        meta.update({u"x_parameters": PARAMETERS})
-        meta.update({u"x_time.min": START})
-        meta.update({u"x_time.max": STOP})
-        meta.update({u"x_requestURL": urlfbin})
+        meta.update({"x_server": SERVER})
+        meta.update({"x_dataset": DATASET})
+        meta.update({"x_parameters": PARAMETERS})
+        meta.update({"x_time.min": START})
+        meta.update({"x_time.max": STOP})
+        meta.update({"x_requestURL": urlfbin})
         t = datetime.now().isoformat()
-        meta.update({u"x_requestDate": t[0:19]})
-        meta.update({u"x_requestFile": fnamefbin})
-        meta.update({u"x_requestFormat": "fbinary"})
+        meta.update({"x_requestDate": t[0:19]})
+        meta.update({"x_requestFile": fnamefbin})
+        meta.update({"x_requestFormat": "fbinary"})
 
         if DOPTS["cache_npbin"]:
-            if DOPTS['logging']: print 'Writing %s ...' % fnamenpy,
+            if DOPTS['logging']: print('Writing %s ...' % fnamenpy, end=' ')
             np.save(fnamenpy,data);
-            if DOPTS['logging']: print 'Done'
+            if DOPTS['logging']: print('Done')
 
-            if DOPTS['logging']: print 'Writing %s ...' % fnamepkl,            
+            if DOPTS['logging']: print('Writing %s ...' % fnamepkl, end=' ')            
             import pickle
             f = open(fnamepkl,'wb') 
             pickle.dump(meta,f)
             f.close()
-            if DOPTS['logging']: print 'Done.'
+            if DOPTS['logging']: print('Done.')
 
     return data, meta

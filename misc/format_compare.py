@@ -2,7 +2,7 @@ import time
 import os
 import re
 import numpy as np
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from datetime import datetime
 import matplotlib.dates as mdates
 import pandas
@@ -24,15 +24,15 @@ filefbin2 = './tmp/' + file + '.fbin2'
 if not os.path.exists('./tmp/'):
     os.makedirs('./tmp')
 if not os.path.isfile(filecsv):
-    urllib.urlretrieve(base + '/data/?id=dataset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=csv',filecsv)
+    urllib.request.urlretrieve(base + '/data/?id=dataset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=csv',filecsv)
 if not os.path.isfile(filefcsv):
-    urllib.urlretrieve(base + '/data/?id=dataset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fcsv',filefcsv)
+    urllib.request.urlretrieve(base + '/data/?id=dataset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fcsv',filefcsv)
 if not os.path.isfile(filebin):
-    urllib.urlretrieve(base + '/data/?id=datset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=binary',filebin)
+    urllib.request.urlretrieve(base + '/data/?id=datset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=binary',filebin)
 if not os.path.isfile(filefbin):
-    urllib.urlretrieve(base + '/data/?id=datset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fbinary',filefbin)
+    urllib.request.urlretrieve(base + '/data/?id=datset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fbinary',filefbin)
 if not os.path.isfile(filefbin2):
-    urllib.urlretrieve(base + '/data/?id=dataset1&parameters=' + file + 'int' + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fbinary',filefbin2)
+    urllib.request.urlretrieve(base + '/data/?id=dataset1&parameters=' + file + 'int' + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fbinary',filefbin2)
 
 plt.figure(0);plt.clf()
 
@@ -45,7 +45,7 @@ datafcsv1 = pandas.read_csv(filefcsv,dtype=dtype,names=['Time','scalar'],sep=','
 zero = datetime.strptime('1970-01-01', "%Y-%m-%d").toordinal()
 Time = zero + datafcsv1['Time']/86400.
 tfcsv = [time.time()-tic];
-print 'fcsv (pandas.read_csv)                 %.4fs # Fast CSV' % tfcsv[0]
+print('fcsv (pandas.read_csv)                 %.4fs # Fast CSV' % tfcsv[0])
 #Time = mdates.num2date(zero + datafcsv1['Time']/86400., tz=None)
 
 plt.figure(0)
@@ -62,7 +62,7 @@ toc = time.time()
 zero = datetime.strptime('1970-01-01', "%Y-%m-%d").toordinal()
 Time = zero + datafcsv2[:,0]/86400.
 tfcsv = [time.time()-tic] + tfcsv
-print 'fcsv (np.loadtxt)                      %.4fs # Fast CSV' % tfcsv[0]
+print('fcsv (np.loadtxt)                      %.4fs # Fast CSV' % tfcsv[0])
 
 plt.figure(0)
 plt.plot(Time, datafcsv2[:,1], '-')
@@ -87,7 +87,7 @@ for line in f:
      Time[i] = DN + float(line[11:13])/24. + float(line[14:16])/(24.*60.) + float(line[17:23])/(24.*3600.)
      i = i+1
 tcsv = [time.time()-tic]
-print 'csv (line by line + faden/datenum)     %.4fs # HAPI CSV' % tcsv[0]
+print('csv (line by line + faden/datenum)     %.4fs # HAPI CSV' % tcsv[0])
 f.close()
 
 plt.figure(0)
@@ -111,7 +111,7 @@ for line in v:
      Time[i] = DN + float(line[11:13])/24. + float(line[14:16])/(24.*60.) + float(line[17:23])/(24.*3600.)
      i = i+1
 tcsv = tcsv + [time.time()-tic]
-print 'csv (pandas.read_csv + faden/datenum)  %.4fs # HAPI CSV' % tcsv[1]
+print('csv (pandas.read_csv + faden/datenum)  %.4fs # HAPI CSV' % tcsv[1])
 plt.figure(0)
 plt.plot(Time,data,color='red')
 datetick()
@@ -128,7 +128,7 @@ Time = Time/86400.0e9 + float(datetime.strptime("1970-01-01", "%Y-%m-%d").toordi
 
 data  = df['scalar'].values.view()
 tcsv = tcsv + [time.time()-tic];
-print 'csv (pandas.read_csv)                  %.4fs # HAPI CSV' % tcsv[2]
+print('csv (pandas.read_csv)                  %.4fs # HAPI CSV' % tcsv[2])
 
 plt.figure(0)
 plt.plot(Time, data, '-')
@@ -150,7 +150,7 @@ for line in v:
      Time[i] = DN + float(line[11:13])/24. + float(line[14:16])/(24.*60.) + float(line[17:23])/(24.*3600.)
      i = i+1
 tcsv = tcsv + [time.time()-tic]
-print 'csv (genfromtext + faden/datenum)      %.4fs # HAPI CSV' % tcsv[3]
+print('csv (genfromtext + faden/datenum)      %.4fs # HAPI CSV' % tcsv[3])
 
 ###############################################################################
 
@@ -186,7 +186,7 @@ if False: # Far too slow.
     
     toc = time.time()
     tcsv = toc-tic;
-    print 'csv total:         %.4fs\t# HAPI CSV' % tcsv
+    print('csv total:         %.4fs\t# HAPI CSV' % tcsv)
     
     plt.figure(0)
     plt.plot(24*(datacsv[:,0]-datacsv[0,0]),datacsv[:,1],color='red')
@@ -208,7 +208,7 @@ f.close
 datafbin = np.reshape(datafbin, [len(datafbin)/(size+1), (size+1)])
 toc = time.time()
 tfbin = toc-tic;
-print 'fbin (fromfile)    %.4fs\t# Fast binary (all doubles)' % tfbin
+print('fbin (fromfile)    %.4fs\t# Fast binary (all doubles)' % tfbin)
 
 plt.figure(0)
 plt.plot(datafbin[:,0],datafbin[:,1],color='blue')
@@ -232,7 +232,7 @@ if False: # Faster than above, but use above as worst-case
     f.close
     toc = time.time()
     tfbin2 = toc-tic;
-    print 'fbin (fromfile)   %.4fs\t# Fast binary (time dbl, param int)' % tfbin2
+    print('fbin (fromfile)   %.4fs\t# Fast binary (time dbl, param int)' % tfbin2)
     
     plt.figure(0)
     plt.plot(datafbin2['time'],datafbin2['scalar']/1000.,color='yellow')
@@ -252,7 +252,7 @@ df = np.fromfile(filebin, dtype=dt)
 Time = pandas.to_datetime(df['Time'],infer_datetime_format=True,utc=True).view('m8')
 toc = time.time()
 tbin = toc-tic;
-print 'bin (fromfile)     %.4fs\t# HAPI binary' % tbin
+print('bin (fromfile)     %.4fs\t# HAPI binary' % tbin)
 
 plt.figure(0)
 plt.plot(Time/1e9,df['scalar'],color='black')
@@ -305,7 +305,7 @@ if False:
     toc = time.time()
     tbin[2] = toc-tic
 
-    print 'bin total:         %.4fs\t# HAPI binary' % np.sum(tbin)
+    print('bin total:         %.4fs\t# HAPI binary' % np.sum(tbin))
 
     #plt.figure(0)
     #plt.plot(timebin,databin,color='magenta')
@@ -317,11 +317,11 @@ if False:
 #print '  (bin extract time:  %.4fs)' % tbin[1]
 #print '  (bin extract data:  %.4fs)' % tbin[2]
 
-print '\nTime Ratios (Best HAPI over best "Fast")'
+print('\nTime Ratios (Best HAPI over best "Fast")')
 #print 'csv/fcsv        : %.4f' % (tcsv/tfcsv)
-print 'csv/fcsv   %.4f' % (tcsvp2/tfcsv)
-print 'bin/fbin   %.4f' % (tbin/tfbin)
-print ''
-print 'csv/bin    %.4f' % (tcsvp/tbin)
-print 'fcsv/fbin  %.4f' % (tfcsv/tbin)
+print('csv/fcsv   %.4f' % (tcsvp2/tfcsv))
+print('bin/fbin   %.4f' % (tbin/tfbin))
+print('')
+print('csv/bin    %.4f' % (tcsvp/tbin))
+print('fcsv/fbin  %.4f' % (tfcsv/tbin))
 #print 'bin/(fbin w/ints): %.4f' % (np.sum(tbin)/tfbin2)
