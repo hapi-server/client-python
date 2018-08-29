@@ -5,6 +5,8 @@ HAPI - Interface to Heliophysics Data Environment API
    data server (https://github.com/hapi-server/). 
 
    See hapi_demo.py for usage examples.
+   
+   Tested with Python 2.7 and 3.6 and pacakges shipped with Anaconda.
 
    Servers = HAPI() or HAPI() returns a list of data server URLs from
    https://github.com/hapi-server/data-specification/blob/master/servers.txt
@@ -48,19 +50,43 @@ Repository: https://github.com/hapi-server/python-client.git
 
 import os
 import re
-import json
-import urllib.request, urllib.parse, urllib.error
-import urllib.request, urllib.error, urllib.parse
+import json    
 import numpy as np
 import pandas
 from datetime import datetime
 import warnings
- 
+import sys
+
+# Start compatability code
+if sys.version_info[0] > 2:
+    # Tested with sys.version = 2.7.15 |Anaconda, Inc.| (default, May  1 2018, 18:37:05) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
+    import urllib.request, urllib.parse, urllib.error
+else:
+    # Tested with sys.version = 2.7.15 |Anaconda, Inc.| (default, May  1 2018, 18:37:05) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
+    # Tested with sys.version = 3.6.5 |Anaconda, Inc.| (default, Apr 26 2018, 08:42:37) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
+    import urllib
+    import urllib2
+
+def urlopen(url):
+    if sys.version_info[0] > 2:
+        res = urllib.request.urlopen(url)
+    else:
+        res = urllib2.urlopen(url)
+    return res
+
+def urlretrieve(url,fname):
+    if sys.version_info[0] > 2:
+        urllib.request.urlretrieve(url, fname)
+    else:
+        urllib.urlretrieve(url, fname)
+# End compatability code
+
+def printf(format, *args): sys.stdout.write(format % args)
+    
 def hapi(*args,**kwargs):
     
     nin = len(args)
         
-    nin = len(args)
     if nin > 0:SERVER = args[0]
     if nin > 1:DATASET = args[1]
     if nin > 2:PARAMETERS = args[2]
@@ -73,6 +99,7 @@ def hapi(*args,**kwargs):
     DOPTS.update({'logging': True})
     DOPTS.update({'cache_npbin': True})
     DOPTS.update({'cache_hapi': True})
+    DOPTS.update({'cache_dir': os.getcwd() + os.path.sep + 'hapi-data'})
     DOPTS.update({'use_cache': False})
     DOPTS.update({'server_list': 'https://raw.githubusercontent.com/hapi-server/servers/master/all.txt'})
     DOPTS.update({'script_url': 'https://raw.githubusercontent.com/hapi-server/client-python/master/hapi.py'})
@@ -85,100 +112,120 @@ def hapi(*args,**kwargs):
         if key in DOPTS:
             DOPTS[key] = value
         else:
-            print('Warning: Keyword option "%s" is not valid.' % key)
+            printf('Warning: Keyword option "%s" is not valid.', key)
         
     if nin == 0:
-        if DOPTS['logging']: print('Reading %s ... ' % DOPTS['server_list'], end=' ')
-        data = urllib.request.urlopen(DOPTS['server_list']).read().decode('utf8').split('\n')
-        if DOPTS['logging']: print('Done.')
+        if DOPTS['logging']: printf('Reading %s ... ', DOPTS['server_list'])
+        if sys.version_info[0] > 2:
+            data = urllib.request.urlopen(DOPTS['server_list']).read().decode('utf8').split('\n')
+        else:
+            data = urllib2.urlopen(DOPTS['server_list']).read().split('\n')
+            
+        if DOPTS['logging']: printf('Done.\n')
         # Remove empty items (if blank lines)
         data = [ x for x in data if x ]
         # Display server URLs to console.
         if DOPTS['logging']:
-            print('List of HAPI servers in %s:' % DOPTS['server_list'])
+            printf('List of HAPI servers in %s:\n', DOPTS['server_list'])
             for url in data:
-                print("   " + url)
+                printf("   %s\n", url)
         return data        
 
     if nin == 1:
         # Could use cache result here.  Probably not needed as catalog
         # metadata requests offline are unlikely to be performed.
         url = SERVER + '/catalog'
-        if DOPTS['logging']: print('Downloading %s ... ' % url, end=' ') 
-        res = urllib.request.urlopen(url)
+        if DOPTS['logging']: printf('Downloading %s ... ', url) 
+        res = urlopen(url)
         meta = json.load(res)
-        if DOPTS['logging']: print('Done.')
+        if DOPTS['logging']: printf('Done.\n')
         data = meta
         return meta
 
     if nin == 2:
         # Could use cached result here.
         url = SERVER + '/info?id=' + DATASET
-        if DOPTS['logging']: print('Downloading %s ... ' % url, end=' ') 
-        res = urllib.request.urlopen(url)
+        if DOPTS['logging']: printf('Downloading %s ... ', url)
+        res = urlopen(url)
         meta = json.load(res)
-        if DOPTS['logging']: print('Done.')
+        if DOPTS['logging']: printf('Done.\n')
         data = meta
         return meta
 
     if nin == 3 or nin == 5:
-    
+
+        urld = re.sub(r"https*://","",SERVER)
+        urld = re.sub(r'/','_',urld)
+        urld = DOPTS["cache_dir"] + os.path.sep + urld
+
         if (DOPTS["cache_npbin"] or DOPTS["cache_hapi"] or DOPTS["use_cache"]):
-            urld = re.sub(r"https*://","",SERVER)
-            urld = re.sub(r'/','_',urld)
-            urld = 'hapi-data' + os.path.sep + urld
             if nin == 5:
+                # Data requested
                 fname     = '%s_%s_%s_%s' % (DATASET,re.sub(',','-',PARAMETERS),re.sub(r'-|:|\.|Z','',START),re.sub(r'-|:|\.|Z','',STOP))
                 fnamecsv  = urld + os.path.sep + fname + '.csv'
                 fnamebin  = urld + os.path.sep + fname + '.bin'
-                fnamefbin = urld + os.path.sep + fname + '.fbin'
                 urlcsv    = SERVER + '/data?id=' + DATASET + '&parameters=' + PARAMETERS + '&time.min=' + START + '&time.max=' + STOP
                 urlbin    = urlcsv + '&format=binary'
-                urlfbin   = urlcsv + '&format=fbinary'
-                fnamenpy  = urld + os.path.sep + fname + '.data.npy'                
+                fnamenpy  = urld + os.path.sep + fname + '.npy'                
 
             urljson = SERVER + '/info?id=' + DATASET + '&parameters=' + PARAMETERS
             fname     = '%s_%s' % (DATASET,re.sub(',','',PARAMETERS))
             fnamejson = urld + os.path.sep + fname + '.json'
-            fnamepkl  = urld + os.path.sep + fname + '.data.pickle'                
+            fnamepkl  = urld + os.path.sep + fname + '.pkl'                
 
         if DOPTS["use_cache"]:
             metaloaded = False
             if os.path.isfile(fnamepkl):
                 import pickle
-                if DOPTS['logging']: print('Reading %s ... ' % fnamepkl, end=' ')
+                if DOPTS['logging']: printf('Reading %s ... ', fnamepkl)
                 f = open(fnamepkl,'rb')                 
                 meta = pickle.load(f) 
                 f.close()                       
-                if DOPTS['logging']: print('Done.')
+                if DOPTS['logging']: printf('Done.\n')
                 metaloaded = True
                 if nin == 3: return meta
             if metaloaded and os.path.isfile(fnamenpy):
-                if DOPTS['logging']: print('Reading %s ... ' % fnamenpy, end=' ')
+                if DOPTS['logging']: printf('Reading %s ... ', fnamenpy)
                 f = open(fnamenpy,'rb')  
                 data = np.load(f)
                 f.close()
-                if DOPTS['logging']: print('Done.')
+                if DOPTS['logging']: printf('Done.\n')
                 return data, meta
 
         if (DOPTS["cache_npbin"] or DOPTS["cache_hapi"]):    
-            if not os.path.exists('./hapi-data'):
-                os.makedirs('./hapi-data')
+            if not os.path.exists(DOPTS["cache_dir"]):
+                os.makedirs(DOPTS["cache_dir"])
             if not os.path.exists(urld):
                 os.makedirs(urld)
 
-        if DOPTS['logging']: print('Downloading %s ... ' % urljson, end=' ')
-        res = urllib.request.urlopen(urljson)
+        if DOPTS['logging']: printf('Downloading %s ... ', urljson)
+        res = urlopen(urljson)
         meta = json.load(res)
-        if DOPTS['logging']: print('Done.')
-    
+        if DOPTS['logging']: printf('Done.\n')
+
+        meta.update({"x_server": SERVER})
+        meta.update({"x_dataset": DATASET})
+        meta.update({"x_parameters": PARAMETERS})
+        meta.update({"x_metaFile": fnamejson})
+        t = datetime.now().isoformat()
+        meta.update({"x_requestDate": t[0:19]})
+        meta.update({"x_cacheDir": urld})
+
+        if nin == 5:
+            meta.update({"x_time.min": START})
+            meta.update({"x_time.max": STOP})        
+            if DOPTS['format'] == 'binary':
+                meta.update({"x_dataFile": fnamebin})
+            else:
+                meta.update({"x_dataFile": fnamecsv})
+
         if DOPTS["cache_hapi"]:
             fnamej = re.sub('.csv','.json',fnamejson)
-            if DOPTS['logging']: print('Writing %s ... ' % fnamejson, end=' ')
+            if DOPTS['logging']: printf('Writing %s ... ', fnamejson)
             f = open(fnamej, 'w')
             json.dump(meta,f,indent=4)
             f.close
-            if DOPTS["logging"]: print('Done.')
+            if DOPTS["logging"]: printf('Done.\n')
     
         if nin == 3:
             return meta
@@ -188,7 +235,7 @@ def hapi(*args,**kwargs):
             raise ValueError('This client does not handle transport format "%s".  Available options: %s' % (DOPTS['format'],', '.join(cformats)))
 
         if DOPTS['format'] != 'csv':
-            res = urllib.request.urlopen(SERVER + '/capabilities')
+            res = urlopen(SERVER + '/capabilities')
             caps = json.load(res)
             sformats = caps["outputFormats"] # Server formats       
             if not DOPTS['format'] in sformats:
@@ -198,6 +245,8 @@ def hapi(*args,**kwargs):
         pnames,psizes,dt = [],[],[]
         cols = np.zeros([len(meta["parameters"]),2],dtype=np.int32)
         ss = 0 # sum of sizes
+        cast_string = False
+
         for i in range(0,len(meta["parameters"])):        
             ptype = str(meta["parameters"][i]["type"])
             pnames.append(str(meta["parameters"][i]["name"]))
@@ -219,66 +268,104 @@ def hapi(*args,**kwargs):
 
             if ptype == 'double': dtype = (pnames[i], '<d', psizes[i])
             if ptype == 'integer': dtype = (pnames[i], np.int32, psizes[i])
-            if DOPTS['format'] == 'binary':
+            
+            # length attribute only required if binary or time variable, 
+            # but use length if available (by using hasattr()). 
+            # To simulate all string parameters with no length attribute, use
+            #if DOPTS['format'] == 'binary':
+            if DOPTS['format'] == 'binary' or hasattr(meta["parameters"][i],'length'):
                 if ptype == 'string': dtype = (pnames[i],  'S' + str(meta["parameters"][i]["length"]), psizes[i])
-                if ptype == 'isotime': dtype = (pnames[i],  'S' + str(meta["parameters"][i]["length"]), psizes[i])
+                if ptype == 'isotime': dtype = (pnames[i],  'S' + str(meta["parameters"][i]["length"]), psizes[i])            
             else:
+                cast_string = True # Convert to string later
                 if ptype == 'string': dtype = (pnames[i],  object, psizes[i])            
-                if ptype == 'isotime': dtype = (pnames[i],  object, 1)
-                # TODO: Use length if for CSV.  Will require less memory than
-                # if each element is an object.
+                if ptype == 'isotime': dtype = (pnames[i],  object, psizes[i])
 
             dt.append(dtype)
 
+        # Read the data. Many methods have been tested for reading.
+        # See misc/format_compare.py
         if DOPTS['format'] == 'binary':
             # HAPI Binary
-            if DOPTS['logging']: print('Downloading %s ... ' % urlbin, end=' ')
-            urllib.request.urlretrieve(urlbin, fnamebin)
-            if DOPTS['logging']: print('Done.')
-            if DOPTS['logging']: print('Reading %s ... ' % fnamebin, end=' ')
+            # TODO: Don't write file if cache_npbin == False
+            # Use urlopen() or equivalent to read directly into memory.
+            if DOPTS['logging']: printf('Downloading %s ... ', urlbin)
+            urlretrieve(urlbin, fnamebin)
+            if DOPTS['logging']: printf('Done.\n')
+            if DOPTS['logging']: printf('Reading %s ... ', fnamebin)
             data = np.fromfile(fnamebin, dtype=dt)
-            if DOPTS['logging']: print('Done.')
+            if DOPTS['logging']: printf('Done.\n')
+
         else:
             # HAPI CSV
-            if DOPTS['logging']: print('Downloading %s ... ' % urlcsv, end=' ')
-            urllib.request.urlretrieve(urlcsv, fnamecsv)
-            if DOPTS['logging']: print('Done.')
-            if DOPTS['logging']: print('Reading %s ... ' % fnamecsv, end=' ')
+            # TODO: Don't write file if cache_npbin == False
+            if DOPTS['logging']: printf('Downloading %s ... ', urlcsv)
+            urlretrieve(urlcsv, fnamecsv)
+            if DOPTS['logging']: printf('Done.\n')
+            if DOPTS['logging']: printf('Reading %s ... ', fnamecsv)
 
             # Read file into Pandas DataFrame
             df = pandas.read_csv(fnamecsv,sep=',',header=None)
 
             # Allocate output N-D array (It is not possible to pass dtype=dt
             # as computed to read_csv, so need to create new ND array.)
+            #print(dt)
+            #import pdb; pdb.set_trace()
             data = np.ndarray(shape=(len(df)),dtype=dt)
+
+            # Insert data from dataframe into N-D array
             for i in range(0,len(pnames)):
                 shape = np.append(len(data),psizes[i])
-                # In numpy 1.8.2, this throws an error for no apparent reason.
+                # In numpy 1.8.2 and Python 2.7, this throws an error for no apparent reason.
                 # Works as expected in numpy 1.10.4
                 data[pnames[i]] = np.squeeze( np.reshape( df.values[:,np.arange(cols[i][0],cols[i][1]+1)], shape ) )
-            if DOPTS['logging']: print('Done.')
+            
+            # If any of the parameters are strings and do not have an associated 
+            # length in the metadata, they must be read with a dtype='O' (object). 
+            # These parameters must be converted to have a dtype='SN', where
+            # N is the maximum string length. N is determined automatically
+            # when using astype('<S') (astype uses largest N needed).
+            if cast_string:
+                dt2 = []
+                for i in range(0,len(pnames)):
+                    if data[pnames[i]].dtype == 'O':
+                        dtype = (pnames[i], str(data[pnames[i]].astype('<S').dtype) , psizes[i])
+                    else:
+                        dtype = dt[i]
+                    dt2.append(dtype)        
 
-        meta.update({"x_server": SERVER})
-        meta.update({"x_dataset": DATASET})
-        meta.update({"x_parameters": PARAMETERS})
-        meta.update({"x_time.min": START})
-        meta.update({"x_time.max": STOP})
-        meta.update({"x_requestURL": urlfbin})
-        t = datetime.now().isoformat()
-        meta.update({"x_requestDate": t[0:19]})
-        meta.update({"x_requestFile": fnamefbin})
-        meta.update({"x_requestFormat": "fbinary"})
+                # Create new ndarray
+                data2 = np.ndarray(data.shape,dt2)                    
+                
+                for i in range(0,len(pnames)):
+                    if data[pnames[i]].dtype == 'O':
+                        data2[pnames[i]] = data[pnames[i]].astype(dt2[i][1])
+                    else:
+                        data2[pnames[i]] = data[pnames[i]]
+                        # Save memory by not copying (does this help?)
+                        #data2[pnames[i]] = np.array(data[pnames[i]],copy=False)
+                    
+                #import pdb; pdb.set_trace()
+            
+            if DOPTS['logging']: printf('Done.\n')
 
         if DOPTS["cache_npbin"]:
-            if DOPTS['logging']: print('Writing %s ...' % fnamenpy, end=' ')
-            np.save(fnamenpy,data);
-            if DOPTS['logging']: print('Done')
+            if DOPTS['logging']: printf('Writing %s ...', fnamenpy)
+            if cast_string:
+                np.save(fnamenpy,data2)
+            else:
+                np.save(fnamenpy,data)
+            
+            if DOPTS['logging']: printf('Done.\n')
 
-            if DOPTS['logging']: print('Writing %s ...' % fnamepkl, end=' ')            
+            if DOPTS['logging']: printf('Writing %s ...', fnamepkl)            
             import pickle
             f = open(fnamepkl,'wb') 
             pickle.dump(meta,f)
             f.close()
-            if DOPTS['logging']: print('Done.')
+            if DOPTS['logging']: printf('Done.\n')
 
-    return data, meta
+        if cast_string:
+            return data2, meta
+        else:
+            return data, meta
