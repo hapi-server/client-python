@@ -315,7 +315,6 @@ def hapi(*args,**kwargs):
             data = np.fromfile(fnamebin, dtype=dt)
             toc = time.time()-tic
             if DOPTS['logging']: printf('Done.\n')
-            print('binary           %.4fs' % toc)
         else:
             # HAPI CSV
             # TODO: Don't write file if cache_npbin == False
@@ -330,7 +329,6 @@ def hapi(*args,**kwargs):
                 if DOPTS['method'] == 'numpy':
                     data = np.genfromtxt(fnamecsv,dtype=dt, delimiter=',')
                     toc = time.time()-tic
-                    print('numpy            %.4fs' % toc)
                 if DOPTS['method'] == 'pandas':
                     # Read file into Pandas DataFrame
                     df = pandas.read_csv(fnamecsv,sep=',',header=None)
@@ -347,8 +345,7 @@ def hapi(*args,**kwargs):
                         # Works as expected in numpy 1.10.4
                         data[pnames[i]] = np.squeeze( np.reshape( df.values[:,np.arange(cols[i][0],cols[i][1]+1)], shape ) )
 
-                    toc = time.time()-tic                        
-                    print('pandas           %.4fs' % toc)
+                    toc = time.time()-tic            
             else:                
                 # At least one string or isotime parameters does not have a length in metadata
                 if DOPTS['method'] == 'numpynolength':
@@ -444,13 +441,11 @@ def hapi(*args,**kwargs):
                         #data2[pnames[i]] = np.array(data[pnames[i]],copy=False)
                                             
                 toc = time.time()-tic
-                if DOPTS['method'] == 'numpynolength':
-                    print('numpy no length  %.4fs' % toc)
-                if DOPTS['method'] == 'pandasnolength':
-                    print('pandas no length %.4fs' % toc)
             
             if DOPTS['logging']: printf('Done.\n')
 
+        meta.update({"x_readTime": toc})
+        
         if DOPTS["cache_npbin"]:
             if DOPTS['logging']: printf('Writing %s ...', fnamenpy)
             if missing_length == True:
