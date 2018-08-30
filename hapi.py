@@ -271,7 +271,7 @@ def hapi(*args,**kwargs):
                 
             cols[i][0] = ss
             cols[i][1] = ss + np.prod(psizes[i]) - 1
-            ss = ss+1
+            ss = cols[i][1]+1
 
             if ptype == 'double': dtype = (pnames[i], '<d', psizes[i])
             if ptype == 'integer': dtype = (pnames[i], np.int32, psizes[i])
@@ -284,6 +284,7 @@ def hapi(*args,**kwargs):
             else:
                 if ptype == 'string' or ptype == 'isotime':
                     if 'length' in meta["parameters"][i]:
+                        # length is specified for parameter in metadata. Use it.
                         if ptype == 'string': dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
                         if ptype == 'isotime': dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])            
                     else:
@@ -301,8 +302,7 @@ def hapi(*args,**kwargs):
 
             dt.append(dtype)
 
-        # Read the data. Many methods have been tested for reading.
-        # See misc/format_compare.py
+        # Read the data.
         if DOPTS['format'] == 'binary':
             # HAPI Binary
             # TODO: Don't write file if cache_npbin == False
@@ -323,10 +323,9 @@ def hapi(*args,**kwargs):
             urlretrieve(urlcsv, fnamecsv)
             if DOPTS['logging']: printf('Done.\n')
             if DOPTS['logging']: printf('Reading %s ... ', fnamecsv)
-
-            #import pdb; pdb.set_trace()
             
             if missing_length == False:
+                # All string and isotime parameters have a length in metadata
                 tic = time.time()                
                 if DOPTS['method'] == 'numpy':
                     data = np.genfromtxt(fnamecsv,dtype=dt, delimiter=',')
@@ -337,12 +336,11 @@ def hapi(*args,**kwargs):
                     df = pandas.read_csv(fnamecsv,sep=',',header=None)
         
                     # Allocate output N-D array (It is not possible to pass dtype=dt
-                    # as computed to read_csv, so need to create new ND array.)
-                    #print(dt)
-                    #import pdb; pdb.set_trace()
+                    # as computed to pandas.read_csv pandas dtype is different
+                    # from numpy's dtype.)
                     data = np.ndarray(shape=(len(df)),dtype=dt)
         
-                    # Insert data from dataframe into N-D array
+                    # Insert data from dataframe df columns into N-D array
                     for i in range(0,len(pnames)):
                         shape = np.append(len(data),psizes[i])
                         # In numpy 1.8.2 and Python 2.7, this throws an error for no apparent reason.
@@ -352,34 +350,59 @@ def hapi(*args,**kwargs):
                     toc = time.time()-tic                        
                     print('pandas           %.4fs' % toc)
             else:                
-                if DOPTS['method'] == 'numpynolength': # Read using numpy.genfromtxt
+                # At least one string or isotime parameters does not have a length in metadata
+                if DOPTS['method'] == 'numpynolength':
                     tic = time.time()
                     # With dtype='None', the data type is determined automatically
                     table = np.genfromtxt(fnamecsv,dtype=None, delimiter=',', encoding='utf-8')
                     # table is a 1-D array. Each element is a row in the file.
-                    # The elements are tuples with length equal to the number of
+                    # If the data types are not the same for each column, 
+                    # the elements are tuples with length equal to the number of
                     # columns.
+                    # If the data types are the same for each column, which
+                    # will happen if only Time is requested or Time and
+                    # a string or isotime parameter is requested, then table
+                    # has rows that are 1-D numpy arrays.
                     
-                    # Contents of table will be placed into ndarray data.
+                    # Contents of table will be placed into N-D array 'data'.
                     data  = np.ndarray(shape=(len(table)),dtype=dt)
-    
-                    # Extract each column (don't know how to do this with slicing
-                    # notation, e.g., data['varname'] = table[:][1:3]. Instead,
-                    # loop over each parameter (pn) and aggregage columns.
-                    # Then insert aggregated columns into data.
-                    for pn in range(0,len(cols)):
-                        shape = np.append(len(data),psizes[pn])
-                        for c in range(cols[pn][0],cols[pn][1]+1):
-                            if c == cols[pn][0]: # New parameter
-                                tmp = table[ table.dtype.names[c] ]
-                            else: # Aggregate
-                                tmp = np.vstack((tmp,table[ table.dtype.names[c] ]))
-                        tmp = np.squeeze( np.reshape( np.transpose(tmp), shape ) )
-                        data[pnames[pn]] = tmp
+
+                    # Insert data from table into N-D array
+                    if (table.dtype.names == None):
+                        if len(pnames) == 1:
+                            # Only time parameter requested.
+                            #import pdb; pdb.set_trace()
+                            data[pnames[0]] = table[:]
+                        else:
+                            # All columns in table have the same datatype
+                            # so table is a 2-D numpy matrix
+                            #import pdb; pdb.set_trace()
+                            for i in range(0,len(pnames)):
+                                shape = np.append(len(data),psizes[i])
+                                # In numpy 1.8.2 and Python 2.7, this throws an error for no apparent reason.
+                                # Works as expected in numpy 1.10.4
+                                data[pnames[i]] = np.squeeze( np.reshape( table[:,np.arange(cols[i][0],cols[i][1]+1)], shape ) )
+                    else:
+                        # Table is not a 2-D numpy matrix.
+                        # Extract each column (don't know how to do this with slicing
+                        # notation, e.g., data['varname'] = table[:][1:3]. Instead,
+                        # loop over each parameter (pn) and aggregate columns.
+                        # Then insert aggregated columns into N-D array 'data'.
+                        #import pdb; pdb.set_trace()
+                        for pn in range(0,len(cols)):
+                            shape = np.append(len(data),psizes[pn])
+                            for c in range(cols[pn][0],cols[pn][1]+1):
+                                #print('pn = %d; c=%d; cn=%s' % (pn,c,table.dtype.names[c]))
+                                if c == cols[pn][0]: # New parameter
+                                    tmp = table[ table.dtype.names[c] ]
+                                else: # Aggregate
+                                    tmp = np.vstack((tmp,table[ table.dtype.names[c] ]))
+                            tmp = np.squeeze( np.reshape( np.transpose(tmp), shape ) )
+                            data[pnames[pn]] = tmp
                                 
-                if DOPTS['method'] == 'pandasnolength': # This works but requires pandas
+                if DOPTS['method'] == 'pandasnolength':
                     tic = time.time()
-                    #import pdb; pdb.set_trace()
+ 
                     # Read file into Pandas DataFrame
                     df = pandas.read_csv(fnamecsv,sep=',',header=None)
         
@@ -419,9 +442,7 @@ def hapi(*args,**kwargs):
                         data2[pnames[i]] = data[pnames[i]]
                         # Save memory by not copying (does this help?)
                         #data2[pnames[i]] = np.array(data[pnames[i]],copy=False)
-                        
-                    #import pdb; pdb.set_trace()
-                    
+                                            
                 toc = time.time()-tic
                 if DOPTS['method'] == 'numpynolength':
                     print('numpy no length  %.4fs' % toc)

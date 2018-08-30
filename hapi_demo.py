@@ -1,6 +1,5 @@
 from hapi import hapi
 from hapiplot import hapiplot
-import matplotlib.pyplot as plt 
 import json
 
 # In IPython, enter %matplotlib qt on command line to open plots in 
@@ -20,6 +19,16 @@ data,meta = hapi(server, dataset, parameters, start, stop, **opts)
 hapiplot(data,meta,logging=True)
 
 #############################################################################
+#%% CDAWeb data
+server     = 'https://cdaweb.gsfc.nasa.gov/hapi'
+dataset    = 'AC_H0_MFI'
+start      = '2001-01-01T05:00:00'
+stop       = '2001-01-01T06:00:00'
+parameters = 'Magnitude,BGSEc'
+opts       = {'logging': True, 'use_cache': False}
+data,meta = hapi(server, dataset, parameters, start, stop, **opts)
+hapiplot(data,meta,logging=True)
+
 #%% Test data 
 server     = 'http://hapi-server.org/servers/TestData/hapi';
 #server     = 'http://localhost:8999/TestData/hapi'

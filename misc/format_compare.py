@@ -2,15 +2,33 @@ import time
 import os
 import re
 import numpy as np
-import urllib.request, urllib.parse, urllib.error
 from datetime import datetime
-import matplotlib.dates as mdates
 import pandas
 import csv
-from datetick import *
+import sys
 
-file = 'vector'
-base = 'http://mag.gmu.edu/TestData/hapi';
+
+# Note - this code is not longer working because of the dependence on the data
+# server.
+
+# Start compatability code
+if sys.version_info[0] > 2:
+    # Tested with sys.version = 2.7.15 |Anaconda, Inc.| (default, May  1 2018, 18:37:05) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
+    import urllib.request, urllib.parse, urllib.error
+else:
+    # Tested with sys.version = 2.7.15 |Anaconda, Inc.| (default, May  1 2018, 18:37:05) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
+    # Tested with sys.version = 3.6.5 |Anaconda, Inc.| (default, Apr 26 2018, 08:42:37) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
+    import urllib
+
+def urlretrieve(url,fname):
+    if sys.version_info[0] > 2:
+        urllib.request.urlretrieve(url, fname)
+    else:
+        urllib.urlretrieve(url, fname)
+# End compatability code
+
+file = 'scalar'
+base = 'http://hapi-server.org/servers/TestData/hapi';
 #base = 'http://localhost:8999/hapi'
 START = '1970-01-01'
 size = 1;
@@ -24,54 +42,55 @@ filefbin2 = './tmp/' + file + '.fbin2'
 if not os.path.exists('./tmp/'):
     os.makedirs('./tmp')
 if not os.path.isfile(filecsv):
-    urllib.request.urlretrieve(base + '/data/?id=dataset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=csv',filecsv)
+    urlretrieve(base + '/data/?id=dataset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=csv',filecsv)
 if not os.path.isfile(filefcsv):
-    urllib.request.urlretrieve(base + '/data/?id=dataset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fcsv',filefcsv)
+    urlretrieve(base + '/data/?id=dataset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fcsv',filefcsv)
 if not os.path.isfile(filebin):
-    urllib.request.urlretrieve(base + '/data/?id=datset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=binary',filebin)
+    urlretrieve(base + '/data/?id=dataset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=binary',filebin)
 if not os.path.isfile(filefbin):
-    urllib.request.urlretrieve(base + '/data/?id=datset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fbinary',filefbin)
+    urlretrieve(base + '/data/?id=dataset1&parameters=' + file + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fbinary',filefbin)
 if not os.path.isfile(filefbin2):
-    urllib.request.urlretrieve(base + '/data/?id=dataset1&parameters=' + file + 'int' + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fbinary',filefbin2)
+    urlretrieve(base + '/data/?id=dataset1&parameters=' + file + 'int' + '&time.min=1970-01-01&time.max=1970-01-02T00:00:00&format=fbinary',filefbin2)
 
 plt.figure(0);plt.clf()
 
-###############################################################################
-# Read Fast CSV
-# See also https://softwarerecs.stackexchange.com/questions/7463/fastest-python-library-to-read-a-csv-file
-tic = time.time()
-dtype = [('Time','<d',1),('scalar','<d',1)]
-datafcsv1 = pandas.read_csv(filefcsv,dtype=dtype,names=['Time','scalar'],sep=',')
-zero = datetime.strptime('1970-01-01', "%Y-%m-%d").toordinal()
-Time = zero + datafcsv1['Time']/86400.
-tfcsv = [time.time()-tic];
-print('fcsv (pandas.read_csv)                 %.4fs # Fast CSV' % tfcsv[0])
-#Time = mdates.num2date(zero + datafcsv1['Time']/86400., tz=None)
+if False:
+    ###############################################################################
+    # Read Fast CSV
+    # See also https://softwarerecs.stackexchange.com/questions/7463/fastest-python-library-to-read-a-csv-file
+    tic = time.time()
+    dtype = [('Time','<d',1),('scalar','<d',1)]
+    datafcsv1 = pandas.read_csv(filefcsv,dtype=dtype,names=['Time','scalar'],sep=',')
+    zero = datetime.strptime('1970-01-01', "%Y-%m-%d").toordinal()
+    Time = zero + datafcsv1['Time']/86400.
+    tfcsv = [time.time()-tic];
+    print('fcsv (pandas.read_csv)                 %.4fs # Fast CSV' % tfcsv[0])
+    #Time = mdates.num2date(zero + datafcsv1['Time']/86400., tz=None)
+    
+    #plt.figure(0)
+    #plt.plot(Time, datafcsv1['scalar'], '-')
+    #datetick()
+    #plt.show()
+    ###############################################################################
+    
+    ###############################################################################
+    # Read Fast CSV
+    tic = time.time()
+    datafcsv2 = np.loadtxt(filefcsv, delimiter=',')
+    toc = time.time()
+    zero = datetime.strptime('1970-01-01', "%Y-%m-%d").toordinal()
+    Time = zero + datafcsv2[:,0]/86400.
+    tfcsv = [time.time()-tic] + tfcsv
+    print('fcsv (np.loadtxt)                      %.4fs # Fast CSV' % tfcsv[0])
+    
+    #plt.figure(0)
+    #plt.plot(Time, datafcsv2[:,1], '-')
+    #datetick()
+    #plt.show()
+    ###############################################################################
 
-plt.figure(0)
-plt.plot(Time, datafcsv1['scalar'], '-')
-datetick()
-plt.show()
 ###############################################################################
-
-###############################################################################
-# Read Fast CSV
-tic = time.time()
-datafcsv2 = np.loadtxt(filefcsv, delimiter=',')
-toc = time.time()
-zero = datetime.strptime('1970-01-01', "%Y-%m-%d").toordinal()
-Time = zero + datafcsv2[:,0]/86400.
-tfcsv = [time.time()-tic] + tfcsv
-print('fcsv (np.loadtxt)                      %.4fs # Fast CSV' % tfcsv[0])
-
-plt.figure(0)
-plt.plot(Time, datafcsv2[:,1], '-')
-datetick()
-plt.show()
-###############################################################################
-
-###############################################################################
-# Read CSV
+#%% Read CSV
 tic= time.time()
 Time = np.zeros(86400,dtype='d')
 data = np.zeros(86400,dtype='d')
@@ -90,19 +109,18 @@ tcsv = [time.time()-tic]
 print('csv (line by line + faden/datenum)     %.4fs # HAPI CSV' % tcsv[0])
 f.close()
 
-plt.figure(0)
-plt.plot(Time, data, '-')
-datetick()
-plt.show()
+#plt.figure(0)
+#plt.plot(Time, data, '-')
+#datetick()
+#plt.show()
 ###############################################################################
 
 ###############################################################################
-# Read HAPI CSV
+#%% Read HAPI CSV
 tic = time.time()
 dt = [('Time','|S24',1),('scalar','<d',1)]
 df = pandas.read_csv(filecsv,dtype=dt,names=['Time','scalar'],sep=',')
-v = df['Time'].values
-data = df['scalar'].values
+
 i = 0
 for line in v:
      if (line[0:10] != DS):
@@ -112,10 +130,10 @@ for line in v:
      i = i+1
 tcsv = tcsv + [time.time()-tic]
 print('csv (pandas.read_csv + faden/datenum)  %.4fs # HAPI CSV' % tcsv[1])
-plt.figure(0)
-plt.plot(Time,data,color='red')
-datetick()
-plt.show()
+#plt.figure(0)
+#plt.plot(Time,data,color='red')
+#datetick()
+#plt.show()
 ###############################################################################
 
 ###############################################################################
@@ -130,10 +148,10 @@ data  = df['scalar'].values.view()
 tcsv = tcsv + [time.time()-tic];
 print('csv (pandas.read_csv)                  %.4fs # HAPI CSV' % tcsv[2])
 
-plt.figure(0)
-plt.plot(Time, data, '-')
-datetick()
-plt.show()
+#plt.figure(0)
+#plt.plot(Time, data, '-')
+#datetick()
+#plt.show()
 ###############################################################################
 
 ###############################################################################
@@ -154,7 +172,6 @@ print('csv (genfromtext + faden/datenum)      %.4fs # HAPI CSV' % tcsv[3])
 
 ###############################################################################
 
-stop
 if False: # Far too slow.
     ###############################################################################
     # Read and plot HAPI CSV
@@ -188,34 +205,35 @@ if False: # Far too slow.
     tcsv = toc-tic;
     print('csv total:         %.4fs\t# HAPI CSV' % tcsv)
     
-    plt.figure(0)
-    plt.plot(24*(datacsv[:,0]-datacsv[0,0]),datacsv[:,1],color='red')
-    plt.draw()
-    plt.show(block=False)
-    plt.xlabel('Hours since ' + START)
+    #plt.figure(0)
+    #plt.plot(24*(datacsv[:,0]-datacsv[0,0]),datacsv[:,1],color='red')
+    #plt.draw()
+    #plt.show(block=False)
+    #plt.xlabel('Hours since ' + START)
     ###############################################################################
 
-###############################################################################
-# Using double only data in fast binary
-tic = time.time()
-f = open(filefbin, 'rb')
-t = f.read(21)
-n = int(t[0])
-dt = datetime.strptime(t[1:20], '%Y-%m-%dT%H:%M:%S')
-f.seek(21, os.SEEK_SET)
-datafbin = np.fromfile(f, dtype=np.dtype('<d'))
-f.close
-datafbin = np.reshape(datafbin, [len(datafbin)/(size+1), (size+1)])
-toc = time.time()
-tfbin = toc-tic;
-print('fbin (fromfile)    %.4fs\t# Fast binary (all doubles)' % tfbin)
-
-plt.figure(0)
-plt.plot(datafbin[:,0],datafbin[:,1],color='blue')
-plt.draw()
-plt.show(block=False)
-plt.xlabel('Seconds since ' + START)
-###############################################################################
+if False:
+    ###############################################################################
+    # Using double only data in fast binary
+    tic = time.time()
+    f = open(filefbin, 'rb')
+    t = f.read(21)
+    n = int(t[0])
+    dt = datetime.strptime(t[1:20], '%Y-%m-%dT%H:%M:%S')
+    f.seek(21, os.SEEK_SET)
+    datafbin = np.fromfile(f, dtype=np.dtype('<d'))
+    f.close
+    datafbin = np.reshape(datafbin, [len(datafbin)/(size+1), (size+1)])
+    toc = time.time()
+    tfbin = toc-tic;
+    print('fbin (fromfile)    %.4fs\t# Fast binary (all doubles)' % tfbin)
+    
+    #plt.figure(0)
+    #plt.plot(datafbin[:,0],datafbin[:,1],color='blue')
+    #plt.draw()
+    #plt.show(block=False)
+    #plt.xlabel('Seconds since ' + START)
+    ###############################################################################
 
 if False: # Faster than above, but use above as worst-case
     ###############################################################################
@@ -234,11 +252,11 @@ if False: # Faster than above, but use above as worst-case
     tfbin2 = toc-tic;
     print('fbin (fromfile)   %.4fs\t# Fast binary (time dbl, param int)' % tfbin2)
     
-    plt.figure(0)
-    plt.plot(datafbin2['time'],datafbin2['scalar']/1000.,color='yellow')
-    plt.draw()
-    plt.show(block=False)
-    plt.xlabel('Seconds since ' + START)
+    #plt.figure(0)
+    #plt.plot(datafbin2['time'],datafbin2['scalar']/1000.,color='yellow')
+    #plt.draw()
+    #plt.show(block=False)
+    #plt.xlabel('Seconds since ' + START)
     ###############################################################################
 
 ###############################################################################
@@ -254,11 +272,11 @@ toc = time.time()
 tbin = toc-tic;
 print('bin (fromfile)     %.4fs\t# HAPI binary' % tbin)
 
-plt.figure(0)
-plt.plot(Time/1e9,df['scalar'],color='black')
-plt.draw()
-plt.show(block=False)
-plt.xlabel('Seconds since ' + START)
+#plt.figure(0)
+#plt.plot(Time/1e9,df['scalar'],color='black')
+#plt.draw()
+#plt.show(block=False)
+#plt.xlabel('Seconds since ' + START)
 
 ###############################################################################
 
