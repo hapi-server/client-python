@@ -21,8 +21,8 @@ hapiplot(data,meta,logging=True)
 
 #############################################################################
 #%% Test data 
-server     = 'http://mag.gmu.edu/TestData/hapi';
-server     = 'http://localhost:8999/TestData/hapi'
+server     = 'http://hapi-server.org/servers/TestData/hapi';
+#server     = 'http://localhost:8999/TestData/hapi'
 dataset    = 'dataset1'
 start      = '1970-01-01'
 stop       = '1970-01-01T00:00:10'
