@@ -56,6 +56,7 @@ import pandas
 from datetime import datetime
 import warnings
 import sys
+import time
 
 # Start compatability code
 if sys.version_info[0] > 2:
@@ -105,6 +106,7 @@ def hapi(*args,**kwargs):
     DOPTS.update({'script_url': 'https://raw.githubusercontent.com/hapi-server/client-python/master/hapi.py'})
     # For testing, change to a different format to force it to be used. 
     # Will use CSV if binary not available
+    DOPTS.update({'method': 'pandas'})
     DOPTS.update({'format': 'binary'})
 
     # Override defaults
@@ -245,7 +247,7 @@ def hapi(*args,**kwargs):
         pnames,psizes,dt = [],[],[]
         cols = np.zeros([len(meta["parameters"]),2],dtype=np.int32)
         ss = 0 # sum of sizes
-        cast_string = False
+        missing_length = False
 
         for i in range(0,len(meta["parameters"])):        
             ptype = str(meta["parameters"][i]["type"])
@@ -255,12 +257,17 @@ def hapi(*args,**kwargs):
             else:
                 psizes.append(1)
 
+            if False:
+                # Interpret size = [1] as meaning same as if size not given
+                if type(psizes[i]) is list and len(psizes[i]) == 1 and psizes[i][0] == 1:
+                    psizes[i] = 1
+                # Interpret size = N (N > 1) as meaning size = [N]
+                if type(psizes[i]) is int and psizes[i] > 1:
+                    psizes[i] = [psizes[i]]
+
             # Interpret size = [1] as meaning same as if size not given
-            if type(psizes[i]) is list and len(psizes[i]) == 1 and psizes[i][0] == 1:
-                psizes[i] = 1
-            # Interpret size = N (N > 1) as meaning size = [N]
-            if type(psizes[i]) is int and psizes[i] > 1:
-                psizes[i] = [psizes[i]]
+            if type(psizes[i]) is list and len(psizes[i]) == 1:
+                psizes[i] = psizes[i][0]
                 
             cols[i][0] = ss
             cols[i][1] = ss + np.prod(psizes[i]) - 1
@@ -269,15 +276,26 @@ def hapi(*args,**kwargs):
             if ptype == 'double': dtype = (pnames[i], '<d', psizes[i])
             if ptype == 'integer': dtype = (pnames[i], np.int32, psizes[i])
             
-            # length attribute only required if binary or time variable, 
-            # but use length if available (by using hasattr()). 
-            # To simulate all string parameters with no length attribute, use
-            #if DOPTS['format'] == 'binary':
-            if DOPTS['format'] == 'binary' or hasattr(meta["parameters"][i],'length'):
-                if ptype == 'string': dtype = (pnames[i],  'S' + str(meta["parameters"][i]["length"]), psizes[i])
-                if ptype == 'isotime': dtype = (pnames[i],  'S' + str(meta["parameters"][i]["length"]), psizes[i])            
+            # length attribute only required for all parameters if 
+            # format=binary. 
+            if DOPTS['format'] == 'binary':
+                if ptype == 'string': dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
+                if ptype == 'isotime': dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])            
             else:
-                cast_string = True # Convert to string later
+                if ptype == 'string' or ptype == 'isotime':
+                    if 'length' in meta["parameters"][i]:
+                        if ptype == 'string': dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
+                        if ptype == 'isotime': dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])            
+                    else:
+                        # A string or isotime parameter did not have a length.
+                        # Will need to use slower CSV read method.
+                        missing_length = True
+                        if ptype == 'string': dtype = (pnames[i],  object, psizes[i])            
+                        if ptype == 'isotime': dtype = (pnames[i],  object, psizes[i])
+
+            # For testing reader. Force use of slow reader.
+            if DOPTS['method'] == 'numpynolength' or DOPTS['method'] == 'pandasnolength':
+                missing_length = True
                 if ptype == 'string': dtype = (pnames[i],  object, psizes[i])            
                 if ptype == 'isotime': dtype = (pnames[i],  object, psizes[i])
 
@@ -293,9 +311,11 @@ def hapi(*args,**kwargs):
             urlretrieve(urlbin, fnamebin)
             if DOPTS['logging']: printf('Done.\n')
             if DOPTS['logging']: printf('Reading %s ... ', fnamebin)
+            tic = time.time()
             data = np.fromfile(fnamebin, dtype=dt)
+            toc = time.time()-tic
             if DOPTS['logging']: printf('Done.\n')
-
+            print('binary           %.4fs' % toc)
         else:
             # HAPI CSV
             # TODO: Don't write file if cache_npbin == False
@@ -304,28 +324,83 @@ def hapi(*args,**kwargs):
             if DOPTS['logging']: printf('Done.\n')
             if DOPTS['logging']: printf('Reading %s ... ', fnamecsv)
 
-            # Read file into Pandas DataFrame
-            df = pandas.read_csv(fnamecsv,sep=',',header=None)
-
-            # Allocate output N-D array (It is not possible to pass dtype=dt
-            # as computed to read_csv, so need to create new ND array.)
-            #print(dt)
             #import pdb; pdb.set_trace()
-            data = np.ndarray(shape=(len(df)),dtype=dt)
-
-            # Insert data from dataframe into N-D array
-            for i in range(0,len(pnames)):
-                shape = np.append(len(data),psizes[i])
-                # In numpy 1.8.2 and Python 2.7, this throws an error for no apparent reason.
-                # Works as expected in numpy 1.10.4
-                data[pnames[i]] = np.squeeze( np.reshape( df.values[:,np.arange(cols[i][0],cols[i][1]+1)], shape ) )
             
-            # If any of the parameters are strings and do not have an associated 
-            # length in the metadata, they must be read with a dtype='O' (object). 
-            # These parameters must be converted to have a dtype='SN', where
-            # N is the maximum string length. N is determined automatically
-            # when using astype('<S') (astype uses largest N needed).
-            if cast_string:
+            if missing_length == False:
+                tic = time.time()                
+                if DOPTS['method'] == 'numpy':
+                    data = np.genfromtxt(fnamecsv,dtype=dt, delimiter=',')
+                    toc = time.time()-tic
+                    print('numpy            %.4fs' % toc)
+                if DOPTS['method'] == 'pandas':
+                    # Read file into Pandas DataFrame
+                    df = pandas.read_csv(fnamecsv,sep=',',header=None)
+        
+                    # Allocate output N-D array (It is not possible to pass dtype=dt
+                    # as computed to read_csv, so need to create new ND array.)
+                    #print(dt)
+                    #import pdb; pdb.set_trace()
+                    data = np.ndarray(shape=(len(df)),dtype=dt)
+        
+                    # Insert data from dataframe into N-D array
+                    for i in range(0,len(pnames)):
+                        shape = np.append(len(data),psizes[i])
+                        # In numpy 1.8.2 and Python 2.7, this throws an error for no apparent reason.
+                        # Works as expected in numpy 1.10.4
+                        data[pnames[i]] = np.squeeze( np.reshape( df.values[:,np.arange(cols[i][0],cols[i][1]+1)], shape ) )
+
+                    toc = time.time()-tic                        
+                    print('pandas           %.4fs' % toc)
+            else:                
+                if DOPTS['method'] == 'numpynolength': # Read using numpy.genfromtxt
+                    tic = time.time()
+                    # With dtype='None', the data type is determined automatically
+                    table = np.genfromtxt(fnamecsv,dtype=None, delimiter=',', encoding='utf-8')
+                    # table is a 1-D array. Each element is a row in the file.
+                    # The elements are tuples with length equal to the number of
+                    # columns.
+                    
+                    # Contents of table will be placed into ndarray data.
+                    data  = np.ndarray(shape=(len(table)),dtype=dt)
+    
+                    # Extract each column (don't know how to do this with slicing
+                    # notation, e.g., data['varname'] = table[:][1:3]. Instead,
+                    # loop over each parameter (pn) and aggregage columns.
+                    # Then insert aggregated columns into data.
+                    for pn in range(0,len(cols)):
+                        shape = np.append(len(data),psizes[pn])
+                        for c in range(cols[pn][0],cols[pn][1]+1):
+                            if c == cols[pn][0]: # New parameter
+                                tmp = table[ table.dtype.names[c] ]
+                            else: # Aggregate
+                                tmp = np.vstack((tmp,table[ table.dtype.names[c] ]))
+                        tmp = np.squeeze( np.reshape( np.transpose(tmp), shape ) )
+                        data[pnames[pn]] = tmp
+                                
+                if DOPTS['method'] == 'pandasnolength': # This works but requires pandas
+                    tic = time.time()
+                    #import pdb; pdb.set_trace()
+                    # Read file into Pandas DataFrame
+                    df = pandas.read_csv(fnamecsv,sep=',',header=None)
+        
+                    # Allocate output N-D array (It is not possible to pass dtype=dt
+                    # as computed to pandas.read_csv, so need to create new ND array.)
+                    #print(dt)
+                    #import pdb; pdb.set_trace()
+                    data = np.ndarray(shape=(len(df)),dtype=dt)
+        
+                    # Insert data from dataframe into N-D array
+                    for i in range(0,len(pnames)):
+                        shape = np.append(len(data),psizes[i])
+                        # In numpy 1.8.2 and Python 2.7, this throws an error for no apparent reason.
+                        # Works as expected in numpy 1.10.4
+                        data[pnames[i]] = np.squeeze( np.reshape( df.values[:,np.arange(cols[i][0],cols[i][1]+1)], shape ) )
+                                
+                # If any of the parameters are strings and do not have an associated 
+                # length in the metadata, they will have dtype='O' (object). 
+                # These parameters must be converted to have a dtype='SN', where
+                # N is the maximum string length. N is determined automatically
+                # when using astype('<S') (astype uses largest N needed).
                 dt2 = []
                 for i in range(0,len(pnames)):
                     if data[pnames[i]].dtype == 'O':
@@ -344,14 +419,20 @@ def hapi(*args,**kwargs):
                         data2[pnames[i]] = data[pnames[i]]
                         # Save memory by not copying (does this help?)
                         #data2[pnames[i]] = np.array(data[pnames[i]],copy=False)
+                        
+                    #import pdb; pdb.set_trace()
                     
-                #import pdb; pdb.set_trace()
+                toc = time.time()-tic
+                if DOPTS['method'] == 'numpynolength':
+                    print('numpy no length  %.4fs' % toc)
+                if DOPTS['method'] == 'pandasnolength':
+                    print('pandas no length %.4fs' % toc)
             
             if DOPTS['logging']: printf('Done.\n')
 
         if DOPTS["cache_npbin"]:
             if DOPTS['logging']: printf('Writing %s ...', fnamenpy)
-            if cast_string:
+            if missing_length == True:
                 np.save(fnamenpy,data2)
             else:
                 np.save(fnamenpy,data)
@@ -365,7 +446,7 @@ def hapi(*args,**kwargs):
             f.close()
             if DOPTS['logging']: printf('Done.\n')
 
-        if cast_string:
+        if missing_length:
             return data2, meta
         else:
             return data, meta
