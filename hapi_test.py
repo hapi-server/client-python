@@ -41,6 +41,7 @@ Number of time values = 86400
 Data types: [('Time', 'S24'), ('scalar', '<f8')]
 '''
 
+#%%
 def test(parameters,opts):
 
     opts['format'] = 'csv'
@@ -80,12 +81,11 @@ def test(parameters,opts):
         print('Outputs differ.')
     
     print('Number of time values = %s' % len(data))
-    print('Data types: {0}').format(data.dtype)
-#############################################################################
+    print('Data types:')
+    print(data.dtype)
 
+#%% Metadata request examples
 if False:
-    #############################################################################
-    #%% Metadata request examples
     
     # List servers to console
     hapi(logging=True)
@@ -110,23 +110,24 @@ if False:
     
     print("Parameter " +  metap["parameters"][1]["name"] + " in datataset " + metad['catalog'][0]['id'] + " from server " + server)
     print(json.dumps(metap1, sort_keys=True, indent=4))
-    #############################################################################
 
+#%% Read one parameter
 if True:
-    #%% Read one parameter
     test('scalar',opts)
 
+#%% Read all parameters
 if False:
-    #%% Read all parameters
     test('',opts)
     
-    #%% Read pairs of parameters
+#%% Read pairs of parameters
+if False:
     ds = hapi(server,dataset)
     for i in range(0,len(ds['parameters'])-1):
         parameters = ds['parameters'][i]['name'] + ',' + ds['parameters'][i+1]['name']
         test(parameters,opts)
     
-    #%% Read each parameter individually
+#%% Read each parameter individually
+if False:
     ds = hapi(server,dataset)
     for p in ds['parameters']:
         test(p['name'],opts)
