@@ -32,11 +32,11 @@ HAPI - Interface to Heliophysics Data Environment API
 
    Options are set by passing a keywords of
 
-       logging (default False) - Log to console
-       cache_hapi (default True) - Save downloaded /info responses in ./hapi-data directory
-       cache_npbin (default True) - Save downloaded /data responses in ./hapi-data directory
-       use_cache (default True) - Use cache files in ./hapi-data directory if found
-       serverlist (default https://raw.githubusercontent.com/hapi-server/servers/master/all.txt)
+       logging (False) - Log to console
+       cache (True) - Save responses and processed responses in cache_dir
+       cache_dir (./hapi-data)
+       use_cache (True) - Use files in cache_dir if found
+       serverlist (https://raw.githubusercontent.com/hapi-server/servers/master/all.txt)
 '''
 # TODO: Use mark-up for docs: https://docs.python.org/devguide/documenting.html 
 
@@ -59,9 +59,10 @@ import warnings
 import sys
 import time
 
-# https://stackoverflow.com/questions/27674602/hide-traceback-unless-a-debug-flag-is-set
 def error(msg):
+    # TODO: Suppress traceback. The following does not work reliably in IPython
     #sys.tracebacklimit=0 # Suppress traceback
+    print('\n')
     raise Exception(msg)
     
 # Start compatability code
@@ -93,8 +94,13 @@ def urlretrieve(url,fname):
             urllib.urlretrieve(url, fname)
     except:
         error('Could not open %s' % url)
-
 # End compatability code
+
+def jsonparse(res):
+    try:
+        return json.load(res)
+    except:
+        error('Could not parse JSON from %s' % res.geturl())
 
 def printf(format, *args): sys.stdout.write(format % args)
     
@@ -110,17 +116,14 @@ def hapi(*args,**kwargs):
 
     # Default options
     DOPTS = {}
-    DOPTS.update({'update_script': False})
     DOPTS.update({'logging': True})
-    DOPTS.update({'cache_npbin': True})
-    DOPTS.update({'cache_hapi': True})
+    DOPTS.update({'cache': True})
     DOPTS.update({'cache_dir': os.getcwd() + os.path.sep + 'hapi-data'})
     DOPTS.update({'use_cache': False})
     DOPTS.update({'server_list': 'https://raw.githubusercontent.com/hapi-server/servers/master/all.txt'})
-    DOPTS.update({'script_url': 'https://raw.githubusercontent.com/hapi-server/client-python/master/hapi.py'})
-    # For testing, change to a different format to force it to be used. 
-    # Will use CSV if binary not available
-    DOPTS.update({'format': 'binary'})
+    # For testing force transport format. (CSV used binary not available.)
+    DOPTS.update({'format': 'binary'}) # Change to 'csv' to always use CSV.
+    # For testing read methods. See hapi_test.py for usage.
     DOPTS.update({'method': 'pandas'})
 
     # Override defaults
@@ -130,16 +133,12 @@ def hapi(*args,**kwargs):
         else:
             printf('Warning: Keyword option "%s" is not valid.', key)
         
-    if nin == 0:
+    if nin == 0: # hapi()
         if DOPTS['logging']: printf('Reading %s ... ', DOPTS['server_list'])
-        if sys.version_info[0] > 2:
-            data = urllib.request.urlopen(DOPTS['server_list']).read().decode('utf8').split('\n')
-        else:
-            data = urllib2.urlopen(DOPTS['server_list']).read().split('\n')
-            
+        # Last .encode('utf8') needed to make Python 2 and 3 types match
+        data = urlopen(DOPTS['server_list']).read().decode('utf8').split('\n')
         if DOPTS['logging']: printf('Done.\n')
-        # Remove empty items (if blank lines)
-        data = [ x for x in data if x ]
+        data = [ x for x in data if x ] # Remove empty items (if blank lines)
         # Display server URLs to console.
         if DOPTS['logging']:
             printf('List of HAPI servers in %s:\n', DOPTS['server_list'])
@@ -147,50 +146,51 @@ def hapi(*args,**kwargs):
                 printf("   %s\n", url)
         return data        
 
-    if nin == 1:
-        # Could use cache result here.  Probably not needed as catalog
-        # metadata requests offline are unlikely to be performed.
+    if nin == 1: # hapi(SERVER)
+        # TODO: Cache
         url = SERVER + '/catalog'
         if DOPTS['logging']: printf('Downloading %s ... ', url) 
         res = urlopen(url)
-        meta = json.load(res)
+        meta = jsonparse(res)
         if DOPTS['logging']: printf('Done.\n')
         data = meta
         return meta
 
-    if nin == 2:
-        # Could use cached result here.
+    if nin == 2: # hapi(SERVER,DATASET)
+        # TODO: Cache
         url = SERVER + '/info?id=' + DATASET
         if DOPTS['logging']: printf('Downloading %s ... ', url)
         res = urlopen(url)
-        meta = json.load(res)
+        meta = jsonparse(res)
         if DOPTS['logging']: printf('Done.\n')
         data = meta
         return meta
 
-    if nin == 3 or nin == 5:
+    if nin == 3 or nin == 5: 
+        # hapi(SERVER,DATASET,PARAMETERS) or 
+        # hapi(SERVER,DATASET,PARAMETERS,START,STOP)
 
+        # urld = url directory (cache directory root path)
         urld = re.sub(r"https*://","",SERVER)
         urld = re.sub(r'/','_',urld)
         urld = DOPTS["cache_dir"] + os.path.sep + urld
 
-        if (DOPTS["cache_npbin"] or DOPTS["cache_hapi"] or DOPTS["use_cache"]):
-            if nin == 5:
-                # Data requested
-                fname     = '%s_%s_%s_%s' % (DATASET,re.sub(',','-',PARAMETERS),re.sub(r'-|:|\.|Z','',START),re.sub(r'-|:|\.|Z','',STOP))
-                fnamecsv  = urld + os.path.sep + fname + '.csv'
-                fnamebin  = urld + os.path.sep + fname + '.bin'
-                urlcsv    = SERVER + '/data?id=' + DATASET + '&parameters=' + PARAMETERS + '&time.min=' + START + '&time.max=' + STOP
-                urlbin    = urlcsv + '&format=binary'
-                fnamenpy  = urld + os.path.sep + fname + '.npy'                
+        urljson   = SERVER + '/info?id=' + DATASET + '&parameters=' + PARAMETERS
+        # Metadata files do not need START/STOP
+        fname     = '%s_%s' % (DATASET,re.sub(',','',PARAMETERS))
+        fnamejson = urld + os.path.sep + fname + '.json'
+        fnamepkl  = urld + os.path.sep + fname + '.pkl'                
 
-            urljson = SERVER + '/info?id=' + DATASET + '&parameters=' + PARAMETERS
-            fname     = '%s_%s' % (DATASET,re.sub(',','',PARAMETERS))
-            fnamejson = urld + os.path.sep + fname + '.json'
-            fnamepkl  = urld + os.path.sep + fname + '.pkl'                
+        if nin == 5: # Data requested
+            fname     = '%s_%s_%s_%s' % (DATASET,re.sub(',','-',PARAMETERS),re.sub(r'-|:|\.|Z','',START),re.sub(r'-|:|\.|Z','',STOP))
+            fnamecsv  = urld + os.path.sep + fname + '.csv'
+            fnamebin  = urld + os.path.sep + fname + '.bin'
+            urlcsv    = SERVER + '/data?id=' + DATASET + '&parameters=' + PARAMETERS + '&time.min=' + START + '&time.max=' + STOP
+            urlbin    = urlcsv + '&format=binary'
+            fnamenpy  = urld + os.path.sep + fname + '.npy'                
 
+        metaloaded = False
         if DOPTS["use_cache"]:
-            metaloaded = False
             if os.path.isfile(fnamepkl):
                 import pickle
                 if DOPTS['logging']: printf('Reading %s ... ', fnamepkl)
@@ -208,16 +208,18 @@ def hapi(*args,**kwargs):
                 if DOPTS['logging']: printf('Done.\n')
                 return data, meta
 
-        if (DOPTS["cache_npbin"] or DOPTS["cache_hapi"]):    
+        if (DOPTS["cache"]):
+            # Create cache directory
             if not os.path.exists(DOPTS["cache_dir"]):
                 os.makedirs(DOPTS["cache_dir"])
             if not os.path.exists(urld):
                 os.makedirs(urld)
 
-        if DOPTS['logging']: printf('Downloading %s ... ', urljson)
-        res = urlopen(urljson)
-        meta = json.load(res)
-        if DOPTS['logging']: printf('Done.\n')
+        if metaloaded == False:
+            if DOPTS['logging']: printf('Downloading %s ... ', urljson)
+            res = urlopen(urljson)
+            meta = jsonparse(res)
+            if DOPTS['logging']: printf('Done.\n')
 
         meta.update({"x_server": SERVER})
         meta.update({"x_dataset": DATASET})
@@ -235,10 +237,9 @@ def hapi(*args,**kwargs):
             else:
                 meta.update({"x_dataFile": fnamecsv})
 
-        if DOPTS["cache_hapi"]:
-            fnamej = re.sub('.csv','.json',fnamejson)
+        if DOPTS["cache"]:
             if DOPTS['logging']: printf('Writing %s ... ', fnamejson)
-            f = open(fnamej, 'w')
+            f = open(fnamejson, 'w')
             json.dump(meta,f,indent=4)
             f.close
             if DOPTS["logging"]: printf('Done.\n')
@@ -250,18 +251,23 @@ def hapi(*args,**kwargs):
         if not DOPTS['format'] in cformats:
             raise ValueError('This client does not handle transport format "%s".  Available options: %s' % (DOPTS['format'],', '.join(cformats)))
 
+        # See if server supports binary
         if DOPTS['format'] != 'csv':
             res = urlopen(SERVER + '/capabilities')
-            caps = json.load(res)
+            caps = jsonparse(res)
             sformats = caps["outputFormats"] # Server formats       
             if not DOPTS['format'] in sformats:
                 warnings.warn('Requested transport format "%s" not avaiable from %s. Will use "csv". Available options: %s' % (DOPTS['format'], SERVER, ', '.join(sformats)))
                 DOPTS['format'] = 'csv'
 
         pnames,psizes,dt = [],[],[]
+        # Each element of cols is an array with start/end column number of
+        # parameter.
         cols = np.zeros([len(meta["parameters"]),2],dtype=np.int32)
-        ss = 0 # sum of sizes
-        missing_length = False
+        ss = 0 # running sum of prod(size)
+
+        # String or ISOTime parameter with no length attribute
+        missing_length = False 
 
         for i in range(0,len(meta["parameters"])):        
             ptype = str(meta["parameters"][i]["type"])
@@ -271,31 +277,25 @@ def hapi(*args,**kwargs):
             else:
                 psizes.append(1)
 
-            if False:
-                # Interpret size = [1] as meaning same as if size not given
-                if type(psizes[i]) is list and len(psizes[i]) == 1 and psizes[i][0] == 1:
-                    psizes[i] = 1
-                # Interpret size = N (N > 1) as meaning size = [N]
-                if type(psizes[i]) is int and psizes[i] > 1:
-                    psizes[i] = [psizes[i]]
-
-            # Interpret size = [1] as meaning same as if size not given
+            # For size = [N] case, readers want
+            # dtype = ('name', type, N) not dtype = ('name', type, [N])
             if type(psizes[i]) is list and len(psizes[i]) == 1:
                 psizes[i] = psizes[i][0]
                 
-            cols[i][0] = ss
-            cols[i][1] = ss + np.prod(psizes[i]) - 1
+            cols[i][0] = ss # First column of parameter
+            cols[i][1] = ss + np.prod(psizes[i]) - 1 # Last column of parameter
             ss = cols[i][1]+1
 
             if ptype == 'double': dtype = (pnames[i], '<d', psizes[i])
             if ptype == 'integer': dtype = (pnames[i], np.int32, psizes[i])
             
-            # length attribute only required for all parameters if 
-            # format=binary. 
             if DOPTS['format'] == 'binary':
+                # length attribute required for all parameters if format=binary. 
                 if ptype == 'string': dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
                 if ptype == 'isotime': dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])            
             else:
+                # length attribute may not be given (but must be given for
+                # first parameter technically)
                 if ptype == 'string' or ptype == 'isotime':
                     if 'length' in meta["parameters"][i]:
                         # length is specified for parameter in metadata. Use it.
@@ -320,38 +320,43 @@ def hapi(*args,**kwargs):
         # Read the data.
         if DOPTS['format'] == 'binary':
             # HAPI Binary
-            # TODO: Don't write file if cache_npbin == False
-            # Use urlopen() or equivalent to read directly into memory.
-            if DOPTS['logging']: printf('Downloading %s ... ', urlbin)
-            if DOPTS["cache_npbin"]:
+            if DOPTS["cache"]:
+                if DOPTS['logging']: printf('Saving %s ... ', urlbin)
+                tic0 = time.time()
                 urlretrieve(urlbin, fnamebin)
+                toc0 = time.time()-tic0
                 if DOPTS['logging']: printf('Done.\n')
                 if DOPTS['logging']: printf('Reading %s ... ', fnamebin)
                 tic = time.time()
                 data = np.fromfile(fnamebin, dtype=dt)
             else:
                 from io import BytesIO
-                #import pdb; pdb.set_trace()
-                fnamebin = BytesIO(urlopen(urlbin).read())                
+                if DOPTS['logging']: printf('Getting %s ... ', urlbin)
+                tic0 = time.time()
+                fnamebin = BytesIO(urlopen(urlbin).read())
+                toc0 = time.time()-tic0
                 if DOPTS['logging']: printf('Done.\n')
-                if DOPTS['logging']: printf('xReading %s ... ', fnamebin)
+                if DOPTS['logging']: printf('Reading %s ... ', fnamebin)
                 tic = time.time()
                 data = np.frombuffer(fnamebin.read(), dtype=dt)
             if DOPTS['logging']: printf('Done.\n')
             toc = time.time()-tic
         else:
             # HAPI CSV
-            if DOPTS['logging']: printf('Downloading %s ... ', urlcsv)
-            if DOPTS["cache_npbin"]:
+            if DOPTS["cache"]:
+                if DOPTS['logging']: printf('Saving %s ... ', urlcsv)
+                tic0 = time.time()
                 urlretrieve(urlcsv, fnamecsv)
+                toc0 = time.time()-tic0
             else:
-                # Don't write file if cache_npbin == False
                 from io import StringIO
+                if DOPTS['logging']: printf('Getting %s ... ', urlcsv)
+                tic0 = time.time()
                 fnamecsv = StringIO(urlopen(urlcsv).read().decode())
+                toc0 = time.time()-tic0
             if DOPTS['logging']: printf('Done.\n')
             if DOPTS['logging']: printf('Reading %s ... ', fnamecsv)
-            #import pdb; pdb.set_trace()
-            
+
             if missing_length == False:
                 # All string and isotime parameters have a length in metadata
                 tic = time.time()                
@@ -473,9 +478,10 @@ def hapi(*args,**kwargs):
             
             if DOPTS['logging']: printf('Done.\n')
 
+        meta.update({"x_downloadTime": toc0})
         meta.update({"x_readTime": toc})
         
-        if DOPTS["cache_npbin"]:
+        if DOPTS["cache"]:
             if DOPTS['logging']: printf('Writing %s ...', fnamenpy)
             if missing_length == True:
                 np.save(fnamenpy,data2)
