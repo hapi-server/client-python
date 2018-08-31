@@ -33,7 +33,8 @@ HAPI - Interface to Heliophysics Data Environment API
    Options are set by passing a keywords of
 
        logging (default False) - Log to console
-       cache_hapi (default True) - Save downloaded files in ./hapi-data directory
+       cache_hapi (default True) - Save downloaded /info responses in ./hapi-data directory
+       cache_npbin (default True) - Save downloaded /data responses in ./hapi-data directory
        use_cache (default True) - Use cache files in ./hapi-data directory if found
        serverlist (default https://raw.githubusercontent.com/hapi-server/servers/master/all.txt)
 '''
@@ -58,6 +59,11 @@ import warnings
 import sys
 import time
 
+# https://stackoverflow.com/questions/27674602/hide-traceback-unless-a-debug-flag-is-set
+def error(msg):
+    #sys.tracebacklimit=0 # Suppress traceback
+    raise Exception(msg)
+    
 # Start compatability code
 if sys.version_info[0] > 2:
     # Tested with sys.version = 2.7.15 |Anaconda, Inc.| (default, May  1 2018, 18:37:05) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
@@ -69,17 +75,25 @@ else:
     import urllib2
 
 def urlopen(url):
-    if sys.version_info[0] > 2:
-        res = urllib.request.urlopen(url)
-    else:
-        res = urllib2.urlopen(url)
+    try:
+        if sys.version_info[0] > 2:
+            res = urllib.request.urlopen(url)
+        else:
+            res = urllib2.urlopen(url)
+    except:
+        error('Could not open %s' % url)
+        
     return res
 
 def urlretrieve(url,fname):
-    if sys.version_info[0] > 2:
-        urllib.request.urlretrieve(url, fname)
-    else:
-        urllib.urlretrieve(url, fname)
+    try:
+        if sys.version_info[0] > 2:
+            urllib.request.urlretrieve(url, fname)
+        else:
+            urllib.urlretrieve(url, fname)
+    except:
+        error('Could not open %s' % url)
+
 # End compatability code
 
 def printf(format, *args): sys.stdout.write(format % args)
@@ -106,8 +120,8 @@ def hapi(*args,**kwargs):
     DOPTS.update({'script_url': 'https://raw.githubusercontent.com/hapi-server/client-python/master/hapi.py'})
     # For testing, change to a different format to force it to be used. 
     # Will use CSV if binary not available
-    DOPTS.update({'method': 'pandas'})
     DOPTS.update({'format': 'binary'})
+    DOPTS.update({'method': 'pandas'})
 
     # Override defaults
     for key, value in kwargs.items():
@@ -295,10 +309,11 @@ def hapi(*args,**kwargs):
                         if ptype == 'isotime': dtype = (pnames[i],  object, psizes[i])
 
             # For testing reader. Force use of slow reader.
-            if DOPTS['method'] == 'numpynolength' or DOPTS['method'] == 'pandasnolength':
-                missing_length = True
-                if ptype == 'string': dtype = (pnames[i],  object, psizes[i])            
-                if ptype == 'isotime': dtype = (pnames[i],  object, psizes[i])
+            if DOPTS['format'] == 'csv':
+                if DOPTS['method'] == 'numpynolength' or DOPTS['method'] == 'pandasnolength':
+                    missing_length = True
+                    if ptype == 'string': dtype = (pnames[i],  object, psizes[i])            
+                    if ptype == 'isotime': dtype = (pnames[i],  object, psizes[i])
 
             dt.append(dtype)
 
@@ -308,20 +323,34 @@ def hapi(*args,**kwargs):
             # TODO: Don't write file if cache_npbin == False
             # Use urlopen() or equivalent to read directly into memory.
             if DOPTS['logging']: printf('Downloading %s ... ', urlbin)
-            urlretrieve(urlbin, fnamebin)
+            if DOPTS["cache_npbin"]:
+                urlretrieve(urlbin, fnamebin)
+                if DOPTS['logging']: printf('Done.\n')
+                if DOPTS['logging']: printf('Reading %s ... ', fnamebin)
+                tic = time.time()
+                data = np.fromfile(fnamebin, dtype=dt)
+            else:
+                from io import BytesIO
+                #import pdb; pdb.set_trace()
+                fnamebin = BytesIO(urlopen(urlbin).read())                
+                if DOPTS['logging']: printf('Done.\n')
+                if DOPTS['logging']: printf('xReading %s ... ', fnamebin)
+                tic = time.time()
+                data = np.frombuffer(fnamebin.read(), dtype=dt)
             if DOPTS['logging']: printf('Done.\n')
-            if DOPTS['logging']: printf('Reading %s ... ', fnamebin)
-            tic = time.time()
-            data = np.fromfile(fnamebin, dtype=dt)
             toc = time.time()-tic
-            if DOPTS['logging']: printf('Done.\n')
         else:
             # HAPI CSV
-            # TODO: Don't write file if cache_npbin == False
             if DOPTS['logging']: printf('Downloading %s ... ', urlcsv)
-            urlretrieve(urlcsv, fnamecsv)
+            if DOPTS["cache_npbin"]:
+                urlretrieve(urlcsv, fnamecsv)
+            else:
+                # Don't write file if cache_npbin == False
+                from io import StringIO
+                fnamecsv = StringIO(urlopen(urlcsv).read().decode())
             if DOPTS['logging']: printf('Done.\n')
             if DOPTS['logging']: printf('Reading %s ... ', fnamecsv)
+            #import pdb; pdb.set_trace()
             
             if missing_length == False:
                 # All string and isotime parameters have a length in metadata
