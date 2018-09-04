@@ -34,6 +34,8 @@ def datetick(dir, **kwargs):
         datetick('x')
     '''
 
+    debug = False
+    
     axes = plt.gca()
     fig = plt.gcf()
     
@@ -52,8 +54,9 @@ def datetick(dir, **kwargs):
     line = axes.lines[0]
     datamin = date2num(line.get_xdata()[0])
     datamax = date2num(line.get_xdata()[-1])
-    print('Data min time: %f' % datamin)
-    print('Data max time: %f' % datamax)
+    if debug == True:
+        print('Data min time: %f' % datamin)
+        print('Data max time: %f' % datamax)
 
     xlim = axes.get_xlim()
 
@@ -67,7 +70,8 @@ def datetick(dir, **kwargs):
     
     deltaT = time[-1] - time[0]
     nHours = deltaT.days * 24.0 + deltaT.seconds/3600.0
-    print("Total seconds: %s" % deltaT.total_seconds())
+    if debug == True:
+        print("Total seconds: %s" % deltaT.total_seconds())
 
     if deltaT.total_seconds() < .1:
         # < 0.1 second
@@ -80,8 +84,9 @@ def datetick(dir, **kwargs):
         # plotd() calls
         # plot(t,y)
         # and then makes first label indicate %Y-%m-%dT%H:%M:%S
-        print(line.get_xdata())
-        print("Warning: Cannot create accurate time labels with this time resolution.")
+        if debug == True:
+            print(line.get_xdata())
+            print("Warning: Cannot create accurate time labels with this time resolution.")
         # This does not locate microseconds.
         from matplotlib.ticker import FuncFormatter
         formatter = FuncFormatter(millis)
@@ -293,10 +298,12 @@ def datetick(dir, **kwargs):
     # Force first time value to be labeled for axis locator
     xt = axes.get_xticks()
     xl = axes.get_xlim()
-    print("Default xlim[0]:    %s" % num2date(xl[0]))
-    print("Default xlim[1]:    %s" % num2date(xl[1]))
-    print("Default xticks[0]:  %s" % num2date(xt[0]))
-    print("Default xticks[-1]: %s" % num2date(xt[-1]))
+    if debug == True:
+        print("Default xlim[0]:    %s" % num2date(xl[0]))
+        print("Default xlim[1]:    %s" % num2date(xl[1]))
+        print("Default xticks[0]:  %s" % num2date(xt[0]))
+        print("Default xticks[-1]: %s" % num2date(xt[-1]))
+
     fig.canvas.draw()
     xt = np.insert(xt,0,xl[0])
     axes.set_xticks(xt)
