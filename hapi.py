@@ -36,7 +36,7 @@ HAPI - Interface to Heliophysics Data Environment API
        cache (True) - Save responses and processed responses in cache_dir
        cache_dir (./hapi-data)
        use_cache (True) - Use files in cache_dir if found
-       serverlist (https://raw.githubusercontent.com/hapi-server/servers/master/all.txt)
+       serverlist (https://github.com/hapi-server/servers/raw/master/all.txt)
 '''
 # TODO: Use mark-up for docs: https://docs.python.org/devguide/documenting.html 
 
@@ -83,7 +83,10 @@ def urlopen(url):
             res = urllib2.urlopen(url)
     except:
         error('Could not open %s' % url)
-        
+
+    if res.getcode() != 200:
+        error('Non-200 HTTP status code for %s' % url)
+    
     return res
 
 def urlretrieve(url,fname):
@@ -94,6 +97,8 @@ def urlretrieve(url,fname):
             urllib.urlretrieve(url, fname)
     except:
         error('Could not open %s' % url)
+#    print(res.getcode())
+    
 # End compatability code
 
 def jsonparse(res):
@@ -116,14 +121,14 @@ def hapi(*args,**kwargs):
 
     # Default options
     DOPTS = {}
-    DOPTS.update({'logging': True})
+    DOPTS.update({'logging': False})
     DOPTS.update({'cache': True})
     DOPTS.update({'cache_dir': os.getcwd() + os.path.sep + 'hapi-data'})
     DOPTS.update({'use_cache': False})
-    DOPTS.update({'server_list': 'https://raw.githubusercontent.com/hapi-server/servers/master/all.txt'})
+    DOPTS.update({'server_list': 'https://github.com/hapi-server/servers/raw/master/all.txt'})
     # For testing force transport format. (CSV used binary not available.)
     DOPTS.update({'format': 'binary'}) # Change to 'csv' to always use CSV.
-    # For testing read methods. See hapi_test.py for usage.
+    # For testing csv read methods. See hapi_test.py for usage.
     DOPTS.update({'method': 'pandas'})
 
     # Override defaults
