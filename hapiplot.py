@@ -1,17 +1,37 @@
-import matplotlib.pyplot as plt 
-import pandas
-import warnings
 import numpy as np
+import pandas
+import matplotlib.pyplot as plt 
+import warnings
 import re
 import sys
+import os
 
-sys.path.insert(0, './misc')
-from datetick import datetick
+###############################################################################
+#%% Python 2/3 Compatability
+def urlretrieve(url,fname):
+    import sys
+    if sys.version_info[0] > 2: import urllib.request
+    else: import urllib
+    try:
+        if sys.version_info[0] > 2: urllib.request.urlretrieve(url, fname)
+        else: urllib.urlretrieve(url, fname)
+    except: raise Exception('Could not open %s' % url)        
+###############################################################################
 
 def printf(format, *args): sys.stdout.write(format % args)
 
 def hapiplot(data,meta,**kwargs):
 
+    #%% Download and import datetick.py 
+    # TODO: Incorporate datetick.py into hapiplot.py
+    url = 'https://github.com/hapi-server/client-python/misc/datetick.py'
+    if os.path.isfile('datetick.py') == False and os.path.isfile('misc/datetick.py') == False:
+        urlretrieve(url,'datetick.py')
+    if os.path.isfile('misc/datetick.py') == True:
+        sys.path.insert(0, './misc')
+
+    from datetick import datetick
+    
     # Default options
     DOPTS = {}
     DOPTS.update({'logging': False})
