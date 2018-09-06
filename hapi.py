@@ -59,10 +59,13 @@ import warnings
 import sys
 import time
 
+sys.tracebacklimit = 1000 # Turn tracebacklimit back to default
+
 def error(msg):
-    # TODO: Suppress traceback. The following does not work reliably in IPython
-    #sys.tracebacklimit=0 # Suppress traceback
     print('\n')
+    sys.tracebacklimit = 0 # Suppress traceback
+    # TODO: The problem with this is that it changes the traceback
+    # limit globally.
     raise Exception(msg)
     
 # Start compatability code
@@ -75,30 +78,54 @@ else:
     import urllib
     import urllib2
 
+def urlerror(e,url):
+
+    def unknown():
+        body = e.read().decode('utf8')
+        if len(body) > 0:
+            error('\n"HTTP %d - %s" returned by %s. Response body:\n%s' % (e.code,e.reason,url,body))
+        else:
+            error('\n"HTTP %d - %s" returned by %s.' % (e.code,e.reason,url))
+        
+    try:
+        jres = json.load(e)
+    except:
+        unknown()
+            
+    if jres['status'] and jres['status']['message']:
+        error('\n%s\n  %s\n' % (url,jres['status']['message']))
+        if jres['status'] and jres['status']['message']:
+            error('\n%s\n  %s\n' % (url,jres['status']['message']))
+        else:
+            unknown()
+    else:
+        unknown()
+        
 def urlopen(url):
-    try:
-        if sys.version_info[0] > 2:
+    if sys.version_info[0] > 2:
+        try:
             res = urllib.request.urlopen(url)
-        else:
+        except urllib.error.URLError as e:
+            urlerror(e,url)
+    else:
+        try:
             res = urllib2.urlopen(url)
-    except:
-        error('Could not open %s' % url)
+        except urllib2.URLError as e:
+            urlerror(e,url)
 
-    if res.getcode() != 200:
-        error('Non-200 HTTP status code for %s' % url)
-    
     return res
-
+        
 def urlretrieve(url,fname):
-    try:
-        if sys.version_info[0] > 2:
+    if sys.version_info[0] > 2:
+        try:
             urllib.request.urlretrieve(url, fname)
-        else:
+        except urllib.error.URLError as e:
+            urlerror(e,url)
+    else:
+        try:
             urllib.urlretrieve(url, fname)
-    except:
-        error('Could not open %s' % url)
-#    print(res.getcode())
-    
+        except urllib2.URLError as e:
+            urlerror(e,url)
 # End compatability code
 
 def jsonparse(res):
@@ -295,6 +322,7 @@ def hapi(*args,**kwargs):
             if ptype == 'integer': dtype = (pnames[i], np.int32, psizes[i])
             
             if DOPTS['format'] == 'binary':
+                # TODO: If 'length' not available, warn and fall back to CSV.
                 # length attribute required for all parameters if format=binary. 
                 if ptype == 'string': dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
                 if ptype == 'isotime': dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])            
