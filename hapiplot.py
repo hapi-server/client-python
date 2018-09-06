@@ -88,6 +88,7 @@ def hapiplot(data,meta,**kwargs):
     #%% Download and import datetick.py 
     # TODO: Incorporate datetick.py into hapiplot.py
     url = 'https://github.com/hapi-server/client-python/raw/master/misc/datetick.py'
+    print(url)
     if os.path.isfile('datetick.py') == False and os.path.isfile('misc/datetick.py') == False:
         urlretrieve(url,'datetick.py')
     if os.path.isfile('misc/datetick.py') == True:
