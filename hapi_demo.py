@@ -76,11 +76,11 @@ def urlretrieve(url,fname):
 def getdeps():
     #%% Download hapi.py and hapiplot.py if not found
     import os
-    url = 'https://github.com/hapi-server/client-python/hapi_demo.py'        
+    url = 'https://github.com/hapi-server/client-python/raw/master/'        
     if os.path.isfile('hapi.py') == False:
-        urlretrieve(url,'hapi.py')
+        urlretrieve(url+'hapi.py','hapi.py')
     if os.path.isfile('hapiplot.py') == False:
-        urlretrieve(url,'hapiplot.py')
+        urlretrieve(url+'hapiplot.py','hapiplot.py')
 
 if __name__ == '__main__':
     getdeps()
