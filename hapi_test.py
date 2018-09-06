@@ -1,4 +1,5 @@
 from hapi import hapi
+from hapiplot import hapitime2datetime
 import numpy as np
 import json
 
@@ -132,4 +133,52 @@ if False:
     for p in ds['parameters']:
         test(p['name'],opts)
 
+
+
+if False:
+    hapi('http://hapi-server.org/servers/TestData/xhapi')
+    
+    server     = 'http://hapi-server.org/servers/TestData/hapi'
+    start      = '1970-01-01'
+    stop       = '1970-01-01T00:00:03'
+    
+    dataset    = 'dataset1x'
+    meta  = hapi(server, dataset)
+    
+    dataset    = 'dataset1'
+    parameters = 'scalarx'
+    meta  = hapi(server, dataset, parameters)
+    
+    data,meta  = hapi(server, dataset, parameters, start, stop)
+
+if False:
+    print(hapitime2datetime(['2000-01-02']))
+    print(hapitime2datetime(['2000-01-02Z']))
+    print(hapitime2datetime(['2000-002']))
+    print(hapitime2datetime(['2000-002Z']))
+    print('')
+    print(hapitime2datetime(['2000-01-02T03']))
+    print(hapitime2datetime(['2000-01-02T03Z']))
+    print(hapitime2datetime(['2000-002T03']))
+    print(hapitime2datetime(['2000-002T03Z']))
+    print('')
+    print(hapitime2datetime(['2000-01-02T03:04']))
+    print(hapitime2datetime(['2000-01-02T03:04Z']))
+    print(hapitime2datetime(['2000-002T03:04']))
+    print(hapitime2datetime(['2000-002T03:04Z']))
+    print('')
+    print(hapitime2datetime(['2000-01-02T03:04:05']))
+    print(hapitime2datetime(['2000-01-02T03:04:05Z']))
+    print(hapitime2datetime(['2000-002T03:04:05']))
+    print(hapitime2datetime(['2000-002T03:04:05Z']))
+    print('')
+    print(hapitime2datetime(['2000-01-02T03:04:05.']))
+    print(hapitime2datetime(['2000-01-02T03:04:05.Z']))
+    print(hapitime2datetime(['2000-002T03:04:05.']))
+    print(hapitime2datetime(['2000-002T03:04:05.Z']))
+    print('')
+    print(hapitime2datetime(['2000-01-02T03:04:05.6']))
+    print(hapitime2datetime(['2000-01-02T03:04:05.6Z']))
+    print(hapitime2datetime(['2000-002T03:04:05.6']))
+    print(hapitime2datetime(['2000-002T03:04:05.6Z']))
     
