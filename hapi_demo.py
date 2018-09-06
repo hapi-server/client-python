@@ -4,19 +4,38 @@
 
 def main():
     #%% Download hapi.py and hapiplot.py if not found
-    getdeps()
-    
-    #%% Imports
+
+    cdaweb()
+    sscweb()
+
+def sscweb():
+
     from hapi import hapi
     from hapiplot import hapiplot
     
-    #%% CDAWeb data
+    #%% SSCWeb data
+    server     = 'http://hapi-server.org/servers/SSCWeb/hapi'
+    dataset    = 'ace'
+    start      = '2001-01-01T05:00:00'
+    stop       = '2001-01-01T06:00:00'
+    parameters = 'X_GSE,Y_GSE,Z_GSE'
+    opts       = {'logging': True, 'use_cache': True}
+    data,meta = hapi(server, dataset, parameters, start, stop, **opts)
+    hapiplot(data,meta)
+    ###############################################################################
+
+def cdaweb():    
+
+    from hapi import hapi
+    from hapiplot import hapiplot
+
+    #%% CDAWeb data - Magnitude and BGSEc from dataset AC_H0_MFI
     server     = 'https://cdaweb.gsfc.nasa.gov/hapi'
     dataset    = 'AC_H0_MFI'
     start      = '2001-01-01T05:00:00'
     stop       = '2001-01-01T06:00:00'
     parameters = 'Magnitude,BGSEc'
-    opts       = {'logging': False, 'use_cache': False}
+    opts       = {'logging': True, 'use_cache': True}    
     data,meta = hapi(server, dataset, parameters, start, stop, **opts)
     hapiplot(data,meta)
     ###############################################################################
@@ -64,5 +83,7 @@ def getdeps():
         urlretrieve(url,'hapiplot.py')
 
 if __name__ == '__main__':
+    getdeps()
+    
     main()
     
