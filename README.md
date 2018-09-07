@@ -9,7 +9,7 @@ The following will download `hapi_demo.py`. When `hapi_demo.py` is executed, it 
 ### Python 3
 ```python
 # D/L and save hapi_demo.py
-import urllib
+import urllib.request
 url = 'https://github.com/hapi-server/client-python/raw/master/hapi_demo.py'
 urllib.request.urlretrieve(url,'hapi_demo.py')
 runfile('hapi_demo.py')
