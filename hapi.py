@@ -70,11 +70,10 @@ def error(msg):
     
 # Start compatability code
 if sys.version_info[0] > 2:
-    # Tested with sys.version = 2.7.15 |Anaconda, Inc.| (default, May  1 2018, 18:37:05) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
+    # Tested with sys.version = 3.6.5 |Anaconda, Inc.| (default, Apr 26 2018, 08:42:37) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
     import urllib.request, urllib.parse, urllib.error
 else:
     # Tested with sys.version = 2.7.15 |Anaconda, Inc.| (default, May  1 2018, 18:37:05) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
-    # Tested with sys.version = 3.6.5 |Anaconda, Inc.| (default, Apr 26 2018, 08:42:37) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
     import urllib
     import urllib2
 
