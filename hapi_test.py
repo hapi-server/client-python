@@ -3,48 +3,21 @@ from hapiplot import hapitime2datetime
 import numpy as np
 import json
 
-# Checks that all four read methods give same result.
-# Does not check that an individual read is correct. Do this manually.
+# Test various parts of hapi.py and hapiplot.py.
 
 server     = 'http://hapi-server.org/servers/TestData/hapi'
 #server     = 'http://localhost:8999/TestData/hapi'
 dataset    = 'dataset1'
 start      = '1970-01-01'
-stop       = '1970-01-01T00:00:03'
-#stop       = '1970-01-02T00:00:00'
-
-# Note that cache = False will prevent output from server from
-# being written to file before being read. Need to test all permutations
-# of cache/use_cache
-opts       = {'logging': False, 'cache': True, 'use_cache': True}
-
-'''
-Typical results:
-    
-cache = True # Save data to disk then read.
-Parameter(s) = scalar
-numpy no length   0.7053s
-pandas no length  0.1095s
-numpy             0.4706s
-pandas            0.0913s
-binary            0.0030s
-Number of time values = 86400
-Data types: [('Time', 'S24'), ('scalar', '<f8')]
-
-cache = False # Read data directly into memory.
-Parameter(s) = scalar
-numpy no length   0.7064s
-pandas no length  0.1195s
-numpy             0.4301s
-pandas            0.1011s
-binary            0.0004s
-Number of time values = 86400
-Data types: [('Time', 'S24'), ('scalar', '<f8')]
-'''
+stop       = '1970-01-01T00:00:03'  # Returns 3 time values
+#stop       = '1970-01-02T00:00:00' # Returns 86400 time values
 
 #%%
 def test(parameters,opts):
 
+    # Checks that all four read methods give same result.
+    # Does not check that an individual read is correct. Do this manually.
+    
     opts['format'] = 'csv'
     
     print('Parameter(s) = %s' % parameters)
@@ -85,6 +58,61 @@ def test(parameters,opts):
     print('Data types:')
     print(data.dtype)
 
+
+###############################################################################
+# Read tests
+
+opts = {'logging': False, 'cache': True, 'use_cache': True}
+# Note that cache = False will prevent output from server from
+# being written to file before being read. Need to test all permutations
+# of cache/use_cache
+
+#%% Read one parameter
+if True:
+    test('scalar',opts)
+
+'''
+Typical results for test('scalar',use_cache=False):
+    
+cache = True # Save data to disk then read.
+Parameter(s) = scalar
+numpy no length   0.7053s
+pandas no length  0.1095s
+numpy             0.4706s
+pandas            0.0913s
+binary            0.0030s
+Number of time values = 86400
+Data types: [('Time', 'S24'), ('scalar', '<f8')]
+
+cache = False # Read data directly into memory.
+Parameter(s) = scalar
+numpy no length   0.7064s
+pandas no length  0.1195s
+numpy             0.4301s
+pandas            0.1011s
+binary            0.0004s
+Number of time values = 86400
+Data types: [('Time', 'S24'), ('scalar', '<f8')]
+'''
+
+#%% Read all parameters
+if False:
+    test('',opts)
+    
+#%% Read pairs of parameters
+if False:
+    ds = hapi(server,dataset)
+    for i in range(0,len(ds['parameters'])-1):
+        parameters = ds['parameters'][i]['name'] + ',' + ds['parameters'][i+1]['name']
+        test(parameters,opts)
+    
+#%% Read each parameter individually
+if False:
+    ds = hapi(server,dataset)
+    for p in ds['parameters']:
+        test(p['name'],opts)
+###############################################################################
+
 #%% Metadata request examples
 if False:
     
@@ -112,39 +140,16 @@ if False:
     print("Parameter " +  metap["parameters"][1]["name"] + " in datataset " + metad['catalog'][0]['id'] + " from server " + server)
     print(json.dumps(metap1, sort_keys=True, indent=4))
 
-#%% Read one parameter
-if True:
-    test('scalar',opts)
-
-#%% Read all parameters
 if False:
-    test('',opts)
-    
-#%% Read pairs of parameters
-if False:
-    ds = hapi(server,dataset)
-    for i in range(0,len(ds['parameters'])-1):
-        parameters = ds['parameters'][i]['name'] + ',' + ds['parameters'][i+1]['name']
-        test(parameters,opts)
-    
-#%% Read each parameter individually
-if False:
-    ds = hapi(server,dataset)
-    for p in ds['parameters']:
-        test(p['name'],opts)
-
-
-
-if False:
+    # Bad server URL
     hapi('http://hapi-server.org/servers/TestData/xhapi')
-    
-    server     = 'http://hapi-server.org/servers/TestData/hapi'
-    start      = '1970-01-01'
-    stop       = '1970-01-01T00:00:03'
-    
-    dataset    = 'dataset1x'
+
+    # Bad dataset name
+    dataset    = 'dataset1x'    
+    stop       = '1970-01-01T00:00:03'   
     meta  = hapi(server, dataset)
     
+   # Bad parameter name
     dataset    = 'dataset1'
     parameters = 'scalarx'
     meta  = hapi(server, dataset, parameters)
@@ -152,6 +157,7 @@ if False:
     data,meta  = hapi(server, dataset, parameters, start, stop)
 
 if False:
+    # Test manual time parsing code used in hapiplot.py.
     print(hapitime2datetime(['2000-01-02']))
     print(hapitime2datetime(['2000-01-02Z']))
     print(hapitime2datetime(['2000-002']))
@@ -181,4 +187,3 @@ if False:
     print(hapitime2datetime(['2000-01-02T03:04:05.6Z']))
     print(hapitime2datetime(['2000-002T03:04:05.6']))
     print(hapitime2datetime(['2000-002T03:04:05.6Z']))
-    
