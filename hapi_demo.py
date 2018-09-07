@@ -3,10 +3,20 @@
 # new window. Enter %matplotlib inline to revert.
 
 def main():
-    #%% Download hapi.py and hapiplot.py if not found
+    
+    getdeps() # Get hapi.py and hapiplot.py if not found
 
     cdaweb()
     sscweb()
+
+def getdeps():
+    #%% Download hapi.py and hapiplot.py if not found
+    import os
+    url = 'https://github.com/hapi-server/client-python/raw/master/'        
+    if os.path.isfile('hapi.py') == False:
+        urlretrieve(url+'hapi.py','hapi.py')
+    if os.path.isfile('hapiplot.py') == False:
+        urlretrieve(url+'hapiplot.py','hapiplot.py')
 
 def sscweb():
 
@@ -73,17 +83,6 @@ def urlretrieve(url,fname):
         else: urllib.urlretrieve(url, fname)
     except: raise Exception('Could not open %s' % url)        
 
-def getdeps():
-    #%% Download hapi.py and hapiplot.py if not found
-    import os
-    url = 'https://github.com/hapi-server/client-python/raw/master/'        
-    if os.path.isfile('hapi.py') == False:
-        urlretrieve(url+'hapi.py','hapi.py')
-    if os.path.isfile('hapiplot.py') == False:
-        urlretrieve(url+'hapiplot.py','hapiplot.py')
-
-if __name__ == '__main__':
-    getdeps()
-    
+if __name__ == '__main__':    
     main()
     
