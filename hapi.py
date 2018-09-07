@@ -43,7 +43,8 @@ HAPI - Interface to Heliophysics Data Environment API
 """
 Author: R.S Weigel <rweigel@gmu.edu>
 License: This is free and unencumbered software released into the public domain.
-Repository: https://github.com/hapi-server/python-client.git
+Repository: https://github.com/hapi-server/client-python
+Version: 0.9
 """
 
 # Written to match style/capabilities/interface of hapi.m at
