@@ -1,74 +1,29 @@
-'''
-HAPI - Interface to Heliophysics Data Environment API
-
-   hapi.py is used to get metadata and data from a HAPI v1.1 compliant
-   data server (https://github.com/hapi-server/). 
-
-   See hapi_demo.py for usage examples.
-   
-   Tested with Python 2.7 and 3.6 and pacakges shipped with Anaconda.
-
-   Servers = HAPI() or HAPI() returns a list of data server URLs from
-   https://github.com/hapi-server/data-specification/blob/master/servers.txt
-
-   Dataset = HAPI(Server) returns an dictionary of datasets available from a
-   URL given by the string Server.  The dictionary structure follows the
-   HAPI JSON structure.
-
-   Parameters = HAPI(Server, Dataset) returns a dictionary of parameters
-   in the string Dataset.  The dictionary structure follows the HAPI JSON
-   structure.
-
-   Metadata = HAPI(Server, Dataset, Parameters) or HAPI(...) returns metadata
-   associated each parameter in the comma-separated string Parameters.
-
-   Data = HAPI(Server, Dataset, Parameters, Start, Stop) returns a dictionary 
-   with elements corresponding to Parameters, e.g., if 
-   Parameters='scalar,vector' and the number of records returned is N, then
-
-   Data['Time'] is a NumPy array of datetimes with shape (N)
-   Data['scalar'] is a NumPy array of shape (N)
-   Data['vector'] is a NumPy array of shape (N,3)
-
-   Options are set by passing a keywords of
-
-       logging (False) - Log to console
-       cache (True) - Save responses and processed responses in cache_dir
-       cache_dir (./hapi-data)
-       use_cache (True) - Use files in cache_dir if found
-       serverlist (https://github.com/hapi-server/servers/raw/master/all.txt)
-'''
-# TODO: Use mark-up for docs: https://docs.python.org/devguide/documenting.html 
-
-"""
-Author: R.S Weigel <rweigel@gmu.edu>
-License: This is free and unencumbered software released into the public domain.
-Repository: https://github.com/hapi-server/client-python
-Version: 0.9
-"""
+# TODO: Use mark-up for docs: https://docs.python.org/devguide/documenting.html
 
 # Written to match style/capabilities/interface of hapi.m at
 # https://github.com/hapi-server/client-matlab
 
 import os
 import re
-import json    
-import numpy as np
-import pandas
+import json
 from datetime import datetime
 import warnings
 import sys
 import time
 
-sys.tracebacklimit = 1000 # Turn tracebacklimit back to default
+import numpy as np
+import pandas
+
+sys.tracebacklimit = 1000  # Turn tracebacklimit back to default
+
 
 def error(msg):
     print('\n')
-    sys.tracebacklimit = 0 # Suppress traceback
+    sys.tracebacklimit = 0  # Suppress traceback
     # TODO: The problem with this is that it changes the traceback
     # limit globally.
     raise Exception(msg)
-    
+
 # Start compatability code
 if sys.version_info[0] > 2:
     # Tested with sys.version = 3.6.5 |Anaconda, Inc.| (default, Apr 26 2018, 08:42:37) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
@@ -78,7 +33,8 @@ else:
     import urllib
     import urllib2
 
-def urlerror(e,url):
+
+def urlerror(e, url):
 
     def unknown():
         body = e.read().decode('utf8')
@@ -100,7 +56,8 @@ def urlerror(e,url):
             unknown()
     else:
         unknown()
-        
+
+
 def urlopen(url):
     if sys.version_info[0] > 2:
         try:
@@ -114,7 +71,8 @@ def urlopen(url):
             urlerror(e,url)
 
     return res
-        
+
+
 def urlretrieve(url,fname):
     if sys.version_info[0] > 2:
         try:
@@ -128,15 +86,83 @@ def urlretrieve(url,fname):
             urlerror(e,url)
 # End compatability code
 
+
 def jsonparse(res):
     try:
         return json.load(res)
     except:
         error('Could not parse JSON from %s' % res.geturl())
 
+
 def printf(format, *args): sys.stdout.write(format % args)
     
-def hapi(*args,**kwargs):
+
+def hapi(*args, **kwargs):
+    """
+    This is the primary interface to the HAPI client.
+
+    Parameters
+    ----------
+    server : str
+        A string with the url to the HAPI compliant server
+    dataset : str
+        A string specifying the dataset
+    parameters: str
+        HAPI parameters
+    start_time: str
+        The start time of the requested data
+    end_time: str
+        The end time of the requested data
+    options : dict
+        The following options are available.
+            logging (False) - Log to console
+            cache (True) - Save responses and processed responses in cache_dir
+            cache_dir (./hapi-data)
+            use_cache (True) - Use files in cache_dir if found
+            serverlist (https://github.com/hapi-server/servers/raw/master/all.txt)
+
+    Returns
+    -------
+    result : various
+        Results depend on the input parameters.
+
+        Servers = HAPI() or HAPI() returns a list of data server URLs from
+        https://github.com/hapi-server/data-specification/blob/master/servers.txt
+
+        Dataset = HAPI(Server) returns an dictionary of datasets available from a
+        URL given by the string Server.  The dictionary structure follows the
+        HAPI JSON structure.
+
+        Parameters = HAPI(Server, Dataset) returns a dictionary of parameters
+        in the string Dataset.  The dictionary structure follows the HAPI JSON
+        structure.
+
+        Metadata = HAPI(Server, Dataset, Parameters) or HAPI(...) returns metadata
+        associated each parameter in the comma-separated string Parameters.
+
+        Data = HAPI(Server, Dataset, Parameters, Start, Stop) returns a dictionary
+        with elements corresponding to Parameters, e.g., if
+        Parameters='scalar,vector' and the number of records returned is N, then
+
+        Data['Time'] is a NumPy array of datetimes with shape (N)
+        Data['scalar'] is a NumPy array of shape (N)
+        Data['vector'] is a NumPy array of shape (N,3)
+
+    References
+    ----------
+        * `HAPI Server Definition <https://github.com/hapi-server`__
+
+    Examples
+    --------
+        >>> from hapi_client import hapi
+        >>> server = 'http://hapi-server.org/servers/SSCWeb/hapi'
+        >>> dataset = 'ace'
+        >>> start, stop = '2001-01-01T05:00:00', '2001-01-01T06:00:00'
+        >>> parameters = 'X_GSE,Y_GSE,Z_GSE'
+        >>> opts = {'logging': True, 'use_cache': True}
+        >>> data, meta = hapi(server, dataset, parameters, start, stop, **opts)
+
+    """
     
     nin = len(args)
         
@@ -178,7 +204,7 @@ def hapi(*args,**kwargs):
                 printf("   %s\n", url)
         return data        
 
-    if nin == 1: # hapi(SERVER)
+    if nin == 1:  # hapi(SERVER)
         # TODO: Cache
         url = SERVER + '/catalog'
         if DOPTS['logging']: printf('Downloading %s ... ', url) 
@@ -188,7 +214,7 @@ def hapi(*args,**kwargs):
         data = meta
         return meta
 
-    if nin == 2: # hapi(SERVER,DATASET)
+    if nin == 2:  # hapi(SERVER,DATASET)
         # TODO: Cache
         url = SERVER + '/info?id=' + DATASET
         if DOPTS['logging']: printf('Downloading %s ... ', url)
