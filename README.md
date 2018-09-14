@@ -24,6 +24,12 @@ urllib.urlretrieve(url,'hapi_demo.py')
 runfile('hapi_demo.py')
 ```
 
+### Pip
+
+```bash
+pip install ???
+```
+
 ## Development
 
 ```bash
