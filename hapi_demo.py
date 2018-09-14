@@ -4,24 +4,21 @@
 
 def main():
     
-    getdeps() # Get hapi.py and hapiplot.py if not found
+    getdeps() # Get hapi.py if not found
 
     cdaweb()
     sscweb()
 
 def getdeps():
-    #%% Download hapi.py and hapiplot.py if not found
+    #%% Download hapi.py if not found
     import os
     url = 'https://github.com/hapi-server/client-python/raw/master/'        
     if os.path.isfile('hapi.py') == False:
         urlretrieve(url+'hapi.py','hapi.py')
-    if os.path.isfile('hapiplot.py') == False:
-        urlretrieve(url+'hapiplot.py','hapiplot.py')
 
 def sscweb():
 
-    from hapi import hapi
-    from hapiplot import hapiplot
+    from hapi import hapi,hapiplot
     
     #%% SSCWeb data
     server     = 'http://hapi-server.org/servers/SSCWeb/hapi'
@@ -36,8 +33,7 @@ def sscweb():
 
 def cdaweb():    
 
-    from hapi import hapi
-    from hapiplot import hapiplot
+    from hapi import hapi,hapiplot
 
     #%% CDAWeb data - Magnitude and BGSEc from dataset AC_H0_MFI
     server     = 'https://cdaweb.gsfc.nasa.gov/hapi'

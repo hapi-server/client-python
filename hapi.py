@@ -1,51 +1,9 @@
-'''
-HAPI - Interface to Heliophysics Data Environment API
-
-   hapi.py is used to get metadata and data from a HAPI v1.1 compliant
-   data server (https://github.com/hapi-server/). 
-
-   See hapi_demo.py for usage examples.
-   
-   Tested with Python 2.7 and 3.6 and pacakges shipped with Anaconda.
-
-   Servers = HAPI() or HAPI() returns a list of data server URLs from
-   https://github.com/hapi-server/data-specification/blob/master/servers.txt
-
-   Dataset = HAPI(Server) returns an dictionary of datasets available from a
-   URL given by the string Server.  The dictionary structure follows the
-   HAPI JSON structure.
-
-   Parameters = HAPI(Server, Dataset) returns a dictionary of parameters
-   in the string Dataset.  The dictionary structure follows the HAPI JSON
-   structure.
-
-   Metadata = HAPI(Server, Dataset, Parameters) or HAPI(...) returns metadata
-   associated each parameter in the comma-separated string Parameters.
-
-   Data = HAPI(Server, Dataset, Parameters, Start, Stop) returns a dictionary 
-   with elements corresponding to Parameters, e.g., if 
-   Parameters='scalar,vector' and the number of records returned is N, then
-
-   Data['Time'] is a NumPy array of datetimes with shape (N)
-   Data['scalar'] is a NumPy array of shape (N)
-   Data['vector'] is a NumPy array of shape (N,3)
-
-   Options are set by passing a keywords of
-
-       logging (False) - Log to console
-       cache (True) - Save responses and processed responses in cache_dir
-       cache_dir (./hapi-data)
-       use_cache (True) - Use files in cache_dir if found
-       serverlist (https://github.com/hapi-server/servers/raw/master/all.txt)
-'''
-# TODO: Use mark-up for docs: https://docs.python.org/devguide/documenting.html 
-
 """
 Author: R.S Weigel <rweigel@gmu.edu>
 License: This is free and unencumbered software released into the public domain.
 Repository: https://github.com/hapi-server/client-python
-Version: 0.9
 """
+Version = '0.8.1'
 
 # Written to match style/capabilities/interface of hapi.m at
 # https://github.com/hapi-server/client-matlab
@@ -137,6 +95,48 @@ def jsonparse(res):
 def printf(format, *args): sys.stdout.write(format % args)
     
 def hapi(*args,**kwargs):
+
+    '''
+    HAPI - Interface to Heliophysics Data Environment API
+    
+       hapi.py is used to get metadata and data from a HAPI v1.1 compliant
+       data server (https://github.com/hapi-server/). 
+    
+       See hapi_demo.py for usage examples.
+       
+       Tested with Python 2.7 and 3.6 and pacakges shipped with Anaconda.
+    
+       Servers = HAPI() or HAPI() returns a list of data server URLs from
+       https://github.com/hapi-server/data-specification/blob/master/servers.txt
+    
+       Dataset = HAPI(Server) returns an dictionary of datasets available from a
+       URL given by the string Server.  The dictionary structure follows the
+       HAPI JSON structure.
+    
+       Parameters = HAPI(Server, Dataset) returns a dictionary of parameters
+       in the string Dataset.  The dictionary structure follows the HAPI JSON
+       structure.
+    
+       Metadata = HAPI(Server, Dataset, Parameters) or HAPI(...) returns metadata
+       associated each parameter in the comma-separated string Parameters.
+    
+       Data = HAPI(Server, Dataset, Parameters, Start, Stop) returns a dictionary 
+       with elements corresponding to Parameters, e.g., if 
+       Parameters='scalar,vector' and the number of records returned is N, then
+    
+       Data['Time'] is a NumPy array of datetimes with shape (N)
+       Data['scalar'] is a NumPy array of shape (N)
+       Data['vector'] is a NumPy array of shape (N,3)
+    
+       Options are set by passing a keywords of
+    
+           logging (False) - Log to console
+           cache (True) - Save responses and processed responses in cache_dir
+           cache_dir (./hapi-data)
+           use_cache (True) - Use files in cache_dir if found
+           serverlist (https://github.com/hapi-server/servers/raw/master/all.txt)
+    '''
+    # TODO: Use mark-up for docs: https://docs.python.org/devguide/documenting.html 
     
     nin = len(args)
         
@@ -164,7 +164,13 @@ def hapi(*args,**kwargs):
             DOPTS[key] = value
         else:
             printf('Warning: Keyword option "%s" is not valid.', key)
-        
+
+    def update():
+        f = urllib.request.urlopen('https://github.com/hapi-server/client-python/raw/master/hapi.py').read().decode('utf8')
+        Version2 = re.compile(r'Version = (.*)', re.MULTILINE|re.UNICODE).search(f).group(1)
+        if Version2 != Version:
+            print('A new version of hapi.py is available at https://github.com/hapi-server/client-python/raw/master/hapi.py')
+
     if nin == 0: # hapi()
         if DOPTS['logging']: printf('Reading %s ... ', DOPTS['server_list'])
         # Last .encode('utf8') needed to make Python 2 and 3 types match
@@ -534,3 +540,518 @@ def hapi(*args,**kwargs):
             return data2, meta
         else:
             return data, meta
+
+def hapiplot(data,meta,**kwargs):
+
+    import matplotlib.pyplot as plt 
+
+    #%% Download and import datetick.py 
+    # TODO: Incorporate datetick.py into hapiplot.py
+    url = 'https://github.com/hapi-server/client-python/raw/master/misc/datetick.py'
+    print(url)
+    if os.path.isfile('datetick.py') == False and os.path.isfile('misc/datetick.py') == False:
+        urlretrieve(url,'datetick.py')
+    if os.path.isfile('misc/datetick.py') == True:
+        sys.path.insert(0, './misc')
+
+    from datetick import datetick
+    
+    # Default options
+    DOPTS = {}
+    DOPTS.update({'logging': False})
+
+    # Override defaults
+    for key, value in kwargs.items():
+        if key in DOPTS:
+            DOPTS[key] = value
+        else:
+            print('Warning: Keyword option "%s" is not valid.' % key)
+
+    fignums = plt.get_fignums()
+    if len(fignums) == 0:
+        fignums = [0]
+    lastfn = fignums[-1]
+    
+    try:
+        # Will fail if no pandas, if YYY-DOY format and other valid ISO 8601
+        # dates such as 2001-01-01T00:00:03.Z
+        Time = pandas.to_datetime(data['Time'].astype('U'),infer_datetime_format=True)
+    except:
+        # Slow and manual parsing.
+        Time = hapitime2datetime(data['Time'].astype('U'))
+        
+    # In the following, the x parameter is a datetime object.
+    # If the x parameter is a number, would need to use plt.plot_date()
+    # and much of the code for datetick.py would need to be modified.
+    for i in range(1,len(meta["parameters"])):
+        if meta["parameters"][i]["type"] != "double" and meta["parameters"][i]["type"] != "integer":
+            warnings.warn("Plots for types double and integer only implemented.")
+            continue
+
+        name = meta["parameters"][i]["name"]
+        y = np.asarray(data[name])
+    
+        if meta["parameters"][i]["fill"]:
+            if meta["parameters"][i]["fill"] == 'nan':
+                yfill = np.nan
+            else:
+                yfill = float(meta["parameters"][i]["fill"])  
+                #if isnan(yfill),yfill = 'null';,end
+        else:
+            yfill = 'null'
+
+        if yfill != 'null':
+            # Replace fills with NaN for plotting
+            # (so gaps shown in lines for time series)
+            y[y == yfill] = np.nan;    
+
+        if y.shape[0] < 11:
+            props = {'linestyle': 'none','marker': '.','markersize': 16}
+        elif y.shape[0] < 101:
+            props = {'lineStyle': '-','linewidth': 2, 'marker': '.', 'markersize': 8}
+        else:
+            props = {}
+        plt.figure(lastfn + i)
+        plt.clf()
+        plt.plot(Time,y,**props)
+        plt.gcf().canvas.set_window_title(meta["x_server"] + " | " + meta["x_dataset"] + " | " + name)
+
+        yl = meta["parameters"][i]["name"] + " [" + meta["parameters"][i]["units"] + "]"
+        plt.ylabel(yl)
+        plt.title(meta["x_server"] + "/info?id=" + meta["x_dataset"] + "&parameters=" + name + "\n", fontsize=10)
+        plt.grid()
+        datetick('x')
+        #import pdb; pdb.set_trace()
+        
+        fnamepng = re.sub('\.csv|\.bin','.png',meta['x_dataFile'])
+        if DOPTS['logging']: printf('Writing %s ... ', fnamepng)
+        plt.figure(lastfn + i).savefig(fnamepng,dpi=300) 
+        if DOPTS['logging']: printf('Done.\n')
+
+        # Important: This must go after savefig or else the png is blank.
+        plt.show()
+
+def hapitime2datetime(Time):
+
+    import time
+    import matplotlib.dates as mpl
+    from datetime import datetime
+
+    end = len(Time[0])-1
+    d = 0
+    # Catch case where no trailing Z
+    if not re.match(r".*Z$",Time[0]):
+        end = len(Time[0])
+        d = 1
+
+    tic= time.time()
+    dateTime = np.zeros(len(Time),dtype='d')
+    (h,hm,hms) = (False,False,False)
+    if re.match(r"[0-9]{4}-[0-9]{3}", Time[0]):
+        fmt = "%Y-%j"
+        to = 9
+        if (len(Time[0]) == 12-d):
+            h = True
+        if (len(Time[0]) == 15-d):
+            hm = True
+        if (len(Time[0]) >= 18-d):
+            hms = True        
+    elif re.match(r"[0-9]{4}-[0-9]{2}", Time[0]):
+        fmt = "%Y-%m-%d"
+        to = 11
+        if (len(Time[0]) == 14-d):
+            h = True
+        if (len(Time[0]) == 17-d):
+            hm = True
+        if (len(Time[0]) >= 20-d):
+            hms = True
+    else:
+        raise
+            
+    DS = Time[0][0:to-1]
+    DN = float(datetime.strptime(DS, fmt).toordinal())
+    for i in range(0,len(Time)):
+        if (Time[i][0:to-1] != DS):
+            DS = Time[0:to-1]
+            DN = float(datetime.strptime(DS, fmt).toordinal()) 
+        # TODO: Do different loop for each case for speed
+        if hms:
+            dateTime[i] = DN + float(Time[i][to:to+2])/24. + float(Time[i][to+3:to+5])/(24.*60.) + float(Time[i][to+6:end])/(24.*3600.)
+        elif hm:
+            dateTime[i] = DN + float(Time[i][to:to+2])/24. + float(Time[i][to+3:to+5])/(24.*60.)
+        elif h:
+            dateTime[i] = DN + float(Time[i][to:to+2])/24.
+        else:
+            dateTime[i] = DN        
+        i = i+1
+    toc = time.time()-tic
+    #print('%.4fs' % toc)
+    
+    tic= time.time()
+    dateTimeString = mpl.num2date(dateTime)
+    toc = time.time()-tic
+    #print('%.4fs' % toc)
+    return dateTimeString
+
+def datetick(dir, **kwargs):
+    '''
+    datetick('x') or datetick('y') formats the major and minor tick labels
+    of the current plot. See 
+    https://github.com/hapi-server/client-python/blob/master/misc/datetick_test.py
+    for tests and comparison with Matplotlib default auto-formatter
+
+    Example:    
+        d1 = dt.datetime(1900, 1, 2)
+        d2 = datetime.fromordinal(i + datetime.toordinal(d1))    
+        x = np.array([d1, d2], dtype=object)
+        y = [0.0,1.0]
+        plt.clf()
+        plt.plot(x, y)
+        datetick('x')
+    '''
+
+    # Based on spacepy/plot/utils.py on 07/10/2017, but many additions.
+    
+    # TODO: Account for leap years instead of using 367, 366, etc.
+    # TODO: Use numsize() to determine if figure width and height
+    #       will cause overlap when default number major tick labels is used.
+    # TODO: If time[0].day > 28, need to make first tick at time[0].day = 28
+    #       as needed.
+    
+    import matplotlib.pyplot as plt 
+    from matplotlib.dates import mpl
+    from datetime import datetime
+
+    def on_xlims_change(ax): datetick('x',set_cb=False)
+    def on_ylims_change(ax): datetick('y',set_cb=False)
+    
+    def millis(x, pos):
+        'The two args are the value and tick position'
+        #print x
+        #print pos
+        return '$%1.1fM' % (x*1e-6)
+
+    def numsize():
+        # Not yet used.
+        # Returns (width, height) of number '0' in pixels
+        # Based on https://stackoverflow.com/q/5320205
+        # TODO: numsize(fig,dir) should inspect fig to get used fonts
+        # for dir='x' and dir='y' and get bounding box for x and y labels.
+        r = plt.figure().canvas.get_renderer()
+        t = plt.text(0.5, 0.5, '0')    
+        bb = t.get_window_extent(renderer=r)
+        w = bb.width
+        h = bb.height
+        plt.close()
+        return (w,h)
+
+    debug = False
+    
+    axes = plt.gca()
+    fig = plt.gcf()
+    
+    # By default, trigger update of ticks when limits
+    # change due to user interaction.
+    set_cb = True
+    if 'set_cb' in kwargs:
+        set_cb = kwargs['set_cb']
+    if set_cb == True:
+        # Trigger update of ticks when limits change.
+        if dir == 'x':
+            axes.callbacks.connect('xlim_changed', on_xlims_change)
+        else:
+            axes.callbacks.connect('ylim_changed', on_ylims_change)
+ 
+    line = axes.lines[0]
+    datamin = mpl.date2num(line.get_xdata()[0])
+    datamax = mpl.date2num(line.get_xdata()[-1])
+    if debug == True:
+        print('Data min time: %f' % datamin)
+        print('Data max time: %f' % datamax)
+
+    xlim = axes.get_xlim()
+
+    tmin = np.max((xlim[0],datamin))
+    tmax = np.min((xlim[1],datamax))
+    
+    if dir == 'x':
+        time = mpl.num2date((tmin,tmax))
+    else:
+        time = mpl.num2date(axes.get_ylim())
+    
+    deltaT = time[-1] - time[0]
+    nHours = deltaT.days * 24.0 + deltaT.seconds/3600.0
+    if debug == True:
+        print("Total seconds: %s" % deltaT.total_seconds())
+
+    if deltaT.total_seconds() < .1:
+        # < 0.1 second
+        # At this level of zoom, would need original datetime data
+        # which has not been converted by date2num and then re-plot
+        # using integer number of milliseconds. E.g., call
+        # plotd(dtobj,y)
+        # where
+        # t = dtobj converted to milliseconds since first array value
+        # plotd() calls
+        # plot(t,y)
+        # and then makes first label indicate %Y-%m-%dT%H:%M:%S
+        if debug == True:
+            print(line.get_xdata())
+            print("Warning: Cannot create accurate time labels with this time resolution.")
+        # This does not locate microseconds.
+        from matplotlib.ticker import FuncFormatter
+        formatter = FuncFormatter(millis)
+        Mtick = mpl.MicrosecondLocator(formatter)
+        mtick = mpl.MicrosecondLocator(interval=1000)
+        fmt   = mpl.DateFormatter('%M:%S:%f')
+        fmt2  = '%Y-%m-%dT%H'
+    if deltaT.total_seconds() < 1:
+        # < 1 second
+        Mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,1)) )
+        mtick = mpl.MicrosecondLocator(interval=100000)
+        fmt   = mpl.DateFormatter('%M:%S')
+        fmt2  = '%Y-%m-%dT%H'    
+    elif deltaT.total_seconds() < 5:
+        # < 5 seconds
+        Mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,1)) )
+        mtick = mpl.MicrosecondLocator(interval=200000)
+        fmt   = mpl.DateFormatter('%M:%S')
+        fmt2  = '%Y-%m-%dT%H'
+    elif deltaT.total_seconds() < 10:
+        # < 10 seconds
+        Mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,1)) )
+        mtick = mpl.MicrosecondLocator(interval=500000)
+        fmt   = mpl.DateFormatter('%M:%S')
+        fmt2  = '%Y-%m-%dT%H'
+    elif deltaT.total_seconds() < 20:
+        # < 20 seconds
+        Mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,2)) )
+        mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,1)) )
+        fmt   = mpl.DateFormatter('%M:%S')
+        fmt2  = '%Y-%m-%dT%H'
+    elif deltaT.total_seconds() < 30:
+        # < 30 seconds
+        Mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,5)) )
+        mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,1)) )
+        fmt   = mpl.DateFormatter('%M:%S')
+        fmt2  = '%Y-%m-%dT%H'
+    elif deltaT.total_seconds() < 60:
+        # < 1 minute
+        Mtick = mpl.econdLocator(bysecond=list(range(time[0].second,60,10)) )
+        mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,2)) )
+        fmt   = mpl.DateFormatter('%M:%S')
+        fmt2  = '%Y-%m-%dT%H'
+    elif deltaT.total_seconds() < 60*2:
+        # < 2 minutes
+        Mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,20)) )
+        mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,5)) )
+        fmt   = mpl.DateFormatter('%M:%S')
+        fmt2  = '%Y-%m-%dT%H'
+    elif deltaT.total_seconds() < 60*3:
+        # < 3 minutes
+        Mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,20)) )
+        mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,5)) )
+        fmt   = mpl.DateFormatter('%M:%S')
+        fmt2  = '%Y-%m-%dT%H'
+    elif deltaT.total_seconds() < 60*5:
+        # < 5 minutes
+        Mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,30)) )
+        mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,10)) )
+        fmt   = mpl.DateFormatter('%M:%S')
+        fmt2  = '%Y-%m-%dT%H'
+    elif deltaT.total_seconds() < 60*10:
+        # < 10 minutes
+        Mtick = mpl.MinuteLocator(byminute=list(range(time[0].minute,60,1)) )
+        mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,15)) )
+        fmt   = mpl.DateFormatter('%M:%S')
+        fmt2  = '%Y-%m-%dT%H'
+    elif deltaT.total_seconds() < 60*20:
+        # < 20 minutes
+        Mtick = mpl.MinuteLocator(byminute=list(range(time[0].minute,60,2)) )
+        mtick = mpl.SecondLocator(bysecond=list(range(time[0].second,60,30)) )
+        fmt   = mpl.DateFormatter('%M:%S')
+        fmt2  = '%Y-%m-%dT%H'
+    elif deltaT.total_seconds() < 60*30:
+        # < 30 minutes
+        Mtick = mpl.MinuteLocator(byminute=list(range(time[0].minute,60,5)) )
+        mtick = mpl.MinuteLocator(byminute=list(range(time[0].minute,60,1)) )
+        fmt   = mpl.DateFormatter('%M:%S')
+        fmt2  = '%Y-%m-%dT%H'
+    elif deltaT.total_seconds() < 60*60:
+        # < 60 minutes
+        Mtick = mpl.MinuteLocator(byminute=list(range(time[0].minute,60,10)) )
+        mtick = mpl.MinuteLocator(byminute=list(range(time[0].minute,60,2)) )
+        fmt   = mpl.DateFormatter('%H:%M:%S')
+        fmt2  = '%Y-%m-%d'
+    elif nHours < 2:
+        Mtick = mpl.MinuteLocator(byminute=list(range(time[0].minute,60,15)) )
+        mtick = mpl.MinuteLocator(byminute=list(range(time[0].minute,60,5)) )
+        fmt   = mpl.DateFormatter('%H:%M:%S')
+        fmt2  = '%Y-%m-%d'
+    elif nHours < 4:
+        Mtick = mpl.MinuteLocator(byminute=list(range(time[0].minute,60,20)) )
+        mtick = mpl.MinuteLocator(byminute=list(range(time[0].minute,60,5)) )
+        fmt   = mpl.DateFormatter('%H:%M:%S')
+        fmt2  = '%Y-%m-%d'
+    elif nHours < 6:
+        Mtick = mpl.HourLocator(byhour=list(range(time[0].hour,24,1)) )
+        mtick = mpl.MinuteLocator(byminute=list(range(time[0].minute,60,10)) )
+        fmt   = mpl.DateFormatter('%H:%M:%S')
+        fmt2  = '%Y-%m-%d'
+    elif nHours < 12:
+        Mtick = mpl.HourLocator(byhour=list(range(time[0].hour,24,2)) )
+        mtick = mpl.MinuteLocator(byminute=list(range(time[0].minute,60,30)) )
+        fmt   = mpl.DateFormatter('%H:%M:%S')
+        fmt2  = '%Y-%m-%d'
+    elif nHours < 24:
+        # < 1 day
+        Mtick = mpl.HourLocator(byhour=list(range(time[0].hour,24,4)) )
+        mtick = mpl.HourLocator(byhour=list(range(time[0].hour,24,1)) )
+        fmt   = mpl.DateFormatter('%H:%M:%S')
+        fmt2  = '%Y-%m-%d'
+    elif nHours < 48:
+        # < 2 days
+        Mtick = mpl.HourLocator(byhour = [0,3,6,9,12,15,18,21])
+        mtick = mpl.HourLocator(byhour = list(range(24)))
+        fmt   = mpl.DateFormatter('%H')
+        fmt2  = '%Y-%m-%d'
+    elif nHours < 72:
+        # < 3 days
+        Mtick = mpl.HourLocator(byhour = [0,6,12,18])
+        mtick = mpl.HourLocator(byhour = list(range(0,24,3)))
+        fmt   = mpl.DateFormatter('%H')
+        fmt2  = '%Y-%m-%d'
+    elif nHours < 96:
+        # < 4 days
+        Mtick = mpl.HourLocator(byhour = [0,12])
+        mtick = mpl.HourLocator(byhour = list(range(0,24,3)))
+        fmt   = mpl.DateFormatter('%H')
+        fmt2  = '%Y-%m-%d'
+    elif deltaT.days < 8:
+        Mtick = mpl.DayLocator(bymonthday=list(range(32)))
+        mtick = mpl.HourLocator(byhour=list(range(0,24,4)))
+        fmt   = mpl.DateFormatter('%d')
+        fmt2  = '%Y-%m'
+    elif deltaT.days < 16:
+        Mtick = mpl.DayLocator(bymonthday=list(range(time[0].day,32,2)))
+        mtick = mpl.DayLocator(interval=1)
+        fmt   = mpl.DateFormatter('%d')
+        fmt2  = '%Y-%m'
+    elif deltaT.days < 32:
+        Mtick = mpl.DayLocator(bymonthday=list(range(time[0].day,32,4)))
+        mtick = mpl.DayLocator(interval=1)
+        fmt   = mpl.DateFormatter('%d')
+        fmt2  = '%Y-%m'
+    elif deltaT.days < 60:
+        Mtick = mpl.DayLocator(bymonthday=list(range(time[0].day,32,7)))
+        mtick = mpl.DayLocator(interval=2)
+        fmt   = mpl.DateFormatter('%d')
+        fmt2  = '%Y-%m'
+    elif deltaT.days < 183:
+        Mtick = mpl.MonthLocator(bymonthday=time[0].day,interval=2)
+        mtick = mpl.MonthLocator(bymonthday=time[0].day,interval=1)
+        if time[0].day == 1:
+            fmt   = mpl.DateFormatter('%Y-%m')
+            fmt2  = ''
+        else:
+            fmt   = mpl.DateFormatter('%Y-%m-%d')
+            fmt2  = ''
+    elif deltaT.days < 367:
+        Mtick = mpl.MonthLocator(bymonth=list(range(1,13,4)),bymonthday=time[0].day)
+        if time[0].day == 1:
+            mtick = mpl.MonthLocator(bymonthday=time[0].day,interval=1)
+            fmt   = mpl.DateFormatter('%Y-%m')
+            fmt2  = ''
+        else:
+            mtick = mpl.MonthLocator(bymonthday=time[0].day,interval=1)
+            fmt   = mpl.DateFormatter('%Y-%m-%d')
+            fmt2  = ''
+    elif deltaT.days < 366*2:
+        Mtick = mpl.MonthLocator(bymonth=list(range(1,13,6)),bymonthday=time[0].day)
+        mtick = mpl.MonthLocator(bymonthday=time[0].day,interval=1)
+        if time[0].day == 1:
+            fmt   = mpl.DateFormatter('%Y-%m')
+            fmt2  = ''
+        else:
+            fmt   = mpl.DateFormatter('%Y-%m-%d')
+            fmt2  = ''
+    elif deltaT.days < 366*8:
+        Mtick = mpl.YearLocator()
+        mtick = mpl.MonthLocator(bymonth=7)
+        fmt   = mpl.DateFormatter('%Y')
+        fmt2  = ''
+    elif deltaT.days < 366*15:
+        Mtick = mpl.YearLocator(2)
+        mtick = mpl.YearLocator(1)
+        fmt   = mpl.DateFormatter('%Y')
+        fmt2  = ''
+    elif deltaT.days < 366*40:
+        Mtick = mpl.YearLocator(5)
+        mtick = mpl.YearLocator(1)
+        fmt   = mpl.DateFormatter('%Y')
+        fmt2  = ''
+    elif deltaT.days < 366*100:
+        Mtick = mpl.YearLocator(10)
+        mtick = mpl.YearLocator(2)
+        fmt   = mpl.DateFormatter('%Y')
+        fmt2  = ''
+    elif deltaT.days < 366*200:
+        Mtick = mpl.YearLocator(20)
+        mtick = mpl.YearLocator(5)
+        fmt   = mpl.DateFormatter('%Y')
+        fmt2  = ''
+    else:
+        Mtick = mpl.YearLocator(50)
+        mtick = mpl.YearLocator(byyear=10)
+        fmt   = mpl.DateFormatter('%Y')
+        fmt2  = ''
+
+    # Force first time value to be labeled for axis locator
+    xt = axes.get_xticks()
+    xl = axes.get_xlim()
+    if debug == True:
+        print("Default xlim[0]:    %s" % mpl.num2date(xl[0]))
+        print("Default xlim[1]:    %s" % mpl.num2date(xl[1]))
+        print("Default xticks[0]:  %s" % mpl.num2date(xt[0]))
+        print("Default xticks[-1]: %s" % mpl.num2date(xt[-1]))
+
+    fig.canvas.draw()
+    xt = np.insert(xt,0,xl[0])
+    axes.set_xticks(xt)
+
+    if False:
+        print("Start: %s" % mpl.num2date(xl[0]))
+        print("Stop:  %s" % mpl.num2date(xl[1]))
+        for i in range(0,len(xt)):
+            print("Tick: %s" % mpl.num2date(xt[i]))
+
+    fig.canvas.draw() 
+    if dir == 'x':
+        axes.xaxis.set_major_locator(Mtick)
+        axes.xaxis.set_minor_locator(mtick)
+        axes.xaxis.set_major_formatter(fmt)
+        fig.canvas.draw() # Render new labels so updated for next line
+        labels = [item.get_text() for item in axes.get_xticklabels()]
+    else:
+        axes.yaxis.set_major_locator(Mtick)
+        axes.yaxis.set_minor_locator(mtick)
+        axes.yaxis.set_major_formatter(fmt)
+        fig.canvas.draw() # Render new labels so updated for next line
+        labels = [item.get_text() for item in axes.get_yticklabels()]
+
+    labels[0] = '%s\n%s' % (labels[0],datetime.strftime(time[0],fmt2))
+    xt = axes.get_xticks()
+    time = mpl.num2date(xt)
+    if fmt2 != '':
+        for i in range(1,len(time)):
+            if time[i].year > time[i-1].year:
+                labels[i] = '%s\n%s' % (labels[i],datetime.strftime(mpl.num2date(xt[i]),fmt2))
+            if deltaT.days > 1 and time[i].month > time[i-1].month:
+                labels[i] = '%s\n%s' % (labels[i],datetime.strftime(mpl.num2date(xt[i]),fmt2))
+            if nHours < 96 and time[i].day > time[i-1].day:
+                labels[i] = '%s\n%s' % (labels[i],datetime.strftime(mpl.num2date(xt[i]),fmt2))
+            
+    if dir == 'x':            
+        axes.set_xticklabels(labels)
+    if dir == 'y':            
+        axes.set_yticklabels(labels)        
