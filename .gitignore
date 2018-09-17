@@ -4,3 +4,8 @@ tmp/
 misc/tmp/
 *~
 .DS_Store
+hapiclient.egg-info/
+dist/
+MANIFEST
+README.txt
+.pytest_cache/
