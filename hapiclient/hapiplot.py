@@ -1,36 +1,44 @@
 import numpy as np
 import pandas
-import matplotlib.pyplot as plt
 import warnings
 import re
 import sys
-import os
+from hapiclient.util.datetick import datetick
 
-###############################################################################
-#%% Python 2/3 Compatability
-def urlretrieve(url, fname):
-    if sys.version_info[0] > 2: import urllib.request
-    else: import urllib
+# To allow to run from command line, find a back-end that works
+import matplotlib
+gui_env = ['Qt5Agg','QT4Agg','GTKAgg','TKAgg','WXAgg']
+for gui in gui_env:
     try:
-        if sys.version_info[0] > 2: urllib.request.urlretrieve(url, fname)
-        else: urllib.urlretrieve(url, fname)
-    except: raise Exception('Could not open %s' % url)
-###############################################################################
+        #print("testing", gui)
+        matplotlib.use(gui,warn=False, force=True)
+        from matplotlib import pyplot as plt
+        break
+    except:
+        continue
 
 def printf(format, *args): sys.stdout.write(format % args)
 
 def hapiplot(data, meta, **kwargs):
+    """
+    Plot response from HAPI server.
 
-    #%% Download and import datetick.py
-    # TODO: Incorporate datetick.py into hapiplot.py
-    url = 'https://github.com/hapi-server/client-python/raw/master/misc/datetick.py'
-    print(url)
-    if os.path.isfile('datetick.py') is False and os.path.isfile('misc/datetick.py') is False:
-        urlretrieve(url, 'datetick.py')
-    if os.path.isfile('misc/datetick.py') is True:
-        sys.path.insert(0, './misc')
+    See also https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb
 
-    from datetick import datetick
+    Example
+    --------
+        >>> from hapiclient.hapi import hapi
+        >>> server = 'http://hapi-server.org/servers/SSCWeb/hapi'
+        >>> dataset = 'ace'
+        >>> start, stop = '2001-01-01T05:00:00', '2001-01-01T06:00:00'
+        >>> parameters = 'X_GSE,Y_GSE,Z_GSE'
+        >>> opts = {'logging': True, 'use_cache': True}
+        >>> data, meta = hapi(server, dataset, parameters, start, stop, **opts)
+        >>> hapiplot(data,meta)
+
+    """    
+    # TODO: Allow back-end to be specified as keyword
+    # matplotlib.use(backend, warn=False, force=True) 
     
     # Default options
     DOPTS = {}

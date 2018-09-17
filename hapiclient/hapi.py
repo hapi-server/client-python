@@ -16,14 +16,12 @@ import pandas
 
 sys.tracebacklimit = 1000  # Turn tracebacklimit back to default
 
-
 def error(msg):
     print('\n')
     sys.tracebacklimit = 0  # Suppress traceback
     # TODO: The problem with this is that it changes the traceback
     # limit globally.
     raise Exception(msg)
-
 
 # Start compatability code
 if sys.version_info[0] > 2:
@@ -101,6 +99,8 @@ def printf(format, *args): sys.stdout.write(format % args)
 def hapi(*args, **kwargs):
     """
     This is the primary interface to the HAPI client.
+    
+    See also https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb
 
     Parameters
     ----------
@@ -109,7 +109,7 @@ def hapi(*args, **kwargs):
     dataset : str
         A string specifying the dataset
     parameters: str
-        HAPI parameters
+        Comma-separated list of parameters in dataset
     start_time: str
         The start time of the requested data
     end_time: str
@@ -151,11 +151,11 @@ def hapi(*args, **kwargs):
 
     References
     ----------
-        * `HAPI Server Definition <https://github.com/hapi-server`__
+        * `HAPI Server Definition <https://github.com/hapi-server/client-python>`
 
-    Examples
+    Example
     --------
-        >>> from hapi_client import hapi
+        >>> from hapiclient.hapi import hapi
         >>> server = 'http://hapi-server.org/servers/SSCWeb/hapi'
         >>> dataset = 'ace'
         >>> start, stop = '2001-01-01T05:00:00', '2001-01-01T06:00:00'
