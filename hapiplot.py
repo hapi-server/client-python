@@ -1,6 +1,6 @@
 import numpy as np
 import pandas
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 import warnings
 import re
 import sys
@@ -8,27 +8,26 @@ import os
 
 ###############################################################################
 #%% Python 2/3 Compatability
-def urlretrieve(url,fname):
-    import sys
+def urlretrieve(url, fname):
     if sys.version_info[0] > 2: import urllib.request
     else: import urllib
     try:
         if sys.version_info[0] > 2: urllib.request.urlretrieve(url, fname)
         else: urllib.urlretrieve(url, fname)
-    except: raise Exception('Could not open %s' % url)        
+    except: raise Exception('Could not open %s' % url)
 ###############################################################################
 
 def printf(format, *args): sys.stdout.write(format % args)
 
-def hapiplot(data,meta,**kwargs):
+def hapiplot(data, meta, **kwargs):
 
-    #%% Download and import datetick.py 
+    #%% Download and import datetick.py
     # TODO: Incorporate datetick.py into hapiplot.py
     url = 'https://github.com/hapi-server/client-python/raw/master/misc/datetick.py'
     print(url)
-    if os.path.isfile('datetick.py') == False and os.path.isfile('misc/datetick.py') == False:
-        urlretrieve(url,'datetick.py')
-    if os.path.isfile('misc/datetick.py') == True:
+    if os.path.isfile('datetick.py') is False and os.path.isfile('misc/datetick.py') is False:
+        urlretrieve(url, 'datetick.py')
+    if os.path.isfile('misc/datetick.py') is True:
         sys.path.insert(0, './misc')
 
     from datetick import datetick
@@ -45,14 +44,14 @@ def hapiplot(data,meta,**kwargs):
             print('Warning: Keyword option "%s" is not valid.' % key)
 
     fignums = plt.get_fignums()
-    if len(fignums) == 0:
+    if not fignums:
         fignums = [0]
     lastfn = fignums[-1]
     
     try:
         # Will fail if no pandas, if YYY-DOY format and other valid ISO 8601
         # dates such as 2001-01-01T00:00:03.Z
-        Time = pandas.to_datetime(data['Time'].astype('U'),infer_datetime_format=True)
+        Time = pandas.to_datetime(data['Time'].astype('U'), infer_datetime_format=True)
     except:
         # Slow and manual parsing.
         Time = hapitime2datetime(data['Time'].astype('U'))
@@ -60,7 +59,7 @@ def hapiplot(data,meta,**kwargs):
     # In the following, the x parameter is a datetime object.
     # If the x parameter is a number, would need to use plt.plot_date()
     # and much of the code for datetick.py would need to be modified.
-    for i in range(1,len(meta["parameters"])):
+    for i in range(1, len(meta["parameters"])):
         if meta["parameters"][i]["type"] != "double" and meta["parameters"][i]["type"] != "integer":
             warnings.warn("Plots for types double and integer only implemented.")
             continue
@@ -80,17 +79,17 @@ def hapiplot(data,meta,**kwargs):
         if yfill != 'null':
             # Replace fills with NaN for plotting
             # (so gaps shown in lines for time series)
-            y[y == yfill] = np.nan;    
+            y[y == yfill] = np.nan;
 
         if y.shape[0] < 11:
-            props = {'linestyle': 'none','marker': '.','markersize': 16}
+            props = {'linestyle': 'none', 'marker': '.', 'markersize': 16}
         elif y.shape[0] < 101:
-            props = {'lineStyle': '-','linewidth': 2, 'marker': '.', 'markersize': 8}
+            props = {'lineStyle': '-', 'linewidth': 2, 'marker': '.', 'markersize': 8}
         else:
             props = {}
         plt.figure(lastfn + i)
         plt.clf()
-        plt.plot(Time,y,**props)
+        plt.plot(Time, y, **props)
         plt.gcf().canvas.set_window_title(meta["x_server"] + " | " + meta["x_dataset"] + " | " + name)
 
         yl = meta["parameters"][i]["name"] + " [" + meta["parameters"][i]["units"] + "]"
@@ -100,9 +99,9 @@ def hapiplot(data,meta,**kwargs):
         datetick('x')
         #import pdb; pdb.set_trace()
         
-        fnamepng = re.sub('\.csv|\.bin','.png',meta['x_dataFile'])
+        fnamepng = re.sub('\.csv|\.bin', '.png', meta['x_dataFile'])
         if DOPTS['logging']: printf('Writing %s ... ', fnamepng)
-        plt.figure(lastfn + i).savefig(fnamepng,dpi=300) 
+        plt.figure(lastfn + i).savefig(fnamepng, dpi=300)
         if DOPTS['logging']: printf('Done.\n')
 
         # Important: This must go after savefig or else the png is blank.
@@ -118,40 +117,40 @@ def hapitime2datetime(Time):
     end = len(Time[0])-1
     d = 0
     # Catch case where no trailing Z
-    if not re.match(r".*Z$",Time[0]):
+    if not re.match(r".*Z$", Time[0]):
         end = len(Time[0])
         d = 1
 
-    tic= time.time()
-    dateTime = np.zeros(len(Time),dtype='d')
-    (h,hm,hms) = (False,False,False)
+    tic = time.time()
+    dateTime = np.zeros(len(Time), dtype='d')
+    (h,hm,hms) = (False, False, False)
     if re.match(r"[0-9]{4}-[0-9]{3}", Time[0]):
         fmt = "%Y-%j"
         to = 9
-        if (len(Time[0]) == 12-d):
+        if len(Time[0]) == 12-d:
             h = True
-        if (len(Time[0]) == 15-d):
+        if len(Time[0]) == 15-d:
             hm = True
-        if (len(Time[0]) >= 18-d):
-            hms = True        
+        if len(Time[0]) >= 18-d:
+            hms = True
     elif re.match(r"[0-9]{4}-[0-9]{2}", Time[0]):
         fmt = "%Y-%m-%d"
         to = 11
-        if (len(Time[0]) == 14-d):
+        if len(Time[0]) == 14-d:
             h = True
-        if (len(Time[0]) == 17-d):
+        if len(Time[0]) == 17-d:
             hm = True
-        if (len(Time[0]) >= 20-d):
+        if len(Time[0]) >= 20-d:
             hms = True
     else:
         raise
             
     DS = Time[0][0:to-1]
     DN = float(datetime.strptime(DS, fmt).toordinal())
-    for i in range(0,len(Time)):
-        if (Time[i][0:to-1] != DS):
+    for i in range(0, len(Time)):
+        if Time[i][0:to-1] != DS:
             DS = Time[0:to-1]
-            DN = float(datetime.strptime(DS, fmt).toordinal()) 
+            DN = float(datetime.strptime(DS, fmt).toordinal())
         # TODO: Do different loop for each case for speed
         if hms:
             dateTime[i] = DN + float(Time[i][to:to+2])/24. + float(Time[i][to+3:to+5])/(24.*60.) + float(Time[i][to+6:end])/(24.*3600.)
@@ -160,12 +159,12 @@ def hapitime2datetime(Time):
         elif h:
             dateTime[i] = DN + float(Time[i][to:to+2])/24.
         else:
-            dateTime[i] = DN        
+            dateTime[i] = DN
         i = i+1
     toc = time.time()-tic
     #print('%.4fs' % toc)
     
-    tic= time.time()
+    tic = time.time()
     dateTimeString = mpl.num2date(dateTime)
     toc = time.time()-tic
     #print('%.4fs' % toc)
