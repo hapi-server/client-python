@@ -1,27 +1,20 @@
+# To execute, first run
+#   pip install hapiclient
+# from command line to install hapiclient package.
+
 #%% Note
 # In IPython, enter %matplotlib qt on command line to open plots in 
 # new window. Enter %matplotlib inline to revert.
 
 def main():
-    
-    getdeps() # Get hapi.py and hapiplot.py if not found
 
+    sscweb()    
     cdaweb()
-    sscweb()
-
-def getdeps():
-    #%% Download hapi.py and hapiplot.py if not found
-    import os
-    url = 'https://github.com/hapi-server/client-python/raw/master/'        
-    if os.path.isfile('hapi.py') == False:
-        urlretrieve(url+'hapi.py','hapi.py')
-    if os.path.isfile('hapiplot.py') == False:
-        urlretrieve(url+'hapiplot.py','hapiplot.py')
 
 def sscweb():
 
-    from hapi import hapi
-    from hapiplot import hapiplot
+    from hapiclient.hapi import hapi
+    from hapiclient.hapiplot import hapiplot
     
     #%% SSCWeb data
     server     = 'http://hapi-server.org/servers/SSCWeb/hapi'
@@ -32,12 +25,11 @@ def sscweb():
     opts       = {'logging': True, 'use_cache': True}
     data,meta = hapi(server, dataset, parameters, start, stop, **opts)
     hapiplot(data,meta)
-    ###############################################################################
 
 def cdaweb():    
 
-    from hapi import hapi
-    from hapiplot import hapiplot
+    from hapiclient.hapi import hapi
+    from hapiclient.hapiplot import hapiplot
 
     #%% CDAWeb data - Magnitude and BGSEc from dataset AC_H0_MFI
     server     = 'https://cdaweb.gsfc.nasa.gov/hapi'
@@ -48,7 +40,6 @@ def cdaweb():
     opts       = {'logging': True, 'use_cache': True}    
     data,meta = hapi(server, dataset, parameters, start, stop, **opts)
     hapiplot(data,meta)
-    ###############################################################################
     
     #%% CDAWeb metadata for AC_H0_MFI
     server     = 'https://cdaweb.gsfc.nasa.gov/hapi'
@@ -73,16 +64,6 @@ def cdaweb():
     servers = hapi(logging=True) # servers is an array of URLs
     print('')
     
-#%% Python 2/3 compatability function
-def urlretrieve(url,fname):
-    import sys
-    if sys.version_info[0] > 2: import urllib.request
-    else: import urllib
-    try:
-        if sys.version_info[0] > 2: urllib.request.urlretrieve(url, fname)
-        else: urllib.urlretrieve(url, fname)
-    except: raise Exception('Could not open %s' % url)        
-
 if __name__ == '__main__':    
     main()
     

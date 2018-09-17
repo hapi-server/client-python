@@ -2,9 +2,15 @@
 
 ## Installation
 
-Requires Python libraries (Numpy, Pandas, Matplotlib) that are typically shipped with a Scientific Python distribution, e.g., [Anaconda](https://www.continuum.io/).  Tested using the Spyder GUI that ships with Anaconda.
+```
+pip install hapiclient
+```
 
-The following will download `hapi_demo.py`. When `hapi_demo.py` is executed, it will download the main script `hapi.py` and the plotting script `hapiplot.py`.
+If you are using Anaconda, make sure that the version of `pip` used is the one distributed with Anaconda (use `which pip`).
+
+## Demo
+
+The following downloads and executes the [demo](https://github.com/hapi-server/client-python/hapi_demo.py).
 
 ### Python 3
 ```python
@@ -12,7 +18,7 @@ The following will download `hapi_demo.py`. When `hapi_demo.py` is executed, it 
 import urllib.request
 url = 'https://github.com/hapi-server/client-python/raw/master/hapi_demo.py'
 urllib.request.urlretrieve(url,'hapi_demo.py')
-runfile('hapi_demo.py')
+exec(open("hapi_demo.py").read(), globals())
 ```
 
 ### Python 2
@@ -21,15 +27,16 @@ runfile('hapi_demo.py')
 import urllib
 url = 'https://github.com/hapi-server/client-python/raw/master/hapi_demo.py'
 urllib.urlretrieve(url,'hapi_demo.py')
-runfile('hapi_demo.py')
+exec(open("hapi_demo.py").read(), globals())
 ```
 
 ## Development
 
 ```bash
 git clone https://github.com/hapi-server/client-python
+cd client-python; python setup.py develop
 ```
-
+	
 Note that the scripts are written to match syntax/capabilities/interface of the [HAPI MATLAB client](https://github.com/hapi-server/matlab-client).
 
 ## Contact
