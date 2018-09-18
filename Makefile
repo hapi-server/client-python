@@ -1,36 +1,45 @@
 # Make package, upload to pypi.org, and test package
-# 1. Edit VERSION variable below
-# 2. Edit version variable in setup.py and then execute "make all"
+# 1. Update CHANGES.txt to have a new version line
+# 2. Execute "make all"
+# 3. Execute "make test-package" (May fail if new version takes time to be
+#    available at pypi.org. Usually takes a few minutes.)
+
+# To test a repository contents, use
+# make test-local
 
 # For testing, change all occurences of
 # pypi.org to test.pypi.org 
 # and 
 # -r pypi to -r pypitest 
 
-VERSION=0.0.34
+# VERSION is updated in make updateversion step.
+VERSION=0.0.22
 SHELL:= /bin/bash
 
 all:
+	make test
 	make package
 	make upload
 	make package-test
 
+# Update version based on content of CHANGES.txt
+updateversion:
+	python misc/version.py
+	mv setup.py.tmp setup.py
+	mv hapiclient/hapi.py.tmp hapiclient/hapi.py
+	mv hapiclient/hapiplot.py.tmp hapiclient/hapi.py
+	mv Makefile.tmp Makefile
+
+commitversion:
+	git commit -a -m "Update version before tagging"
+	git push
+	git tag -a v$(VERSION) -m "Version "$(VERSION)
+
 package:
+	make updateversion
+	make commitversion
 	make README.txt
 	python setup.py sdist
-# The following results in package being named hapiclient-0.0.0 when installed.	
-#	python setup.py sdist --version $(VERSION)
-
-# Enter "deactivate" to exit virtual environment
-# On OS-X (at least), I need to close windows for next plot to be shown
-package-test:
-	pip install --user pipenv
-	python3 -m virtualenv env
-	source env/bin/activate && \
-		pip install hapiclient \
-		--index-url https://test.pypi.org/simple  \
-		--extra-index-url https://pypi.org/simple
-	env/bin/python3 hapi_demo.py
 
 upload: 
 	twine upload \
@@ -42,22 +51,47 @@ upload:
 README.txt: README.md
 	pandoc --from=markdown --to=rst --output=README.txt README.md
 
-# Use package in ./hapiclient
+# Use package in ./hapiclient instead of that installed by pip.
 install-local:
 	python setup.py develop
 
+# Test contents in repository using local install of python.
+test-local:
+	make install-local
+	pytest -v hapiclient/test/test_hapi.py
+	python3 hapi_demo.py
+	python setup.py develop --uninstall
+
+# Test package in a virtual environment
+# Enter "deactivate" to exit virtual environment
+# On OS-X (at least), I need to close windows for next plot to be shown 
+# (virutal environment has different windows manager than system)
+# Note: pytest uses script in local directory. Need to figure out how to
+# use version in installed package.
+package-test:
+	pip install --user pipenv
+	python3 -m virtualenv env
+	cp hapi_demo.py /tmp
+	source env/bin/activate && \
+		pip install 'hapiclient==$(VERSION)' \
+			--index-url https://test.pypi.org/simple  \
+			--extra-index-url https://pypi.org/simple && \
+		pytest -v hapiclient/test/test_hapi.py && \
+		env/bin/python3 /tmp/hapi_demo.py
+
 install:
-	python setup.py develop --uninstall; pip install 'hapiclient==$(VERSION)' --index-url https://test.pypi.org/simple
+	pip install 'hapiclient==$(VERSION)' --index-url https://test.pypi.org/simple
 	conda list | grep hapiclient
 	pip list | grep hapiclient
 
-# First run creates test files that subsequent tests use for comparison
+test:
+	pytest -v hapiclient/test/test_hapi.py
+
+# Run pytest twice because first run creates test files that
+# subsequent tests use for comparison.
 test-clean:
 	rm -f hapiclient/test/data/*
 	pytest -v hapiclient/test/test_hapi.py
-	pytest -v hapiclient/test/test_hapi.py
-
-test:
 	pytest -v hapiclient/test/test_hapi.py
 
 # Not used

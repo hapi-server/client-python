@@ -1,8 +1,3 @@
-# TODO: Use mark-up for docs: https://docs.python.org/devguide/documenting.html
-
-# Written to match style/capabilities/interface of hapi.m at
-# https://github.com/hapi-server/client-matlab
-
 import os
 import re
 import json
@@ -17,6 +12,8 @@ import pandas
 sys.tracebacklimit = 1000  # Turn tracebacklimit back to default
 
 def error(msg):
+    # TODO: Return more specific exception. Will need to update test_hapi.py
+    # because it keys on exception value for certain tests.
     print('\n')
     sys.tracebacklimit = 0  # Suppress traceback
     # TODO: The problem with this is that it changes the traceback
@@ -31,7 +28,6 @@ else:
     # Tested with sys.version = 2.7.15 |Anaconda, Inc.| (default, May  1 2018, 18:37:05) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
     import urllib
     import urllib2
-
 
 def urlerror(e, url):
 
@@ -56,7 +52,6 @@ def urlerror(e, url):
     else:
         unknown()
 
-
 def urlopen(url):
     if sys.version_info[0] > 2:
         try:
@@ -71,7 +66,6 @@ def urlopen(url):
 
     return res
 
-
 def urlretrieve(url, fname):
     if sys.version_info[0] > 2:
         try:
@@ -85,35 +79,34 @@ def urlretrieve(url, fname):
             urlerror(e, url)
 # End compatability code
 
-
 def jsonparse(res):
     try:
         return json.load(res)
     except:
         error('Could not parse JSON from %s' % res.geturl())
 
-
 def printf(format, *args): sys.stdout.write(format % args)
 
-
 def hapi(*args, **kwargs):
-    """
-    This is the primary interface to the HAPI client.
+    """This is the primary interface to the HAPI client.
     
-    See also https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb
+    Version: 0.0.4
 
     Parameters
     ----------
     server : str
-        A string with the url to the HAPI compliant server
+        A string with the url to the HAPI compliant server. A HAPI URL
+        always ends with "/hapi".
     dataset : str
-        A string specifying the dataset
+        A string specifying a dataset from a server
     parameters: str
         Comma-separated list of parameters in dataset
     start_time: str
         The start time of the requested data
     end_time: str
-        The end time of the requested data
+        The end time of the requested data; end times are exclusive - the
+        last data record returned by a HAPI server should be before the
+        given end_time.
     options : dict
         The following options are available.
             logging (False) - Log to console
@@ -127,21 +120,21 @@ def hapi(*args, **kwargs):
     result : various
         Results depend on the input parameters.
 
-        Servers = HAPI() or HAPI() returns a list of data server URLs from
+        Servers = hapi() or hapi() returns a list of data server URLs from
         https://github.com/hapi-server/data-specification/blob/master/servers.txt
 
-        Dataset = HAPI(Server) returns a dict of datasets available from a
+        Dataset = hapi(Server) returns a dict of datasets available from a
         URL given by the string Server.  The dictionary structure follows the
         HAPI JSON structure.
 
-        Parameters = HAPI(Server, Dataset) returns a dictionary of parameters
+        Parameters = hapi(Server, Dataset) returns a dictionary of parameters
         in the string Dataset.  The dictionary structure follows the HAPI JSON
         structure.
 
-        Metadata = HAPI(Server, Dataset, Parameters) or HAPI(...) returns metadata
+        Metadata = hapi(Server, Dataset, Parameters) or HAPI(...) returns metadata
         associated each parameter in the comma-separated string Parameters.
 
-        Data = HAPI(Server, Dataset, Parameters, Start, Stop) returns a dictionary
+        Data = hapi(Server, Dataset, Parameters, Start, Stop) returns a dictionary
         with elements corresponding to Parameters, e.g., if
         Parameters='scalar,vector' and the number of records returned is N, then
 
@@ -162,7 +155,11 @@ def hapi(*args, **kwargs):
         >>> parameters = 'X_GSE,Y_GSE,Z_GSE'
         >>> opts = {'logging': True, 'use_cache': True}
         >>> data, meta = hapi(server, dataset, parameters, start, stop, **opts)
+
+       See also https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynbs
     """
+
+    __version__ = '0.0.4' # This is modified by misc/setversion.py. See Makefile.
 
     nin = len(args)
 
@@ -493,10 +490,10 @@ def hapi(*args, **kwargs):
                     table = np.genfromtxt(fnamecsv, dtype=None, delimiter=',',
                                           encoding='utf-8')
                     # table is a 1-D array. Each element is a row in the file.
-                    # If the data types are not the same for each column,
+                    # - If the data types are not the same for each column,
                     # the elements are tuples with length equal to the number
                     # of columns.
-                    # If the data types are the same for each column, which
+                    # - If the data types are the same for each column, which
                     # will happen if only Time is requested or Time and
                     # a string or isotime parameter is requested, then table
                     # has rows that are 1-D numpy arrays.
@@ -556,7 +553,7 @@ def hapi(*args, **kwargs):
                         # Works as expected in numpy 1.10.4
                         data[pnames[i]] = np.squeeze(np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1]+1)], shape))
 
-                # If any of the parameters are strings and do not have an associated
+                # If any of the parameters are strings that do not have an associated
                 # length in the metadata, they will have dtype='O' (object).
                 # These parameters must be converted to have a dtype='SN', where
                 # N is the maximum string length. N is determined automatically
@@ -569,7 +566,7 @@ def hapi(*args, **kwargs):
                         dtype = dt[i]
                     dt2.append(dtype)
 
-                # Create new ndarray
+                # Create new N-D array
                 data2 = np.ndarray(data.shape, dt2)
 
                 for i in range(0, len(pnames)):

@@ -23,6 +23,8 @@ def hapiplot(data, meta, **kwargs):
     """
     Plot response from HAPI server.
 
+    Version: __version__
+
     See also https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb
 
     Example
@@ -36,7 +38,11 @@ def hapiplot(data, meta, **kwargs):
         >>> data, meta = hapi(server, dataset, parameters, start, stop, **opts)
         >>> hapiplot(data,meta)
 
-    """    
+       See also https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynbs
+    """
+
+    __version__ = '0.0.1' # This is modified by misc/setversion.py. See Makefile.
+ 
     # TODO: Allow back-end to be specified as keyword
     # matplotlib.use(backend, warn=False, force=True) 
     
