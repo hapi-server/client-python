@@ -22,7 +22,7 @@ all:
 	make test-local
 	make package
 	make upload
-	make package-test
+	make test-package
 
 # Update version based on content of CHANGES.txt
 updateversion:
@@ -60,6 +60,7 @@ install-local:
 
 # Test contents in repository using local install of python.
 test-local:
+	pip install --user pipenv	
 	make install-local
 	pytest -v hapiclient/test/test_hapi.py
 	python3 hapi_demo.py
@@ -72,14 +73,15 @@ test-local:
 # Note: pytest uses script in local directory. Need to figure out how to
 # use version in installed package.
 test-package:
-	pip install --user pipenv
+	rm -rf env
 	python3 -m virtualenv env
 	cp hapi_demo.py /tmp
 	source env/bin/activate && \
+		pip install pytest && \
 		pip install 'hapiclient==$(VERSION)' \
 			--index-url $(URL)/simple  \
 			--extra-index-url https://pypi.org/simple && \
-		pytest -v hapiclient/test/test_hapi.py && \
+		env/bin/pytest -v hapiclient/test/test_hapi.py && \
 		env/bin/python3 /tmp/hapi_demo.py
 
 install:
@@ -88,6 +90,7 @@ install:
 	pip list | grep hapiclient
 
 test:
+	pip install --user pipenv
 	pytest -v hapiclient/test/test_hapi.py
 
 # Run pytest twice because first run creates test files that
@@ -117,6 +120,7 @@ clean:
 	- rm -f MANIFEST
 	- rm -rf .pytest_cache/
 	- rm -rf hapiclient.egg-info/
+
 
 
 
