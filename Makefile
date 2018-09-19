@@ -11,7 +11,7 @@
 #URL=https://test.pypi.org/
 #REP=pypitest
 
-URL=https://pypi.org/
+URL=https://upload.pypi.org/
 REP=pypi
 
 # VERSION is updated in make updateversion step.
@@ -48,7 +48,7 @@ upload:
 		-r $(REP) dist/hapiclient-$(VERSION).tar.gz \
 		--config-file misc/.pypirc \
 		&& \
-		echo "Uploaded to $(URL)project/hapiclient/"
+	echo Uploaded to $(subst upload.,,$(URL))project/hapiclient/
 
 README.txt: README.md
 	pandoc --from=markdown --to=rst --output=README.txt README.md
@@ -70,7 +70,7 @@ test-local:
 # (virutal environment has different windows manager than system)
 # Note: pytest uses script in local directory. Need to figure out how to
 # use version in installed package.
-package-test:
+test-package:
 	pip install --user pipenv
 	python3 -m virtualenv env
 	cp hapi_demo.py /tmp
@@ -115,4 +115,5 @@ clean:
 	- rm -rf dist
 	- rm -f MANIFEST
 	- rm -rf .pytest_cache/
+
 
