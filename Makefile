@@ -38,6 +38,7 @@ commitversion:
 	git tag -a v$(VERSION) -m "Version "$(VERSION)
 
 package:
+	make clean
 	make updateversion
 	make commitversion
 	make README.txt
@@ -115,5 +116,6 @@ clean:
 	- rm -rf dist
 	- rm -f MANIFEST
 	- rm -rf .pytest_cache/
+
 
 
