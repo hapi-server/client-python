@@ -15,11 +15,11 @@ URL=https://upload.pypi.org/
 REP=pypi
 
 # VERSION is updated in make updateversion step.
-VERSION=0.0.1
+VERSION=0.0.2
 SHELL:= /bin/bash
 
 all:
-	make test
+	make test-local
 	make package
 	make upload
 	make package-test
@@ -116,6 +116,8 @@ clean:
 	- rm -rf dist
 	- rm -f MANIFEST
 	- rm -rf .pytest_cache/
+	- rm -rf hapiclient.egg-info/
+
 
 
 
