@@ -7,13 +7,15 @@
 # To test a repository contents, use
 # make test-local
 
-# For testing, change all occurences of
-# pypi.org to test.pypi.org 
-# and 
-# -r pypi to -r pypitest 
+# For using the pypi test repository, use
+#URL=https://test.pypi.org/
+#REP=pypitest
+
+URL=https://pypi.org/
+REP=pypi
 
 # VERSION is updated in make updateversion step.
-VERSION=0.0.22
+VERSION=0.0.1
 SHELL:= /bin/bash
 
 all:
@@ -43,10 +45,10 @@ package:
 
 upload: 
 	twine upload \
-		-r pypitest dist/hapiclient-$(VERSION).tar.gz \
+		-r $(REP) dist/hapiclient-$(VERSION).tar.gz \
 		--config-file misc/.pypirc \
 		&& \
-		echo "Uploaded to https://test.pypi.org/project/hapiclient/"
+		echo "Uploaded to $(URL)project/hapiclient/"
 
 README.txt: README.md
 	pandoc --from=markdown --to=rst --output=README.txt README.md
@@ -74,13 +76,13 @@ package-test:
 	cp hapi_demo.py /tmp
 	source env/bin/activate && \
 		pip install 'hapiclient==$(VERSION)' \
-			--index-url https://test.pypi.org/simple  \
+			--index-url $(URL)/simple  \
 			--extra-index-url https://pypi.org/simple && \
 		pytest -v hapiclient/test/test_hapi.py && \
 		env/bin/python3 /tmp/hapi_demo.py
 
 install:
-	pip install 'hapiclient==$(VERSION)' --index-url https://test.pypi.org/simple
+	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple
 	conda list | grep hapiclient
 	pip list | grep hapiclient
 
@@ -113,3 +115,4 @@ clean:
 	- rm -rf dist
 	- rm -f MANIFEST
 	- rm -rf .pytest_cache/
+

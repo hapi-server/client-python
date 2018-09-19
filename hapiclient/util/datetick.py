@@ -7,7 +7,7 @@ import matplotlib
 gui_env = ['Qt5Agg','QT4Agg','GTKAgg','TKAgg','WXAgg']
 for gui in gui_env:
     try:
-        print("xtesting", gui)
+        #print("xtesting", gui)
         matplotlib.use(gui,warn=False, force=True)
         import matplotlib.pyplot as plt
         break

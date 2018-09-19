@@ -13,20 +13,24 @@ import os
 print(os.popen("pip install hapiclient").read())
 ```
 
-## Demo - Jypyter Notebook
+## Demo
 
-The result of running the demo can be viewed in the [Jupyter Notebook](https://jupyter-notebook.readthedocs.io/en/stable/examples/Notebook/Notebook%20Basics.html) at [hapi_demo.ipynb](https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb). To execute this demo locally, execute
+The [demo](https://github.com/hapi-server/client-python/hapi_demo.py) shows example usage of this package. The output of this demo after execution in a [Jupyter Notebook](https://jupyter-notebook.readthedocs.io/en/stable/examples/Notebook/Notebook%20Basics.html) can be viewed at [hapi_demo.ipynb](https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb).
+
+### Jypyter Notebook
+
+To execute the demo in a [Jupyter Notebook](https://jupyter-notebook.readthedocs.io/en/stable/examples/Notebook/Notebook%20Basics.html), execute
 ```
 curl -L -O https://rawgithub.com/hapi-server/client-python/master/hapi_demo.ipynb
 jupyter-notebook hapi_demo.ipynb
 ```
-(To run code in a cell after editng it, enter <code>SHIFT+ENTER</code>.)
+(A web page should open. To run code in a cell after editng it, enter <code>SHIFT+ENTER</code>.)
 
-The following downloads and executes the [demo](https://github.com/hapi-server/client-python/hapi_demo.py).
+### Python Command Line
 
-## Demo - Python Command Line
+The following Python commands downloads and executes the [demo](https://github.com/hapi-server/client-python/hapi_demo.py).
 
-### Python 2
+#### Python 2
 ```python
 # D/L and save hapi_demo.py
 import urllib
@@ -35,7 +39,7 @@ urllib.urlretrieve(url,'hapi_demo.py')
 exec(open("hapi_demo.py").read(), globals())
 ```
 
-### Python 3
+#### Python 3
 ```python
 # D/L and save hapi_demo.py
 import urllib.request
