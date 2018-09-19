@@ -15,7 +15,7 @@ print(os.popen("pip install hapiclient").read())
 
 ## Demo - Jypyter Notebook
 
-The result of running the demo can be viewed in the (Jupyter Notebook)[https://jupyter-notebook.readthedocs.io/en/stable/examples/Notebook/Notebook%20Basics.html] at (hapi_demo.ipynb)[https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb]. To execute this demo locally, execute
+The result of running the demo can be viewed in the [Jupyter Notebook](https://jupyter-notebook.readthedocs.io/en/stable/examples/Notebook/Notebook%20Basics.html) at [hapi_demo.ipynb](https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb). To execute this demo locally, execute
 ```
 curl -L -O https://rawgithub.com/hapi-server/client-python/master/hapi_demo.ipynb
 jupyter-notebook hapi_demo.ipynb
