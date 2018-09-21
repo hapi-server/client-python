@@ -4,7 +4,7 @@ import warnings
 import re
 import sys
 from hapiclient.util.datetick import datetick
-
+  
 # To allow to run from command line, find a back-end that works
 import matplotlib
 gui_env = ['Qt5Agg','QT4Agg','GTKAgg','TKAgg','WXAgg']
@@ -61,15 +61,17 @@ def hapiplot(data, meta, **kwargs):
     if not fignums:
         fignums = [0]
     lastfn = fignums[-1]
-    
+
     try:
         # Will fail if no pandas, if YYY-DOY format and other valid ISO 8601
         # dates such as 2001-01-01T00:00:03.Z
         Time = pandas.to_datetime(data['Time'].astype('U'), infer_datetime_format=True)
+        #print('using pandas to_datetime')
     except:
         # Slow and manual parsing.
+        #print('using matplotlib datetime')
         Time = hapitime2datetime(data['Time'].astype('U'))
-        
+    
     # In the following, the x parameter is a datetime object.
     # If the x parameter is a number, would need to use plt.plot_date()
     # and much of the code for datetick.py would need to be modified.
@@ -179,7 +181,8 @@ def hapitime2datetime(Time):
     #print('%.4fs' % toc)
     
     tic = time.time()
-    dateTimeString = mpl.num2date(dateTime)
+    import pytz
+    dateTimeString = mpl.num2date(dateTime,tz=pytz.timezone('utc'))
     toc = time.time()-tic
     #print('%.4fs' % toc)
     return dateTimeString
