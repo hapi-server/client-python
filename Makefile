@@ -1,11 +1,16 @@
-# Make package, upload to pypi.org, and test package
+# Test repository contents using system packages:
+#   make repository-test
+#
+# Make and test a candidate release package in virtual environment:
 # 1. Update CHANGES.txt to have a new version line
-# 2. Execute "make all"
-# 3. Execute "make test-package" (May fail if new version takes time to be
-#    available at pypi.org. Usually takes a few minutes.)
-
-# To test a repository contents, use
-# make test-local
+# 2. make package
+#
+# Make release package, upload to pypi.org, and test package
+# 1. make release
+# 2. Wait 10 minutes and execute "make release-test" 
+#    (Will fail unti new version is available at pypi.org for pip install. 
+#     Usually takes 5-10 minutes even though web page is immediatly
+#     updated.)
 
 # For using the pypi test repository, use
 #URL=https://test.pypi.org/
@@ -14,65 +19,23 @@
 URL=https://upload.pypi.org/
 REP=pypi
 
-# VERSION is updated in make updateversion step.
-VERSION=0.0.3
+# VERSION below is updated in make version-update step.
+VERSION=0.0.4
 SHELL:= /bin/bash
 
-all:
-	make test-local
-	make package
-	make upload
-	make test-package
+release:
+	make version-tag
+	make release-upload
 
-# Update version based on content of CHANGES.txt
-updateversion:
-	python misc/version.py
-	mv setup.py.tmp setup.py
-	mv hapiclient/hapi.py.tmp hapiclient/hapi.py
-	mv hapiclient/hapiplot.py.tmp hapiclient/hapi.py
-	mv Makefile.tmp Makefile
-
-commitversion:
-	git commit -a -m "Update version before tagging"
-	git push
-	git tag -a v$(VERSION) -m "Version "$(VERSION)
-
-package:
-	make clean
-	make updateversion
-	make commitversion
-	make README.txt
-	python setup.py sdist
-
-upload: 
+release-upload: 
 	twine upload \
 		-r $(REP) dist/hapiclient-$(VERSION).tar.gz \
 		--config-file misc/.pypirc \
 		&& \
 	echo Uploaded to $(subst upload.,,$(URL))project/hapiclient/
 
-README.txt: README.md
-	pandoc --from=markdown --to=rst --output=README.txt README.md
-
-# Use package in ./hapiclient instead of that installed by pip.
-install-local:
-	python setup.py develop
-
-# Test contents in repository using local install of python.
-test-local:
-	pip install --user pipenv	
-	make install-local
-	pytest -v hapiclient/test/test_hapi.py
-	python3 hapi_demo.py
-	python setup.py develop --uninstall
-
-# Test package in a virtual environment
-# Enter "deactivate" to exit virtual environment
-# On OS-X (at least), I need to close windows for next plot to be shown 
-# (virutal environment has different windows manager than system)
-# Note: pytest uses script in local directory. Need to figure out how to
-# use version in installed package.
-test-package:
+# See comments above package-test
+release-test:
 	rm -rf env
 	python3 -m virtualenv env
 	cp hapi_demo.py /tmp
@@ -84,13 +47,67 @@ test-package:
 		env/bin/pytest -v hapiclient/test/test_hapi.py && \
 		env/bin/python3 /tmp/hapi_demo.py
 
+package:
+	make clean
+	make version-update
+	make README.txt
+	make repository-test
+	python setup.py sdist
+	make package-test
+
+# Test package in a virtual environment
+# Enter "deactivate" to exit virtual environment
+# On OS-X (at least), I need to close windows for next plot to be shown 
+# (virutal environment has different windows manager than system)
+# Note: pytest uses script in local directory. Need to figure out how to
+# use version in installed package.
+package-test:
+	rm -rf env
+	python3 -m virtualenv env
+	cp hapi_demo.py /tmp
+	source env/bin/activate && \
+		pip install pytest && \
+		pip install deepdiff && \
+		pip install dist/hapiclient-$(VERSION).tar.gz \
+			--index-url $(URL)/simple  \
+			--extra-index-url https://pypi.org/simple && \
+		env/bin/pytest -v hapiclient/test/test_hapi.py && \
+		env/bin/python3 /tmp/hapi_demo.py
+
+# Update version based on content of CHANGES.txt
+version-update:
+	python misc/version.py
+	mv setup.py.tmp setup.py
+	mv hapiclient/hapi.py.tmp hapiclient/hapi.py
+	mv hapiclient/hapiplot.py.tmp hapiclient/hapi.py
+	mv Makefile.tmp Makefile
+
+version-tag:
+	git commit -a -m "Update version before tagging"
+	git push
+	git tag -a v$(VERSION) -m "Version "$(VERSION)
+
+README.txt: README.md
+	pandoc --from=markdown --to=rst --output=README.txt README.md
+
+# Use package in ./hapiclient instead of that installed by pip.
+install-local:
+	python setup.py develop
+
+# Test contents in repository using system install of python.
+# 'python setup.py develop' creates symlinks in system package directory.
+repository-test:
+	python setup.py develop
+	pytest -v hapiclient/test/test_hapi.py
+	python3 hapi_demo.py
+	python setup.py develop --uninstall
+
 install:
 	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple
 	conda list | grep hapiclient
 	pip list | grep hapiclient
 
 test:
-	pip install --user pipenv
 	pytest -v hapiclient/test/test_hapi.py
 
 # Run pytest twice because first run creates test files that
@@ -120,9 +137,6 @@ clean:
 	- rm -f MANIFEST
 	- rm -rf .pytest_cache/
 	- rm -rf hapiclient.egg-info/
-
-
-
 
 
 

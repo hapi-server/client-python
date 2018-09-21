@@ -17,10 +17,14 @@ for gui in gui_env:
 def datetick(dir, **kwargs):
     '''
     datetick('x') or datetick('y') formats the major and minor tick labels
-    of the current plot.
+    of the current figure.
     Example:
+        import datetime as dt
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from hapiclient.util.datetick import datetick
         d1 = dt.datetime(1900, 1, 2)
-        d2 = datetime.fromordinal(i + datetime.toordinal(d1))
+        d2 = dt.datetime.fromordinal(10 + dt.datetime.toordinal(d1))
         x = np.array([d1, d2], dtype=object)
         y = [0.0,1.0]
         plt.clf()
