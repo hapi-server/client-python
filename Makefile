@@ -7,9 +7,10 @@
 #
 # Make release package, upload to pypi.org, and test package
 # 1. make release
-# 2. Wait 10 minutes and execute "make release-test" 
+# 2. Wait 10 minutes and execute
+# 3. make release-test
 #    (Will fail unti new version is available at pypi.org for pip install. 
-#     Usually takes 5-10 minutes even though web page is immediatly
+#     Usually takes 5-10 minutes even though web page is immediately
 #     updated.)
 
 # For using the pypi test repository, use
@@ -84,9 +85,10 @@ version-update:
 	mv Makefile.tmp Makefile
 
 version-tag:
-	git commit -a -m "Update version before tagging"
+	git commit -a -m "Last $(VERSION) commit"
 	git push
 	git tag -a v$(VERSION) -m "Version "$(VERSION)
+	git push --tags
 
 README.txt: README.md
 	pandoc --from=markdown --to=rst --output=README.txt README.md
