@@ -589,7 +589,7 @@ def hapi(*args, **kwargs):
 
         if DOPTS["cache"]:
             if DOPTS['logging']:
-                printf('Writing %s ...', fnamenpy)
+                printf('Writing %s ... ', fnamenpy)
             if missing_length:
                 np.save(fnamenpy, data2)
             else:
@@ -599,10 +599,10 @@ def hapi(*args, **kwargs):
                 printf('Done.\n')
 
             if DOPTS['logging']:
-                printf('Writing %s ...', fnamepkl)
+                printf('Writing %s ... ', fnamepkl)
             import pickle
             f = open(fnamepkl, 'wb')
-            pickle.dump(meta, f)
+            pickle.dump(meta, f, protocol=2)
             f.close()
             if DOPTS['logging']:
                 printf('Done.\n')
