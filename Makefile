@@ -20,7 +20,7 @@ URL=https://upload.pypi.org/
 REP=pypi
 
 # VERSION below is updated in make version-update step.
-VERSION=0.0.4
+VERSION=0.0.5
 SHELL:= /bin/bash
 
 release:
@@ -41,6 +41,7 @@ release-test:
 	cp hapi_demo.py /tmp
 	source env/bin/activate && \
 		pip install pytest && \
+		pip install deepdiff && \
 		pip install 'hapiclient==$(VERSION)' \
 			--index-url $(URL)/simple  \
 			--extra-index-url https://pypi.org/simple && \
@@ -91,12 +92,14 @@ README.txt: README.md
 	pandoc --from=markdown --to=rst --output=README.txt README.md
 
 # Use package in ./hapiclient instead of that installed by pip.
+# This seems to not work in Spyder.
 install-local:
 	python setup.py develop
 
 # Test contents in repository using system install of python.
 # 'python setup.py develop' creates symlinks in system package directory.
 repository-test:
+	make README.txt	
 	python setup.py develop
 	pytest -v hapiclient/test/test_hapi.py
 	python3 hapi_demo.py
@@ -137,6 +140,8 @@ clean:
 	- rm -f MANIFEST
 	- rm -rf .pytest_cache/
 	- rm -rf hapiclient.egg-info/
+
+
 
 
 

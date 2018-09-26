@@ -6,10 +6,13 @@ import sys
 # Get last version in CHANGES.txt
 print("Finding version information from CHANGES.txt")
 fin = open("CHANGES.txt")
+version = '0.0.0'
 for line in fin:
-	print(line)
-	version = re.sub(r"^v(.*):.*", r"\1", line)
+	(repl,n) = re.subn(r"^v(.*):.*", r"\1", line)
+	if n > 0:
+		version = repl
 fin.close()
+version = version.rstrip()
 print("Using version = " + version)
 
 lines = ''

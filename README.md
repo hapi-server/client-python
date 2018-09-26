@@ -2,20 +2,21 @@
 
 ## Installation
 
-```
+Command line:
+```bash
 pip install hapiclient
 ```
 
-If you are using Anaconda, make sure that the version of `pip` used is the one distributed with Anaconda (`which pip` should show a location in an anaconda directory). As a failsave, on the Python command line, you can use
+If you are using Anaconda, make sure that the version of `pip` used is the one distributed with Anaconda (`which pip` should show a location in an anaconda directory). As a failsafe, on the Python command line, you can use
 
-```
+```python
 import os
 print(os.popen("pip install hapiclient").read())
 ```
 
 ## Demo
 
-The [demo](https://github.com/hapi-server/client-python/hapi_demo.py) shows example usage of this package. The output of this demo after execution in a [Jupyter Notebook](https://jupyter-notebook.readthedocs.io/en/stable/examples/Notebook/Notebook%20Basics.html) can be viewed at [hapi_demo.ipynb](https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb).
+The [hapi_demo.py](https://github.com/hapi-server/client-python/hapi_demo.py) shows example usage of this package. The output of this demo after execution in a [Jupyter Notebook](https://jupyter-notebook.readthedocs.io/en/stable/examples/Notebook/Notebook%20Basics.html) can be viewed at [hapi_demo.ipynb](https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb).
 
 ### Jypyter Notebook
 
