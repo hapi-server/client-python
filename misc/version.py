@@ -41,8 +41,8 @@ with open("setup.py.tmp", "w") as fout:
 fout.close()    
 print("Wrote setup.py.tmp")
 
-lines = ''
 for fname in ("hapiclient/hapi.py","hapiclient/hapiplot.py"):
+	lines = ''
 	fin = open(fname)
 	#sys.stdout.write("Updating version in " + fname + ".")
 	for lineo in fin:
