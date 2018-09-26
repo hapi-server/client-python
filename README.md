@@ -16,7 +16,7 @@ print(os.popen("pip install hapiclient").read())
 
 ## Demo
 
-The [hapi_demo.py](https://github.com/hapi-server/client-python/hapi_demo.py) shows example usage of this package. The output of this demo after execution in a [Jupyter Notebook](https://jupyter-notebook.readthedocs.io/en/stable/examples/Notebook/Notebook%20Basics.html) can be viewed at [hapi_demo.ipynb](https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb).
+The [hapi_demo.py](https://github.com/hapi-server/client-python/blob/master/hapi_demo.py) shows example usage of this package. The output of this demo after execution in a [Jupyter Notebook](https://jupyter-notebook.readthedocs.io/en/stable/examples/Notebook/Notebook%20Basics.html) can be viewed at [hapi_demo.ipynb](https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb).
 
 ### Jypyter Notebook
 
