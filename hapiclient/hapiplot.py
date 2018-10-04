@@ -1,16 +1,16 @@
 import numpy as np
-import pandas
 import warnings
 import re
 import sys
 from hapiclient.util.datetick import datetick
+from hapiclient.hapi import hapitime2datetime
   
 # To allow to run from command line, find a back-end that works
 import matplotlib
 gui_env = ['Qt5Agg','QT4Agg','GTKAgg','TKAgg','WXAgg']
 for gui in gui_env:
     try:
-        #print("testing", gui)
+        #print("Trying MatPlotLib back-end ", gui)
         matplotlib.use(gui,warn=False, force=True)
         from matplotlib import pyplot as plt
         break
@@ -43,8 +43,9 @@ def hapiplot(data, meta, **kwargs):
 
     __version__ = '0.0.1' # This is modified by misc/setversion.py. See Makefile.
  
-    # TODO: Allow back-end to be specified as keyword
-    # matplotlib.use(backend, warn=False, force=True) 
+    # TODO: Allow back-end to be specified as keyword, e.g.,
+    # hapiplot(data,meta,backend='Qt5Agg') ->
+    #   matplotlib.use(backend, warn=False, force=True) 
     
     # Default options
     DOPTS = {}
@@ -62,15 +63,7 @@ def hapiplot(data, meta, **kwargs):
         fignums = [0]
     lastfn = fignums[-1]
 
-    try:
-        # Will fail if no pandas, if YYY-DOY format and other valid ISO 8601
-        # dates such as 2001-01-01T00:00:03.Z
-        Time = pandas.to_datetime(data['Time'].astype('U'), infer_datetime_format=True)
-        #print('using pandas to_datetime')
-    except:
-        # Slow and manual parsing.
-        #print('using matplotlib datetime')
-        Time = hapitime2datetime(data['Time'].astype('U'))
+    Time = hapitime2datetime(data['Time'])
     
     # In the following, the x parameter is a datetime object.
     # If the x parameter is a number, would need to use plt.plot_date()
@@ -122,67 +115,3 @@ def hapiplot(data, meta, **kwargs):
 
         # Important: This must go after savefig or else the png is blank.
         plt.show()
-
-def hapitime2datetime(Time):
-
-    import re
-    import time
-    import matplotlib.dates as mpl
-    from datetime import datetime
-
-    end = len(Time[0])-1
-    d = 0
-    # Catch case where no trailing Z
-    if not re.match(r".*Z$", Time[0]):
-        end = len(Time[0])
-        d = 1
-
-    tic = time.time()
-    dateTime = np.zeros(len(Time), dtype='d')
-    (h,hm,hms) = (False, False, False)
-    if re.match(r"[0-9]{4}-[0-9]{3}", Time[0]):
-        fmt = "%Y-%j"
-        to = 9
-        if len(Time[0]) == 12-d:
-            h = True
-        if len(Time[0]) == 15-d:
-            hm = True
-        if len(Time[0]) >= 18-d:
-            hms = True
-    elif re.match(r"[0-9]{4}-[0-9]{2}", Time[0]):
-        fmt = "%Y-%m-%d"
-        to = 11
-        if len(Time[0]) == 14-d:
-            h = True
-        if len(Time[0]) == 17-d:
-            hm = True
-        if len(Time[0]) >= 20-d:
-            hms = True
-    else:
-        raise
-            
-    DS = Time[0][0:to-1]
-    DN = float(datetime.strptime(DS, fmt).toordinal())
-    for i in range(0, len(Time)):
-        if Time[i][0:to-1] != DS:
-            DS = Time[0:to-1]
-            DN = float(datetime.strptime(DS, fmt).toordinal())
-        # TODO: Do different loop for each case for speed
-        if hms:
-            dateTime[i] = DN + float(Time[i][to:to+2])/24. + float(Time[i][to+3:to+5])/(24.*60.) + float(Time[i][to+6:end])/(24.*3600.)
-        elif hm:
-            dateTime[i] = DN + float(Time[i][to:to+2])/24. + float(Time[i][to+3:to+5])/(24.*60.)
-        elif h:
-            dateTime[i] = DN + float(Time[i][to:to+2])/24.
-        else:
-            dateTime[i] = DN
-        i = i+1
-    toc = time.time()-tic
-    #print('%.4fs' % toc)
-    
-    tic = time.time()
-    import pytz
-    dateTimeString = mpl.num2date(dateTime,tz=pytz.timezone('utc'))
-    toc = time.time()-tic
-    #print('%.4fs' % toc)
-    return dateTimeString

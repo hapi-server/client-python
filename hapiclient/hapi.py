@@ -15,7 +15,7 @@ def error(msg):
     # TODO: Return more specific exception. Will need to update test_hapi.py
     # because it keys on exception value for certain tests.
     print('\n')
-    sys.tracebacklimit = 0  # Suppress traceback
+#    sys.tracebacklimit = 0  # Suppress traceback
     # TODO: The problem with this is that it changes the traceback
     # limit globally.
     raise Exception(msg)
@@ -88,7 +88,10 @@ def jsonparse(res):
 def printf(format, *args): sys.stdout.write(format % args)
 
 def hapi(*args, **kwargs):
-    """This is the primary interface to the HAPI client.
+    """Request data from a HAPI server.
+    
+    For additional documentation and demonstration, see
+    https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb
     
     Version: 0.0.5
 
@@ -146,17 +149,9 @@ def hapi(*args, **kwargs):
     ----------
         * `HAPI Server Definition <https://github.com/hapi-server/client-python>`
 
-    Example
-    --------
-        >>> from hapiclient.hapi import hapi
-        >>> server = 'http://hapi-server.org/servers/SSCWeb/hapi'
-        >>> dataset = 'ace'
-        >>> start, stop = '2001-01-01T05:00:00', '2001-01-01T06:00:00'
-        >>> parameters = 'X_GSE,Y_GSE,Z_GSE'
-        >>> opts = {'logging': True, 'use_cache': True}
-        >>> data, meta = hapi(server, dataset, parameters, start, stop, **opts)
-
-       See also https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb
+    Examples
+    ----------
+       See https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb
     """
 
     __version__ = '0.0.5' # This is modified by misc/setversion.py. See Makefile.
@@ -319,7 +314,7 @@ def hapi(*args, **kwargs):
                 printf('Writing %s ... ', fnamejson)
             f = open(fnamejson, 'w')
             json.dump(meta, f, indent=4)
-            f.close
+            f.close()
             if DOPTS["logging"]:
                 printf('Done.\n')
 
@@ -611,3 +606,119 @@ def hapi(*args, **kwargs):
             return data2, meta
         else:
             return data, meta
+
+def hapitime2datetime(Time, **kwargs):
+
+    import re
+    import time
+    from datetime import datetime
+
+    DOPTS = {}
+    DOPTS.update({'logging': False})
+
+    # Override defaults
+    for key, value in kwargs.items():
+        if key in DOPTS:
+            DOPTS[key] = value
+        else:
+            print('Warning: Keyword option "%s" is not valid.' % key)
+
+    if type(Time) == list:
+        Time = np.asarray(Time)
+    if type(Time) == str or type(Time) == bytes:
+        Time = np.asarray([Time])
+
+    if type(Time) != np.ndarray:
+        print("error")
+    if type(Time[0]) == np.bytes_:
+        Time = Time.astype('U')
+
+    tic = time.time()
+
+    try:
+        # Will fail if no pandas, if YYY-DOY format and other valid ISO 8601
+        # dates such as 2001-01-01T00:00:03.Z
+        import pandas
+        # When infer_datetime_format is used, TimeStamp object returned.
+        # When format=... is used, datetime object is used.
+        Time = pandas.to_datetime(Time, infer_datetime_format=True).to_pydatetime()
+        toc = time.time() - tic
+        if DOPTS['logging']: printf("Pandas processing time = %.4fs, Input = %s\n", toc, Time[0])
+        return Time
+    except:
+        pass
+    
+    # Convert from Python byte literals to unicode string
+    # https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.astype.html
+    # https://www.b-list.org/weblog/2017/sep/05/how-python-does-unicode/
+    Time = Time.astype('U')
+
+    d = 0
+    # Catch case where no trailing Z
+    # Technically HAPI ISO 8601 must have trailing Z:
+    # https://github.com/hapi-server/data-specification/blob/master/hapi-dev/HAPI-data-access-spec-dev.md#representation-of-time
+    if not re.match(r".*Z$", Time[0]):
+        d = 1
+
+    pythonDateTime = np.empty(len(Time), dtype=object)
+
+    # Parse date part
+    # If h=True then hour given. 
+    # If hm=True, then hour and minute given.
+    # If hms=True, them hour, minute, and second given.
+    (h,hm,hms) = (False, False, False)
+        
+    if len(Time[0]) == 4 or (len(Time[0]) == 5 and Time[0][-1] == "Z"):
+        fmt = '%Y'
+        to = 5
+    elif re.match(r"[0-9]{4}-[0-9]{3}", Time[0]):
+        # YYYY-DOY format
+        fmt = "%Y-%j"
+        to = 9
+        if len(Time[0]) >= 12-d:
+            h = True
+        if len(Time[0]) >= 15-d:
+            hm = True
+        if len(Time[0]) >= 18-d:
+            hms = True
+    elif re.match(r"[0-9]{4}-[0-9]{2}", Time[0]):
+        # YYYY-MM-DD format
+        fmt = "%Y-%m"
+        to = 8
+        if len(Time[0]) > 8:
+            fmt = fmt + "-%d"
+            to = 11
+        if len(Time[0]) >= 14-d:
+            h = True
+        if len(Time[0]) >= 17-d:
+            hm = True
+        if len(Time[0]) >= 20-d:
+            hms = True
+    else:
+        # TODO: Also check for invalid time string lengths.
+        # Should use JSON schema regular expressions for allowed versions of ISO 8601.
+        raise ValueError('First time value %s is not a valid HAPI Time' % Time[0])
+
+    fmto = fmt
+    if h:
+        fmt = fmt + "T%H"
+    if hm:
+        fmt = fmt + ":%M"
+    if hms:
+        fmt = fmt + ":%S"
+        
+    if re.match(r".*\.[0-9].*$", Time[0]):
+        fmt = fmt + ".%f"
+    if re.match(r".*\.$", Time[0]) or re.match(r".*\.Z$", Time[0]):
+        fmt = fmt + "."
+
+    if re.match(r".*Z$", Time[0]):
+        fmt = fmt + "Z"        
+
+    for i in range(0, len(Time)):
+        pythonDateTime[i] = datetime.strptime(Time[i],fmt)
+
+    toc = time.time() - tic
+    if DOPTS['logging']: printf("Manual processing time = %.4fs, Input = %s, fmto = %s, fmt = %s\n", toc, Time[0], fmto, fmt)
+
+    return pythonDateTime

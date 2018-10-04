@@ -1,67 +1,428 @@
 import os
 import datetime
+import dateutil.parser
 import matplotlib.pyplot as plt
 import numpy as np
-from datetick import datetick
+from hapiclient.util.datetick import datetick
 
-# Plots two points separated by varying time ranges.
-# For testing date/time tick labeling code datetick.py.
+def plotit(ds1,ds2):
+    # Plots two points separated by varying time ranges.
+    # For testing date/time tick labeling code datetick.py.
+    dt1 = dateutil.parser.parse(ds1)
+    dt2 = dateutil.parser.parse(ds2)
+    x = np.array([dt1,dt2], dtype=object)
+    y = [0.0,0.0]
+    plt.clf()
+    plt.plot(x, y, '*')
+    datetick('x')
+    plt.grid()
+
+###############################################################################
+# > 50 years
+
+# Simple
+plotit('1950-01-01T00:00:00Z','2012-01-04T00:00:00Z')
+
+###############################################################################
+# 366*8 days <= dt < 366*15 days
+
+# Simple
+plotit('2001-01-01T00:00:00Z','2009-01-04T00:00:00Z')
+plotit('2001-01-01T00:00:00Z','2012-01-04T00:00:00Z')
+
+###############################################################################
+# 366*2 days <= dt < 366*8 days
+
+# Simple
+plotit('2001-01-01T00:00:00Z','2003-01-04T00:00:00Z')
+plotit('2001-01-01T00:00:00Z','2008-12-31T00:00:00Z')
+plotit('2001-04-01T00:00:00Z','2002-04-30T00:00:00Z')
+
+
+###############################################################################
+# 367 <= dt < 366*2 days
+
+# Simple
+plotit('2001-01-01T00:00:00Z','2002-01-03T00:00:00Z')
+plotit('2001-01-01T00:00:00Z','2002-12-31T00:00:00Z')
+plotit('2001-04-01T00:00:00Z','2002-04-30T00:00:00Z')
+
+###############################################################################
+#183 <= dt < 367 days
+
+# Simple
+plotit('2001-01-01T00:00:00Z','2001-07-02T00:00:00Z')
+plotit('2001-01-01T00:00:00Z','2001-12-31T00:00:00Z')
+plotit('2001-02-12T00:00:00Z','2002-01-31T00:00:00Z')
+
+###############################################################################
+# 60 <= dt < 183 days
+
+# Simple
+plotit('2001-01-01T00:00:00Z','2001-05-02T00:00:00Z')
+plotit('2001-01-01T00:00:00Z','2001-02-27T23:00:00Z')
+plotit('2001-12-31T00:00:00Z','2002-02-26T23:00:00Z')
     
-#for i in (15,31,59,182,366,400,731):
-#    d1 = datetime(1900, 1, 2)
-#    d2 = datetime.fromordinal(datetime.toordinal(d1) + i)
+###############################################################################
+# 32<= dt < 60 days
 
-# Test 1-second cadence labels
-test = 'sec'
-tmpdir = "./tmp/"+test
-if not os.path.exists(tmpdir): os.makedirs(tmpdir)
-for j in range(1,2): # Seconds after 2000-01-01 for first point
-    for i in range(1,2): # Time separation between points
-        d1 = datetime.datetime(2000, 1, 1) + datetime.timedelta(seconds=j)
-        d2 = d1 + datetime.timedelta(seconds=i)
+# Simple
+plotit('2001-01-01T00:00:00Z','2001-02-02T00:00:00Z')
+plotit('2001-01-01T00:00:00Z','2001-02-27T23:00:00Z')
+plotit('2001-12-31T00:00:00Z','2002-02-26T23:00:00Z')
+
+###############################################################################
+# 16 <= dt < 32 days
+
+# Simple
+plotit('2001-01-01T00:00:00Z','2001-01-31T00:00:00Z')
+plotit('2001-01-01T00:00:00Z','2001-01-16T23:00:00Z')
+
+###############################################################################
+# 8 <= dt < 16 days
+
+# Simple
+plotit('2001-01-01T00:00:00Z','2001-01-09T00:00:00Z')
+plotit('2001-01-01T00:00:00Z','2001-01-16T23:00:00Z')
+# Span month boundary
+plotit('2001-01-30T00:00:00Z','2001-02-04T23:00:00Z')
+# Span year boundary
+plotit('2001-12-30T00:00:00Z','2002-01-04T23:00:00Z')
+
+###############################################################################
+# 4 <= dt < 8 days
+
+# Simple
+plotit('2001-01-01T00:00:00Z','2001-01-05T00:00:00Z')
+plotit('2001-01-01T00:00:00Z','2001-01-05T00:00:00Z')
+# Span month boundary
+plotit('2001-01-30T00:00:00Z','2001-02-01T23:00:00Z')
+# Span year boundary
+plotit('2001-12-30T00:00:00Z','2002-01-01T23:00:00Z')
+
+###############################################################################
+# 48 <= dt < 72 hours
+
+# Simple
+plotit('2001-01-01T00:00:00Z','2001-01-03T00:00:00Z')
+plotit('2001-01-01T00:00:00Z','2001-01-03T12:30:00Z')
+plotit('2001-01-01T00:00:00Z','2001-01-03T23:59:59Z')
+
+###############################################################################
+# 24 <= dt < 48 hours
+
+# Simple
+plotit('2001-01-01T00:00:00Z','2001-01-02T01:00:00Z')
+plotit('2001-01-01T00:00:00Z','2001-01-02T23:00:00Z')
+plotit('2001-01-01T06:00:00Z','2001-01-02T07:00:00Z')
+plotit('2001-01-01T00:30:00Z','2001-01-02T01:00:00Z')
+
+###############################################################################
+# 12 <= dt < 24 hours
+
+# Simple
+plotit('2001-01-01T00:00:00Z','2001-01-01T18:00:00Z')
+plotit('2001-01-01T00:00:00Z','2001-01-01T12:00:00Z')
+plotit('2001-01-01T00:00:00Z','2001-01-01T23:00:00Z')
+# Cross day boundary
+plotit('2001-01-01T02:00:00Z','2001-01-02T01:00:00Z')
+
+###############################################################################
+# 6 <= dt < 12 hours
+
+# Simple
+d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
+d2 = dateutil.parser.parse('2001-01-01T09:00:00Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Simple
+d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
+d2 = dateutil.parser.parse('2001-01-01T06:00:00Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Simple
+d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
+d2 = dateutil.parser.parse('2001-01-01T11:00:00Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+###############################################################################
+# 20 <= dt < 30 second
+
+# Simple
+d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
+d2 = dateutil.parser.parse('2001-01-01T00:00:21Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Simple
+d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
+d2 = dateutil.parser.parse('2001-01-01T00:00:29Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Cross minute boundary
+d1 = dateutil.parser.parse('2001-01-01T00:00:58Z')
+d2 = dateutil.parser.parse('2001-01-01T00:01:18Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Cross hour boundary
+d1 = dateutil.parser.parse('2001-01-01T00:59:58Z')
+d2 = dateutil.parser.parse('2001-01-01T01:00:28Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+###############################################################################
+# 1 <= dt < 5 second
+
+# Simple
+d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
+d2 = dateutil.parser.parse('2001-01-01T00:00:05Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Simple
+d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
+d2 = dateutil.parser.parse('2001-01-01T00:00:01Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Cross day boundary
+d1 = dateutil.parser.parse('2001-01-01T00:00:59Z')
+d2 = dateutil.parser.parse('2001-01-01T00:01:03Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Cross hour boundary
+d1 = dateutil.parser.parse('2001-01-01T00:59:58Z')
+d2 = dateutil.parser.parse('2001-01-01T01:00:03Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Cross day boundary
+d1 = dateutil.parser.parse('2001-01-01T23:59:58Z')
+d2 = dateutil.parser.parse('2001-01-02T00:00:03Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+###############################################################################
+# 5 <= dt < 10 second
+
+# Simple
+d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
+d2 = dateutil.parser.parse('2001-01-01T00:00:07Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Simple
+d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
+d2 = dateutil.parser.parse('2001-01-01T00:00:09Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Simple
+d1 = dateutil.parser.parse('2001-01-01T00:00:01Z')
+d2 = dateutil.parser.parse('2001-01-01T00:00:06Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Cross day boundary
+d1 = dateutil.parser.parse('2001-01-01T23:59:58Z')
+d2 = dateutil.parser.parse('2001-01-02T00:00:05Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Cross day boundary
+# Problem: Second row of labels overlap
+d1 = dateutil.parser.parse('2001-01-01T23:59:59Z')
+d2 = dateutil.parser.parse('2001-01-02T00:00:05Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Cross hour boundary only
+d1 = dateutil.parser.parse('2001-01-01T00:59:58Z')
+d2 = dateutil.parser.parse('2001-01-01T01:00:05Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Cross hour boundary/max time span for this tick locator
+d1 = dateutil.parser.parse('2001-01-01T00:59:58Z')
+d2 = dateutil.parser.parse('2001-01-01T01:00:07Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Cross hour boundary/min time span for this tick locator
+d1 = dateutil.parser.parse('2001-01-01T00:59:58Z')
+d2 = dateutil.parser.parse('2001-01-01T01:00:03')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+
+###############################################################################
+# 10 <= dt < 20 second
+
+# Cross day boundary
+d1 = dateutil.parser.parse('2001-01-01T23:59:56Z')
+d2 = dateutil.parser.parse('2001-01-02T00:00:10Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Cross day boundary
+# Problem: Second row of labels overlap
+d1 = dateutil.parser.parse('2001-01-01T23:59:58Z')
+d2 = dateutil.parser.parse('2001-01-02T00:00:10Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Cross hour boundary only
+d1 = dateutil.parser.parse('2001-01-01T00:59:56Z')
+d2 = dateutil.parser.parse('2001-01-01T01:00:10Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Cross hour boundary/max time span for this tick locator
+d1 = dateutil.parser.parse('2001-01-01T00:59:56Z')
+d2 = dateutil.parser.parse('2001-01-01T01:00:15Z')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+# Cross hour boundary/min time span for this tick locator
+d1 = dateutil.parser.parse('2001-01-01T00:59:56Z')
+d2 = dateutil.parser.parse('2001-01-01T01:00:06')
+x = np.array([d1,d2], dtype=object)
+y = [0.0,0.0]
+plt.clf()
+plt.plot(x, y, '*')
+datetick('x')
+
+
+if False:
+    # Test 1-second cadence labels
+    test = 'sec'
+    tmpdir = "./tmp/"+test
+    if not os.path.exists(tmpdir): os.makedirs(tmpdir)
+    
+    for j in range(1,3): # Seconds after 2000-01-01 for first point
+        for i in range(1,3): # Time separation between points
+            d1 = datetime.datetime(2000, 1, 1) + datetime.timedelta(seconds=j)
+            d2 = d1 + datetime.timedelta(seconds=i)
+            
+            x = np.array([d1,d2], dtype=object)
+            #y = [0.0,1e-5/i]
+            y = [0.0,0.0]
         
-        x = np.array([d1,d2], dtype=object)
-        #y = [0.0,1e-5/i]
-        y = [0.0,0.0]
-    
-        ######################################################################
-        #%% Default plot
-        figstr = tmpdir + "/dateplot_%s_def_%02d_%04d.png" % (test,j,i)
-        print("Writing %s" % figstr)
-        plt.figure("Default")
-        #plt.gcf().set_size_inches(5,1) # Aspect ratio of figure is 10
-        plt.clf()
-        plt.subplot(2,1,1)
-        #plt.subplots_adjust(hspace=5,top=1)
-        plt.plot(x, y, '*')
-        plt.title('Default (top) and New (bottom)')
-        plt.gcf().autofmt_xdate()
-        #plt.gca().set_aspect(0.00001*i) # Remove vertical whitespace
-        #plt.axes().set_aspect(0.000002) # Remove vertical whitespace
-        #plt.gca().get_yaxis().set_visible(False) # Remove y-labels
-        plt.gca().set_yticks([0]) # Label only y=0
-        #plt.ylabel('y ',rotation=0,ha='right',va='center')
-        plt.ylabel('y') # Show label
-        #plt.show()
-        #plt.savefig(figstr,bbox_inches='tight')
-        ######################################################################
-    
-        ######################################################################
-        #%% New plot
-        figstr = tmpdir + "/dateplot_%s_new_%02d_%04d.png" % (test,j,i)
-        print("Writing %s" % figstr)
-        #plt.figure("New")
-        #plt.clf()
-        plt.subplot(2,1,2)
-        plt.plot(x, y, '*')
-        datetick('x') # Instead of autofmt_xdate()
-        #plt.gca().set_aspect(0.00001*i) # Remove vertical whitespace
-        #plt.axes().set_aspect(0.000002) 
-        #plt.gca().get_yaxis().set_visible(False) # Remove y-labels
-        plt.gca().set_yticks([0]) # Label only y=0
-        #plt.ylabel('y ',rotation=0,ha='right',va='center')
-        plt.ylabel('y') # Show label
-        plt.tight_layout()
-        #plt.show()
-        plt.savefig(figstr,bbox_inches='tight')
-        ######################################################################
+            ######################################################################
+            #%% Default plot
+            figstr = tmpdir + "/dateplot_%s_def_%02d_%04d.png" % (test,j,i)
+            print("Writing %s" % figstr)
+            plt.figure("Default")
+            #plt.gcf().set_size_inches(5,1) # Aspect ratio of figure is 10
+            plt.clf()
+            plt.subplot(2,1,1)
+            #plt.subplots_adjust(hspace=5,top=1)
+            plt.plot(x, y, '*')
+            plt.title('Default (top) and New (bottom)')
+            plt.gcf().autofmt_xdate()
+            #plt.gca().set_aspect(0.00001*i) # Remove vertical whitespace
+            #plt.axes().set_aspect(0.000002) # Remove vertical whitespace
+            #plt.gca().get_yaxis().set_visible(False) # Remove y-labels
+            plt.gca().set_yticks([0]) # Label only y=0
+            #plt.ylabel('y ',rotation=0,ha='right',va='center')
+            plt.ylabel('y') # Show label
+            #plt.show()
+            #plt.savefig(figstr,bbox_inches='tight')
+            ######################################################################
+        
+            ######################################################################
+            #%% New plot
+            figstr = tmpdir + "/dateplot_%s_new_%02d_%04d.png" % (test,j,i)
+            print("Writing %s" % figstr)
+            #plt.figure("New")
+            #plt.clf()
+            plt.subplot(2,1,2)
+            plt.plot(x, y, '*')
+            datetick('x') # Instead of autofmt_xdate()
+            #plt.gca().set_aspect(0.00001*i) # Remove vertical whitespace
+            #plt.axes().set_aspect(0.000002) 
+            #plt.gca().get_yaxis().set_visible(False) # Remove y-labels
+            plt.gca().set_yticks([0]) # Label only y=0
+            #plt.ylabel('y ',rotation=0,ha='right',va='center')
+            plt.ylabel('y') # Show label
+            plt.tight_layout()
+            #plt.show()
+            plt.savefig(figstr,bbox_inches='tight')
+            ######################################################################
