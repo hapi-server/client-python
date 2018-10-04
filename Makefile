@@ -74,6 +74,7 @@ package-test:
 			--index-url $(URL)/simple  \
 			--extra-index-url https://pypi.org/simple && \
 		env/bin/pytest -v hapiclient/test/test_hapi.py && \
+		env/bin/pytest -v hapiclient/test/test_hapitime2datetime.py && \
 		env/bin/python3 /tmp/hapi_demo.py
 
 # Update version based on content of CHANGES.txt
@@ -101,9 +102,11 @@ install-local:
 # Test contents in repository using system install of python.
 # 'python setup.py develop' creates symlinks in system package directory.
 repository-test:
+	make clean
 	make README.txt	
 	python setup.py develop
 	pytest -v hapiclient/test/test_hapi.py
+	pytest -v hapiclient/test/test_hapitime2datetime.py
 	python3 hapi_demo.py
 	python setup.py develop --uninstall
 
