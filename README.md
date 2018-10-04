@@ -2,21 +2,36 @@
 
 ## Installation
 
-Command line:
+### Standard Method
+
+Operating system command line:
+
 ```bash
 pip install hapiclient
 ```
 
-If you are using Anaconda, make sure that the version of `pip` used is the one distributed with Anaconda (`which pip` should show a location in an anaconda directory). As a failsafe, on the Python command line, you can use
+### Fail-safe
+
+Python command line:
 
 ```python
 import os
 print(os.popen("pip install hapiclient").read())
 ```
 
+The above executes and displays the output of the operating system command `pip install hapiclient` using the shell environment associated with that installation of Python.
+
+This method addresses a problem often encountered when attempting to use `pip` packages in Anaconda. To use a `pip` package in Anaconda, one must use the version of `pip` installed with Anaconda (it is usually under a subdirectory with the name `anaconda/`) as opposed to the one installed with the operating system. To see the location of `pip` used in a given Python session, enter `print(os.popen("which pip").read())`.
+
+## Documentation
+
+See the help string by entering `help(hapi)` on the Python command line.
+
+All of the features are extensively demonstrated in [hapi_demo.ipynb](https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb).
+
 ## Demo
 
-The [hapi_demo.py](https://github.com/hapi-server/client-python/blob/master/hapi_demo.py) shows example usage of this package. The output of this demo after execution in a [Jupyter Notebook](https://jupyter-notebook.readthedocs.io/en/stable/examples/Notebook/Notebook%20Basics.html) can be viewed at [hapi_demo.ipynb](https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb).
+The [hapi_demo.py](https://github.com/hapi-server/client-python/blob/master/hapi_demo.py) shows example usage of this package.
 
 ### Jypyter Notebook
 

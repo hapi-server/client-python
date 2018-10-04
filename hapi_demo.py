@@ -8,7 +8,7 @@
 
 def main():
 
-    sscweb()    
+    sscweb()
     cdaweb()
 
 def sscweb():
