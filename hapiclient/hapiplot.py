@@ -20,8 +20,7 @@ for gui in gui_env:
 def printf(format, *args): sys.stdout.write(format % args)
 
 def hapiplot(data, meta, **kwargs):
-    """
-    Plot response from HAPI server.
+    """Plot response from HAPI server.
 
     Version: 0.0.6
 
@@ -38,14 +37,13 @@ def hapiplot(data, meta, **kwargs):
         >>> data, meta = hapi(server, dataset, parameters, start, stop, **opts)
         >>> hapiplot(data,meta)
 
-       See also https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynbs
     """
 
     __version__ = '0.0.6' # This is modified by misc/setversion.py. See Makefile.
  
     # TODO: Allow back-end to be specified as keyword, e.g.,
-    # hapiplot(data,meta,backend='Qt5Agg') ->
-    #   matplotlib.use(backend, warn=False, force=True) 
+    #   hapiplot(data,meta,backend='Qt5Agg') ->
+    #      matplotlib.use(backend, warn=False, force=True)
     
     # Default options
     DOPTS = {}
@@ -56,13 +54,15 @@ def hapiplot(data, meta, **kwargs):
         if key in DOPTS:
             DOPTS[key] = value
         else:
-            print('Warning: Keyword option "%s" is not valid.' % key)
+            warnings.warn('Warning: Keyword option "%s" is not valid.' % key)
 
     fignums = plt.get_fignums()
     if not fignums:
         fignums = [0]
     lastfn = fignums[-1]
 
+    # Convert from NumPy array of byte literals to NumPy array of
+    # datetime objects.
     Time = hapitime2datetime(data['Time'])
     
     # In the following, the x parameter is a datetime object.
@@ -106,7 +106,6 @@ def hapiplot(data, meta, **kwargs):
         plt.title(meta["x_server"] + "/info?id=" + meta["x_dataset"] + "&parameters=" + name + "\n", fontsize=10)
         plt.grid()
         datetick('x')
-        #import pdb; pdb.set_trace()
         
         fnamepng = re.sub('\.csv|\.bin', '.png', meta['x_dataFile'])
         if DOPTS['logging']: printf('Writing %s ... ', fnamepng)
@@ -115,5 +114,3 @@ def hapiplot(data, meta, **kwargs):
 
         # Important: This must go after savefig or else the png is blank.
         plt.show()
-
-

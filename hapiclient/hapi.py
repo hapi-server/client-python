@@ -5,6 +5,7 @@ from datetime import datetime
 import warnings
 import sys
 import time
+import pickle
 
 import numpy as np
 import pandas
@@ -15,7 +16,7 @@ def error(msg):
     # TODO: Return more specific exception. Will need to update test_hapi.py
     # because it keys on exception value for certain tests.
     print('\n')
-#    sys.tracebacklimit = 0  # Suppress traceback
+    #sys.tracebacklimit = 0  # Suppress traceback
     # TODO: The problem with this is that it changes the traceback
     # limit globally.
     raise Exception(msg)
@@ -89,10 +90,10 @@ def printf(format, *args): sys.stdout.write(format % args)
 
 def hapi(*args, **kwargs):
     """Request data from a HAPI server.
-    
+
     For additional documentation and demonstration, see
     https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb
-    
+
     Version: 0.0.6
 
     Parameters
@@ -176,6 +177,7 @@ def hapi(*args, **kwargs):
     DOPTS.update({'cache_dir': os.getcwd() + os.path.sep + 'hapi-data'})
     DOPTS.update({'use_cache': False})
     DOPTS.update({'server_list': 'https://github.com/hapi-server/servers/raw/master/all.txt'})
+
     # For testing force transport format. (CSV used binary not available.)
     DOPTS.update({'format': 'binary'}) # Change to 'csv' to always use CSV.
     # For testing csv read methods. See hapi_test.py for usage.
@@ -186,10 +188,10 @@ def hapi(*args, **kwargs):
         if key in DOPTS:
             DOPTS[key] = value
         else:
-            printf('Warning: Keyword option "%s" is not valid.', key)
+            warnings.warn('Warning: Keyword option "%s" is not valid.', key)
 
     if DOPTS['logging']: printf('Running hapi.py version %s\n',__version__)
-    
+
     if nin == 0:  # hapi()
         if DOPTS['logging']:
             printf('Reading %s ... ', DOPTS['server_list'])
@@ -240,7 +242,7 @@ def hapi(*args, **kwargs):
 
         urljson = SERVER + '/info?id=' + DATASET + '&parameters=' + PARAMETERS
         # Metadata files do not need START/STOP
-        fname = '%s_%s' % (DATASET,re.sub(',', '', PARAMETERS))
+        fname = '%s_%s' % (DATASET,re.sub(',', '-', PARAMETERS))
         fnamejson = urld + os.path.sep + fname + '.json'
         fnamepkl  = urld + os.path.sep + fname + '.pkl'
 
@@ -258,24 +260,19 @@ def hapi(*args, **kwargs):
         metaloaded = False
         if DOPTS["use_cache"]:
             if os.path.isfile(fnamepkl):
-                import pickle
-                if DOPTS['logging']:
-                    printf('Reading %s ... ', fnamepkl)
+                if DOPTS['logging']: printf('Reading %s ... ', fnamepkl)
                 f = open(fnamepkl, 'rb')
                 meta = pickle.load(f)
                 f.close()
-                if DOPTS['logging']:
-                    printf('Done.\n')
+                if DOPTS['logging']: printf('Done.\n')
                 metaloaded = True
                 if nin == 3: return meta
             if metaloaded and os.path.isfile(fnamenpy):
-                if DOPTS['logging']:
-                    printf('Reading %s ... ', fnamenpy)
+                if DOPTS['logging']: printf('Reading %s ... ', fnamenpy)
                 f = open(fnamenpy, 'rb')
                 data = np.load(f)
                 f.close()
-                if DOPTS['logging']:
-                    printf('Done.\n')
+                if DOPTS['logging']: printf('Done.\n')
                 return data, meta
 
         if (DOPTS["cache"]):
@@ -286,19 +283,16 @@ def hapi(*args, **kwargs):
                 os.makedirs(urld)
 
         if not metaloaded:
-            if DOPTS['logging']:
-                printf('Downloading %s ... ', urljson)
+            if DOPTS['logging']: printf('Downloading %s ... ', urljson)
             res = urlopen(urljson)
             meta = jsonparse(res)
-            if DOPTS['logging']:
-                printf('Done.\n')
+            if DOPTS['logging']: printf('Done.\n')
 
         meta.update({"x_server": SERVER})
         meta.update({"x_dataset": DATASET})
         meta.update({"x_parameters": PARAMETERS})
         meta.update({"x_metaFile": fnamejson})
-        t = datetime.now().isoformat()
-        meta.update({"x_requestDate": t[0:19]})
+        meta.update({"x_requestDate": datetime.now().isoformat()[0:19]})
         meta.update({"x_cacheDir": urld})
 
         if nin == 5:
@@ -310,13 +304,11 @@ def hapi(*args, **kwargs):
                 meta.update({"x_dataFile": fnamecsv})
 
         if DOPTS["cache"]:
-            if DOPTS['logging']:
-                printf('Writing %s ... ', fnamejson)
+            if DOPTS['logging']: printf('Writing %s ... ', fnamejson)
             f = open(fnamejson, 'w')
             json.dump(meta, f, indent=4)
             f.close()
-            if DOPTS["logging"]:
-                printf('Done.\n')
+            if DOPTS["logging"]: printf('Done.\n')
 
         if nin == 3:
             return meta
@@ -324,7 +316,8 @@ def hapi(*args, **kwargs):
         cformats = ['csv', 'binary']  # client formats
         if not DOPTS['format'] in cformats:
             raise ValueError('This client does not handle transport '
-                             'format "%s".  Available options: %s' % (DOPTS['format'], ', '.join(cformats)))
+                             'format "%s".  Available options: %s'
+                             % (DOPTS['format'], ', '.join(cformats)))
 
         # See if server supports binary
         if DOPTS['format'] != 'csv':
@@ -333,7 +326,8 @@ def hapi(*args, **kwargs):
             sformats = caps["outputFormats"]  # Server formats
             if not DOPTS['format'] in sformats:
                 warnings.warn('Requested transport format "%s" not avaiable '
-                              'from %s. Will use "csv". Available options: %s' % (DOPTS['format'], SERVER, ', '.join(sformats)))
+                              'from %s. Will use "csv". Available options: %s'
+                              % (DOPTS['format'], SERVER, ', '.join(sformats)))
                 DOPTS['format'] = 'csv'
 
         pnames, psizes, dt = [], [], []
@@ -342,7 +336,8 @@ def hapi(*args, **kwargs):
         cols = np.zeros([len(meta["parameters"]), 2], dtype=np.int32)
         ss = 0  # running sum of prod(size)
 
-        # String or ISOTime parameter with no length attribute
+        # String or ISOTime parameter with no length attribute in metadata
+        # (length attribute is required only for primary time column)
         missing_length = False
 
         for i in range(0, len(meta["parameters"])):
@@ -371,9 +366,7 @@ def hapi(*args, **kwargs):
                 # TODO: If 'length' not available, warn and fall back to CSV.
                 # length attribute required for all parameters if
                 # format=binary.
-                if ptype == 'string':
-                    dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
-                if ptype == 'isotime':
+                if ptype == 'string' or ptype == 'isotime':
                     dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
             else:
                 # length attribute may not be given (but must be given for
@@ -381,80 +374,71 @@ def hapi(*args, **kwargs):
                 if ptype == 'string' or ptype == 'isotime':
                     if 'length' in meta["parameters"][i]:
                         # length is specified for parameter in metadata. Use it.
-                        if ptype == 'string':
-                            dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
-                        if ptype == 'isotime':
+                        if ptype == 'string' or 'isotime':
                             dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
                     else:
                         # A string or isotime parameter did not have a length.
                         # Will need to use slower CSV read method.
                         missing_length = True
-                        if ptype == 'string':
-                            dtype = (pnames[i], object, psizes[i])
-                        if ptype == 'isotime':
+                        if ptype == 'string' or ptype == 'isotime':
                             dtype = (pnames[i], object, psizes[i])
 
             # For testing reader. Force use of slow reader.
             if DOPTS['format'] == 'csv':
                 if DOPTS['method'] == 'numpynolength' or DOPTS['method'] == 'pandasnolength':
                     missing_length = True
-                    if ptype == 'string':
-                        dtype = (pnames[i], object, psizes[i])
-                    if ptype == 'isotime':
+                    if ptype == 'string' or 'isotime':
                         dtype = (pnames[i], object, psizes[i])
 
             dt.append(dtype)
+
+        # length attribute required for all parameters when serving binary but
+        # is only required for time parameter when serving CSV. This catches
+        # case where server provides binary but is missing a length attribute
+        # in one or more string parameters that were requested.
+        if DOPTS['format'] == 'binary' and missing_length:
+            warnings.warn('Requesting CSV instead of binary because of problem with server metadata.')
+            DOPTS['format'] == 'csv'
 
         # Read the data.
         if DOPTS['format'] == 'binary':
             # HAPI Binary
             if DOPTS["cache"]:
-                if DOPTS['logging']:
-                    printf('Saving %s ... ', urlbin)
+                if DOPTS['logging']: printf('Saving %s ... ', urlbin)
                 tic0 = time.time()
                 urlretrieve(urlbin, fnamebin)
                 toc0 = time.time()-tic0
-                if DOPTS['logging']:
-                    printf('Done.\n')
-                if DOPTS['logging']:
-                    printf('Reading %s ... ', fnamebin)
+                if DOPTS['logging']: printf('Done.\n')
+                if DOPTS['logging']: printf('Reading %s ... ', fnamebin)
                 tic = time.time()
                 data = np.fromfile(fnamebin, dtype=dt)
             else:
                 from io import BytesIO
-                if DOPTS['logging']:
-                    printf('Getting %s ... ', urlbin)
+                if DOPTS['logging']: printf('Getting %s ... ', urlbin)
                 tic0 = time.time()
                 fnamebin = BytesIO(urlopen(urlbin).read())
                 toc0 = time.time()-tic0
-                if DOPTS['logging']:
-                    printf('Done.\n')
-                if DOPTS['logging']:
-                    printf('Reading %s ... ', fnamebin)
+                if DOPTS['logging']: printf('Done.\n')
+                if DOPTS['logging']: printf('Reading %s ... ', fnamebin)
                 tic = time.time()
                 data = np.frombuffer(fnamebin.read(), dtype=dt)
-            if DOPTS['logging']:
-                printf('Done.\n')
+            if DOPTS['logging']: printf('Done.\n')
             toc = time.time() - tic
         else:
             # HAPI CSV
             if DOPTS["cache"]:
-                if DOPTS['logging']:
-                    printf('Saving %s ... ', urlcsv)
+                if DOPTS['logging']: printf('Saving %s ... ', urlcsv)
                 tic0 = time.time()
                 urlretrieve(urlcsv, fnamecsv)
                 toc0 = time.time() - tic0
             else:
                 from io import StringIO
-                if DOPTS['logging']:
-                    printf('Getting %s ... ', urlcsv)
+                if DOPTS['logging']: printf('Getting %s ... ', urlcsv)
                 tic0 = time.time()
                 fnamecsv = StringIO(urlopen(urlcsv).read().decode())
                 toc0 = time.time() - tic0
-            if DOPTS['logging']:
-                printf('Done.\n')
-            if DOPTS['logging']:
-                printf('Reading %s ... ', fnamecsv)
+            if DOPTS['logging']: printf('Done.\n')
+            if DOPTS['logging']: printf('Reading %s ... ', fnamecsv)
 
             if not missing_length:
                 # All string and isotime parameters have a length in metadata
@@ -467,20 +451,21 @@ def hapi(*args, **kwargs):
                     df = pandas.read_csv(fnamecsv, sep=',', header=None)
 
                     # Allocate output N-D array (It is not possible to pass dtype=dt
-                    # as computed to pandas.read_csv pandas dtype is different
+                    # as computed to pandas.read_csv; pandas dtype is different
                     # from numpy's dtype.)
                     data = np.ndarray(shape=(len(df)), dtype=dt)
-        
-                    # Insert data from dataframe df columns into N-D array
+
+                    # Insert data from dataframe 'df' columns into N-D array 'data'
                     for i in range(0, len(pnames)):
                         shape = np.append(len(data), psizes[i])
-                        # In numpy 1.8.2 and Python 2.7, this throws an error for no apparent reason.
-                        # Works as expected in numpy 1.10.4
+                        # In numpy 1.8.2 and Python 2.7, this throws an error
+                        # for no apparent reason. Works as expected in numpy 1.10.4
                         data[pnames[i]] = np.squeeze(np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1]+1)], shape))
 
                     toc = time.time() - tic
             else:
-                # At least one string or isotime parameters does not have a length in metadata
+                # At least one requested string or isotime parameter does not
+                #  have a length in metadata
                 if DOPTS['method'] == 'numpynolength':
                     tic = time.time()
                     # With dtype='None', the data type is determined automatically
@@ -495,23 +480,21 @@ def hapi(*args, **kwargs):
                     # a string or isotime parameter is requested, then table
                     # has rows that are 1-D numpy arrays.
 
-                    # Contents of table will be placed into N-D array 'data'.
+                    # Contents of 'table' will be placed into N-D array 'data'.
                     data = np.ndarray(shape=(len(table)), dtype=dt)
 
-                    # Insert data from table into N-D array
+                    # Insert data from 'table' into N-D array 'data'
                     if (table.dtype.names == None):
                         if len(pnames) == 1:
                             # Only time parameter requested.
                             # import pdb; pdb.set_trace()
                             data[pnames[0]] = table[:]
                         else:
-                            # All columns in table have the same datatype
+                            # All columns in 'table' have the same data type
                             # so table is a 2-D numpy matrix
                             #import pdb; pdb.set_trace()
                             for i in range(0, len(pnames)):
                                 shape = np.append(len(data), psizes[i])
-                                # In numpy 1.8.2 and Python 2.7, this throws an error for no apparent reason.
-                                # Works as expected in numpy 1.10.4
                                 data[pnames[i]] = np.squeeze(np.reshape(table[:, np.arange(cols[i][0], cols[i][1]+1)], shape))
                     else:
                         # Table is not a 2-D numpy matrix.
@@ -523,7 +506,6 @@ def hapi(*args, **kwargs):
                         for pn in range(0, len(cols)):
                             shape = np.append(len(data), psizes[pn])
                             for c in range(cols[pn][0], cols[pn][1]+1):
-                                #print('pn = %d; c=%d; cn=%s' % (pn,c,table.dtype.names[c]))
                                 if c == cols[pn][0]:  # New parameter
                                     tmp = table[table.dtype.names[c]]
                                 else: # Aggregate
@@ -576,26 +558,21 @@ def hapi(*args, **kwargs):
 
                 toc = time.time() - tic
 
-            if DOPTS['logging']:
-                printf('Done.\n')
+            if DOPTS['logging']: printf('Done.\n')
 
         meta.update({"x_downloadTime": toc0})
         meta.update({"x_readTime": toc})
 
         if DOPTS["cache"]:
-            if DOPTS['logging']:
-                printf('Writing %s ... ', fnamenpy)
+            if DOPTS['logging']: printf('Writing %s ... ', fnamenpy)
             if missing_length:
                 np.save(fnamenpy, data2)
             else:
                 np.save(fnamenpy, data)
 
-            if DOPTS['logging']:
-                printf('Done.\n')
+            if DOPTS['logging']: printf('Done.\n')
 
-            if DOPTS['logging']:
-                printf('Writing %s ... ', fnamepkl)
-            import pickle
+            if DOPTS['logging']: printf('Writing %s ... ', fnamepkl)
             f = open(fnamepkl, 'wb')
             pickle.dump(meta, f, protocol=2)
             f.close()
@@ -608,6 +585,50 @@ def hapi(*args, **kwargs):
             return data, meta
 
 def hapitime2datetime(Time, **kwargs):
+    """Convert HAPI timestamps to Python datetimes.
+
+    A HAPI-compliant server represents time as an ISO 8601 string
+    (with several constraints - see the HAPI specification).
+    hapi() reads these into a NumPy array of Python byte literals.
+
+    This function converts the byte literals to Python datetime objects.
+
+    Typical usage:
+        data = hapi(...) # Get data
+        DateTimes = hapitime2datetime(data['Time']) # Convert
+
+    Parameter
+    ----------
+    Time:
+        - A numpy array of HAPI timestamp byte literals
+        - A numpy array of HAPI timestamp strings
+        - A list of HAPI timestamp byte literals
+        - A list of HAPI timestamp strings
+        - A HAPI timestamp byte literal
+        - A HAPI timestamp strings
+
+    Returns
+    ----------
+    A NumPy array Python datetime objects with length = len(Time)
+
+    Examples
+    ----------
+    All of the following return
+      array([datetime.datetime(1970, 1, 1, 0, 0)], dtype=object)
+
+    from hapiclient.hapi import hapitime2datetime
+    import numpy as np
+
+    hapitime2datetime(np.array([b'1970-01-01T00:00:00.000Z']))
+	hapitime2datetime(np.array(['1970-01-01T00:00:00.000Z']))
+
+    hapitime2datetime([b'1970-01-01T00:00:00.000Z'])
+    hapitime2datetime(['1970-01-01T00:00:00.000Z'])
+
+    hapitime2datetime([b'1970-01-01T00:00:00.000Z'])
+    hapitime2datetime('1970-01-01T00:00:00.000Z')
+
+    """
 
     import re
     import time
@@ -621,7 +642,7 @@ def hapitime2datetime(Time, **kwargs):
         if key in DOPTS:
             DOPTS[key] = value
         else:
-            print('Warning: Keyword option "%s" is not valid.' % key)
+            warnings.warn('Keyword option "%s" is not valid.' % key)
 
     if type(Time) == list:
         Time = np.asarray(Time)
@@ -647,11 +668,14 @@ def hapitime2datetime(Time, **kwargs):
         return Time
     except:
         pass
-    
-    # Convert from Python byte literals to unicode string
+
+    # Convert from Python byte literals to unicode strings
     # https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.astype.html
     # https://www.b-list.org/weblog/2017/sep/05/how-python-does-unicode/
+    # Note the new Time variable requires 4x more memory. 
     Time = Time.astype('U')
+    # Could save memory at cost of speed by decoding at each iteration below, e.g.
+    # Time[i] -> Time[i].decode('utf-8')
 
     d = 0
     # Catch case where no trailing Z
@@ -663,11 +687,11 @@ def hapitime2datetime(Time, **kwargs):
     pythonDateTime = np.empty(len(Time), dtype=object)
 
     # Parse date part
-    # If h=True then hour given. 
+    # If h=True then hour given.
     # If hm=True, then hour and minute given.
     # If hms=True, them hour, minute, and second given.
     (h,hm,hms) = (False, False, False)
-        
+
     if len(Time[0]) == 4 or (len(Time[0]) == 5 and Time[0][-1] == "Z"):
         fmt = '%Y'
         to = 5
@@ -706,14 +730,14 @@ def hapitime2datetime(Time, **kwargs):
         fmt = fmt + ":%M"
     if hms:
         fmt = fmt + ":%S"
-        
+
     if re.match(r".*\.[0-9].*$", Time[0]):
         fmt = fmt + ".%f"
     if re.match(r".*\.$", Time[0]) or re.match(r".*\.Z$", Time[0]):
         fmt = fmt + "."
 
     if re.match(r".*Z$", Time[0]):
-        fmt = fmt + "Z"        
+        fmt = fmt + "Z"
 
     for i in range(0, len(Time)):
         pythonDateTime[i] = datetime.strptime(Time[i],fmt)
@@ -722,4 +746,3 @@ def hapitime2datetime(Time, **kwargs):
     if DOPTS['logging']: printf("Manual processing time = %.4fs, Input = %s, fmto = %s, fmt = %s\n", toc, Time[0], fmto, fmt)
 
     return pythonDateTime
-
