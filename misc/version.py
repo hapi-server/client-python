@@ -52,7 +52,7 @@ for fname in ("hapiclient/hapi.py","hapiclient/hapiplot.py"):
 		updated2 = lineo != line2
 		lines = lines + line2
 	fin.close()
-	assert updated1 == False or updated2 is False, "Problem updating version in " + fname + "."
+	assert updated1 is False or updated2 is False, "Problem updating version in " + fname + "."
 	with open(fname + ".tmp", "w") as fout:
 	    fout.write(lines + "\n")
 	fout.close()    

@@ -93,7 +93,7 @@ def hapi(*args, **kwargs):
     For additional documentation and demonstration, see
     https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb
     
-    Version: 0.0.5
+    Version: 0.0.6
 
     Parameters
     ----------
@@ -154,7 +154,7 @@ def hapi(*args, **kwargs):
        See https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb
     """
 
-    __version__ = '0.0.5' # This is modified by misc/setversion.py. See Makefile.
+    __version__ = '0.0.6' # This is modified by misc/setversion.py. See Makefile.
 
     nin = len(args)
 
@@ -722,3 +722,4 @@ def hapitime2datetime(Time, **kwargs):
     if DOPTS['logging']: printf("Manual processing time = %.4fs, Input = %s, fmto = %s, fmt = %s\n", toc, Time[0], fmto, fmt)
 
     return pythonDateTime
+

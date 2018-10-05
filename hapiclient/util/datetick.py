@@ -54,9 +54,6 @@ def datetick(dir, **kwargs):
     debug = False
     
     axes = plt.gca()
-    print('datetick')
-    print(axes)
-
     fig = plt.gcf()
     
     # By default, trigger update of ticks when limits
@@ -71,7 +68,6 @@ def datetick(dir, **kwargs):
         else:
             axes.callbacks.connect('ylim_changed', on_ylims_change)
 
-    print(axes) 
     line = axes.lines[0]
         
     datamin = mpld.date2num(line.get_xdata()[0])

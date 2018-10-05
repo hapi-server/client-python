@@ -4,4 +4,9 @@ v0.0.3: 2018-09-19 -- Initial package release.
 v0.0.4: 2018-09-19 -- Initial package release.
 v0.0.5: 
 		2018-09-26 -- Set pickle protocol to 2 for python 2/3 compatability
-			
+v0.0.6: 
+		2018-09-04 -- Move hapitime2datetime to hapi.py
+		2018-10-04 -- Make hapitime2datetime output datetimes and add tests
+		2018-10-04 -- Improve dateticks.py
+		2018-10-04 -- Add hapi_demo.ipynb
+		2018-10-04 -- Other documentation improvements

@@ -1,4 +1,4 @@
-# Test repository contents using system packages:
+# Development: Test repository contents:
 #   make repository-test
 #
 # Make and test a candidate release package in virtual environment:
@@ -7,10 +7,10 @@
 #
 # Make release package, upload to pypi.org, and test package
 # 1. make release
-# 2. Wait 10 minutes and execute
+# 2. Wait ~5 minutes and execute
 # 3. make release-test
 #    (Will fail unti new version is available at pypi.org for pip install. 
-#     Usually takes 5-10 minutes even though web page is immediately
+#     Usually takes ~5 minutes even though web page is immediately
 #     updated.)
 
 # For using the pypi test repository, use
@@ -20,8 +20,8 @@
 URL=https://upload.pypi.org/
 REP=pypi
 
-# VERSION below is updated in make version-update step.
-VERSION=0.0.5
+# VERSION below is updated in "make version-update" step.
+VERSION=0.0.6
 SHELL:= /bin/bash
 
 release:
@@ -82,7 +82,7 @@ version-update:
 	python misc/version.py
 	mv setup.py.tmp setup.py
 	mv hapiclient/hapi.py.tmp hapiclient/hapi.py
-	mv hapiclient/hapiplot.py.tmp hapiclient/hapi.py
+	mv hapiclient/hapiplot.py.tmp hapiclient/hapiplot.py
 	mv Makefile.tmp Makefile
 
 version-tag:
@@ -145,6 +145,11 @@ clean:
 	- rm -f MANIFEST
 	- rm -rf .pytest_cache/
 	- rm -rf hapiclient.egg-info/
+
+
+
+
+
 
 
 

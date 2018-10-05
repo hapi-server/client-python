@@ -23,7 +23,7 @@ def hapiplot(data, meta, **kwargs):
     """
     Plot response from HAPI server.
 
-    Version: __version__
+    Version: 0.0.6
 
     See also https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb
 
@@ -41,7 +41,7 @@ def hapiplot(data, meta, **kwargs):
        See also https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynbs
     """
 
-    __version__ = '0.0.1' # This is modified by misc/setversion.py. See Makefile.
+    __version__ = '0.0.6' # This is modified by misc/setversion.py. See Makefile.
  
     # TODO: Allow back-end to be specified as keyword, e.g.,
     # hapiplot(data,meta,backend='Qt5Agg') ->
@@ -115,3 +115,5 @@ def hapiplot(data, meta, **kwargs):
 
         # Important: This must go after savefig or else the png is blank.
         plt.show()
+
+
