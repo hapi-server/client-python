@@ -1,11 +1,16 @@
 import pytest
 import os
 import pickle
-from hapiclient.hapi import hapi
 from deepdiff import DeepDiff
+from hapiclient.hapi import hapi
+from hapiclient.test.readcompare import readcompare, clearcache
 
 serverbad = 'http://hapi-server.org/servers/TestData/xhapi'
 server = 'http://hapi-server.org/servers/TestData/hapi'
+
+# To use in program, use, e.g.,
+# from hapiclient.test.test_hapi import test_reader_short
+# test_reader_short()
 
 def writepickle(fname, var):
     fname = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data',fname)
@@ -26,7 +31,6 @@ def test_hapi():
 
 def test_server_list():
     """Test that specifying a server returns something."""
-    server = 'http://hapi-server.org/servers/SSCWeb/hapi'
     assert hapi(server) is not None
 
 def test_catalog():
@@ -35,7 +39,7 @@ def test_catalog():
     assert meta['status'] == {'code': 1200, 'message': 'OK'} and meta['catalog'][0]['id'] == 'dataset1'
 
 def test_dataset():
-    """Request for dataset returns dataset metadata"""
+    """Request for dataset returns correct dataset metadata"""
     meta = hapi(server,'dataset1')
     pklFile = 'test_dataset.pkl'
     if not os.path.isfile(pklFile):
@@ -47,7 +51,7 @@ def test_dataset():
     assert DeepDiff(meta,metatest) == {}
 
 def test_parameter():
-    """Request for dataset returns parameter metadata"""
+    """Request for dataset returns correct parameter metadata"""
     meta = hapi(server,'dataset1')
     pklFile = 'test_parameter.pkl'
     if not os.path.isfile(pklFile):
@@ -79,3 +83,34 @@ def test_deprecation():
         "This is deprecated, but shouldn't raise an exception, unless "
         "enable_deprecations_as_exceptions() called from conftest.py",
         DeprecationWarning)
+
+def test_reader_short():
+        
+    # TODO: Check that parameters='scalar' and parameters='scalar,vector'
+    # gives same values for scalar parameter.
+    
+    opts = {'logging': False, 'cache_dir': '/tmp/hapi-data', 'cache': False, 'use_cache': False}
+    dataset = 'dataset1'
+    run = 'short'
+
+    clearcache(opts)
+    # Read one parameter
+    assert readcompare(server, dataset, 'scalar', run, opts)
+    clearcache(opts)
+    # Read two parameters
+    assert readcompare(server, dataset, 'scalar,vector', run, opts)
+    clearcache(opts)
+    # Read all parameters
+    assert readcompare(server, dataset, '', run, opts)
+
+@pytest.mark.long
+def test_reader_long():
+    
+    opts = {'logging': False, 'cache_dir': '/tmp/hapi-data', 'cache': False, 'use_cache': False}
+    dataset = 'dataset1'
+    
+    run = 'long'
+    clearcache(opts)
+    # Read two parameters
+    assert readcompare(server, dataset, 'scalar,vector', run, opts)
+        

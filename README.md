@@ -71,9 +71,19 @@ git clone https://github.com/hapi-server/client-python
 cd client-python; python setup.py develop
 ```
 
-(The command <code>python setup.py develop</code> creates symlinks so that the local package is used instead of an installed package.)
+(The command <code>python setup.py develop</code> creates symlinks so that the local package is used instead of an installed package. Use `pip uninstall hapi` to ensure the local package is used.)
 
-Note that the scripts are written to match syntax/capabilities/interface of the [HAPI MATLAB client](https://github.com/hapi-server/matlab-client).
+To run tests before a commit, execute
+```bash
+make repository-test
+```
+
+To run an individual test in a Python session, use, e.g.,
+
+```python
+from hapiclient.test.test_hapi import test_reader
+test_reader()
+```
 
 ## Contact
 

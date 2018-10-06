@@ -24,6 +24,18 @@ REP=pypi
 VERSION=0.0.6
 SHELL:= /bin/bash
 
+# Test contents in repository using system install of python.
+# 'python setup.py develop' creates symlinks in system package directory.
+repository-test:
+	make clean
+	make README.txt
+	python setup.py develop
+	pytest -v -m 'not long' hapiclient/test/test_hapi.py
+	pytest -v -m 'long' hapiclient/test/test_hapi.py
+	pytest -v hapiclient/test/test_hapitime2datetime.py
+	python3 hapi_demo.py
+	#python setup.py develop --uninstall
+
 release:
 	make version-tag
 	make release-upload
@@ -99,17 +111,6 @@ README.txt: README.md
 install-local:
 	python setup.py develop
 
-# Test contents in repository using system install of python.
-# 'python setup.py develop' creates symlinks in system package directory.
-repository-test:
-	make clean
-	make README.txt	
-	python setup.py develop
-	pytest -v hapiclient/test/test_hapi.py
-	pytest -v hapiclient/test/test_hapitime2datetime.py
-	python3 hapi_demo.py
-	python setup.py develop --uninstall
-
 install:
 	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple
 	conda list | grep hapiclient
@@ -131,6 +132,7 @@ requirements:
 	pipreqs hapiclient/
 
 clean:
+	- python setup.py develop --uninstall
 	- find . -name __pycache__ | xargs rm -rf {}
 	- find . -name *.pyc | xargs rm -rf {}
 	- find . -name *.DS_Store | xargs rm -rf {}
