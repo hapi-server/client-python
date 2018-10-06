@@ -1,21 +1,22 @@
-import numpy as np
 import warnings
 import re
 import sys
-from hapiclient.util.datetick import datetick
-from hapiclient.hapi import hapitime2datetime
-  
+import numpy as np
+
 # To allow to run from command line, find a back-end that works
 import matplotlib
-gui_env = ['Qt5Agg','QT4Agg','GTKAgg','TKAgg','WXAgg']
+gui_env = ['Qt5Agg', 'QT4Agg', 'GTKAgg', 'TKAgg', 'WXAgg']
 for gui in gui_env:
     try:
         #print("Trying MatPlotLib back-end ", gui)
-        matplotlib.use(gui,warn=False, force=True)
+        matplotlib.use(gui, warn=False, force=True)
         from matplotlib import pyplot as plt
         break
     except:
         continue
+
+from hapiclient.util.datetick import datetick
+from hapiclient.hapi import hapitime2datetime
 
 def printf(format, *args): sys.stdout.write(format % args)
 
@@ -40,11 +41,11 @@ def hapiplot(data, meta, **kwargs):
     """
 
     __version__ = '0.0.6' # This is modified by misc/setversion.py. See Makefile.
- 
+
     # TODO: Allow back-end to be specified as keyword, e.g.,
     #   hapiplot(data,meta,backend='Qt5Agg') ->
     #      matplotlib.use(backend, warn=False, force=True)
-    
+
     # Default options
     DOPTS = {}
     DOPTS.update({'logging': False})
@@ -64,7 +65,7 @@ def hapiplot(data, meta, **kwargs):
     # Convert from NumPy array of byte literals to NumPy array of
     # datetime objects.
     Time = hapitime2datetime(data['Time'])
-    
+
     # In the following, the x parameter is a datetime object.
     # If the x parameter is a number, would need to use plt.plot_date()
     # and much of the code for datetick.py would need to be modified.
@@ -75,12 +76,12 @@ def hapiplot(data, meta, **kwargs):
 
         name = meta["parameters"][i]["name"]
         y = np.asarray(data[name])
-    
+
         if meta["parameters"][i]["fill"]:
             if meta["parameters"][i]["fill"] == 'nan':
                 yfill = np.nan
             else:
-                yfill = float(meta["parameters"][i]["fill"])  
+                yfill = float(meta["parameters"][i]["fill"])
                 #if isnan(yfill),yfill = 'null';,end
         else:
             yfill = 'null'
@@ -106,8 +107,8 @@ def hapiplot(data, meta, **kwargs):
         plt.title(meta["x_server"] + "/info?id=" + meta["x_dataset"] + "&parameters=" + name + "\n", fontsize=10)
         plt.grid()
         datetick('x')
-        
-        fnamepng = re.sub('\.csv|\.bin', '.png', meta['x_dataFile'])
+
+        fnamepng = re.sub(r'\.csv|\.bin', '.png', meta['x_dataFile'])
         if DOPTS['logging']: printf('Writing %s ... ', fnamepng)
         plt.figure(lastfn + i).savefig(fnamepng, dpi=300)
         if DOPTS['logging']: printf('Done.\n')
