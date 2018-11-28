@@ -30,6 +30,7 @@ def autoplot(server, dataset, parameters, start, stop, **kwargs):
     
     import os
     import re
+    import platform
     import subprocess
     
     from hapiclient.util import setopts, log, urlopen, download, urlquote
@@ -121,8 +122,10 @@ def autoplot(server, dataset, parameters, start, stop, **kwargs):
     download(jarpath, jarurl, **opts)
 
     com = "java"
-    com = com + " -Xdock:icon=" + jaricon
-    com = com + ' -Xdock:name="Autoplot"'
+    
+    if 'darwin' in platform.platform().lower():
+        com = com + " -Xdock:icon=" + jaricon
+        com = com + ' -Xdock:name="Autoplot"'
     com = com + " -DPORT=" + str(opts['port'])
     com = com + " -DHAPI_DATA=" + opts['cachedir']
     com = com + " -DhapiServerCache=true"
