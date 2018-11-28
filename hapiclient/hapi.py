@@ -1,92 +1,110 @@
 import os
 import re
 import json
-from datetime import datetime
-import warnings
-import sys
 import time
 import pickle
 
 import numpy as np
 import pandas
 
-#sys.tracebacklimit = 1000  # Turn tracebacklimit back to default
-def error(msg):
-    # TODO: Return more specific exception. Will need to update test_hapi.py
-    # because it keys on exception value for certain tests.
-    #print('\n')
-    #sys.tracebacklimit = 0  # Suppress traceback
-    # TODO: The problem with this is that it changes the traceback
-    # limit globally.
-    raise Exception(msg)
+from datetime import datetime
 
-# Start compatability code
-if sys.version_info[0] > 2:
-    # Tested with sys.version = 3.6.5 |Anaconda, Inc.| (default, Apr 26 2018, 08:42:37) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
-    import urllib.request, urllib.parse, urllib.error
-else:
-    # Tested with sys.version = 2.7.15 |Anaconda, Inc.| (default, May  1 2018, 18:37:05) \n[GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
-    import urllib
-    import urllib2
+from hapiclient.util import setopts, log, warning
+from hapiclient.util import urlopen, urlretrieve, jsonparse
 
-def urlerror(e, url):
+def subset(meta, params):
+    """Extract subset of parameters from meta object returned by hapi()
+    
+    metar = subset(meta, parameters) modifies meta.parameters array so
+    it only contains elements for the time variable and the parameters in
+    the comma-separated list `parameters`.
+    """
 
-    def unknown():
-        body = e.read().decode('utf8')
-        if len(body) > 0:
-            error('\n"HTTP %d - %s" returned by %s. Response body:\n%s' % (e.code, e.reason, url, body))
-        else:
-            error('\n"HTTP %d - %s" returned by %s.' % (e.code, e.reason, url))
+    if params == '':
+        return meta
 
-    try:
-        jres = json.load(e)
-    except:
-        unknown()
+    p = params.split(',')
+    pm = [] # Parameter names in metadata
+    for i in range(0,len(meta['parameters'])):
+        pm.append(meta['parameters'][i]['name'])
+    for i in range(0,len(p)):
+        if p[i] not in pm:
+            raise Exception('Parameter %s is not in dataset' % p[i])
+    
+    pa = [meta['parameters'][0]] # First parameter is always the time parameter
+    for i in range(1,len(pm)):
+        if pm[i] in p:
+            pa.append(meta['parameters'][i])
+    meta['parameters'] = pa
+    return meta
 
-    if jres['status'] and jres['status']['message']:
-        error('\n%s\n  %s\n' % (url, jres['status']['message']))
-        if jres['status'] and jres['status']['message']:
-            error('\n%s\n  %s\n' % (url, jres['status']['message']))
-        else:
-            unknown()
+def server2dirname(server):
+    """Convert a server URL to a directory name."""
+    
+    urld = re.sub(r"https*://", "", server)
+    urld = re.sub(r'/', '_', urld)
+    return urld
+    
+def cachedir(*args):
+    """HAPI cache directory.
+    
+    cachedir() returns the default directory (~/hapi-data)
+
+    cachdir(basedir, server)
+    """
+
+    if len(args) == 2:
+        # cachedir(base_dir, server)
+        return args[0] + os.path.sep + server2dirname(args[1])
     else:
-        unknown()
+        # cachedir()
+        # Default cachedir
+        return os.path.expanduser("~") + os.path.sep + 'hapi-data'
 
-def urlopen(url):
-    if sys.version_info[0] > 2:
-        try:
-            res = urllib.request.urlopen(url)
-        except urllib.error.URLError as e:
-            urlerror(e, url)
+def request2path(*args):
+    # request2path(server, dataset, parameters, start, stop)
+    # request2path(server, dataset, parameters, start, stop, cachedir)
+
+    if len(args) == 5:
+        # Use default if cachedir not given.
+        cachedirectory = cachedir()
     else:
-        try:
-            res = urllib2.urlopen(url)
-        except urllib2.URLError as e:
-            urlerror(e, url)
+        cachedirectory = args[5]
 
-    return res
+    # url subdirectory
+    urldirectory = server2dirname(args[0])
+    fname = '%s_%s_%s_%s' % (args[1], re.sub(',', '-', args[2]),
+                             re.sub(r'-|:|\.|Z', '', args[3]),
+                             re.sub(r'-|:|\.|Z', '', args[4]))
 
-def urlretrieve(url, fname):
-    if sys.version_info[0] > 2:
-        try:
-            urllib.request.urlretrieve(url, fname)
-        except urllib.error.URLError as e:
-            urlerror(e, url)
-    else:
-        try:
-            urllib.urlretrieve(url, fname)
-        except urllib2.URLError as e:
-            urlerror(e, url)
-# End compatability code
+    return os.path.join(cachedirectory, urldirectory, fname)
 
-def jsonparse(res):
-    try:
-        return json.load(res)
-    except:
-        error('Could not parse JSON from %s' % res.geturl())
+def hapiopts():
+    """Return allowed options for hapi().
+    
+       Used by hapiplot() and hapi().
+    """
+    # Default options
+    opts = {
+                'logging': False,
+                'cache': True,
+                'cachedir': cachedir(),
+                'usecache': False,
+                'server_list': 'https://github.com/hapi-server/servers/raw/master/all.txt',
+                'format': 'binary',
+                'method': 'pandas'
+            }
 
-def printf(format, *args): sys.stdout.write(format % args)
-
+    # format = 'binary' is used by default and CSV used if binary is not available from server.
+    # This should option should be excluded from the help string.
+ 
+    # method = 'pandas' is used by default. Other methods 
+    # (numpy, pandasnolength, numpynolength)can be used for testing
+    # CSV read methods. See test_hapi.py for comparsion.
+    # This should option should be excluded from the help string.
+    
+    return opts
+    
 def hapi(*args, **kwargs):
     """Request data from a HAPI server.
 
@@ -113,9 +131,9 @@ def hapi(*args, **kwargs):
     options : dict
         The following options are available.
             logging (False) - Log to console
-            cache (True) - Save responses and processed responses in cache_dir
-            cache_dir (./hapi-data)
-            use_cache (True) - Use files in cache_dir if found
+            cache (True) - Save responses and processed responses in cachedir
+            cachedir (./hapi-data)
+            usecache (True) - Use files in cachedir if found
             serverlist (https://github.com/hapi-server/servers/raw/master/all.txt)
 
     Returns
@@ -134,20 +152,22 @@ def hapi(*args, **kwargs):
         in the string Dataset.  The dictionary structure follows the HAPI JSON
         structure.
 
-        Metadata = hapi(Server, Dataset, Parameters) or HAPI(...) returns metadata
+        Metadata = hapi(Server, Dataset, Parameters) returns metadata
         associated each parameter in the comma-separated string Parameters. The
         dictionary structure follows the HAPI JSON structure.
 
-        Data = hapi(Server, Dataset, Parameters, Start, Stop) returns a dictionary
-        with elements corresponding to Parameters, e.g., if
-        Parameters = 'scalar,vector' and the number of records returned is N, then
+        Data = hapi(Server, Dataset, Parameters, Start, Stop) returns a 
+        dictionary with elements corresponding to Parameters, e.g., if
+        Parameters = 'scalar,vector' and the number of records in the time
+        range Start <= t < Stop returned is N, then
 
           Data['scalar'] is a NumPy array of shape (N)
           Data['vector'] is a NumPy array of shape (N,3)
-          Data['Time'] is a NumPy array of byte literals with shape (N). The
-
-        Byte literal times can be converted to Python datetimes using 
-        hapitime2datetime(Data['Time'])
+          Data['Time'] is a NumPy array of byte literals with shape (N).
+          
+          Byte literal times can be converted to Python datetimes using 
+          
+          dtarray = hapitime2datetime(Data['Time'])
         
         Data, Meta = hapi(Server, Dataset, Parameters, Start, Stop) returns
         the metadata for parameters in Meta.
@@ -171,182 +191,195 @@ def hapi(*args, **kwargs):
         DATASET = args[1]
     if nin > 2:
         PARAMETERS = args[2]
+        if re.search(r', ', PARAMETERS):
+            warning("hapi", "Removing spaces after commas in given parameter list of '" + PARAMETERS + "'")
+            PARAMETERS = re.sub(r',\s+', ',', PARAMETERS)
     if nin > 3:
         START = args[3]
     if nin > 4:
         STOP = args[4]
 
-    # Default options
-    DOPTS = {}
-    DOPTS.update({'logging': False})
-    DOPTS.update({'cache': True})
-    DOPTS.update({'cache_dir': os.getcwd() + os.path.sep + 'hapi-data'})
-    DOPTS.update({'use_cache': False})
-    DOPTS.update({'server_list': 'https://github.com/hapi-server/servers/raw/master/all.txt'})
-
-    # For testing force transport format. (CSV used binary not available.)
-    DOPTS.update({'format': 'binary'}) # Change to 'csv' to always use CSV.
-
-    # For testing CSV read methods. See test_hapi.py for comparsion.
-    # Can be pandas, numpy, pandasnolength, numpynolength
-    DOPTS.update({'method': 'pandas'}) 
-
     # Override defaults
-    for key, value in kwargs.items():
-        if key in DOPTS:
-            DOPTS[key] = value
-        else:
-            warnings.warn('Warning: Keyword option "%s" is not valid.', key)
-
-    if DOPTS['logging']: printf('Running hapi.py version %s\n', __version__)
+    opts = setopts(hapiopts(), kwargs)
+    
+    log('Running hapi.py version %s' % __version__, opts)
 
     if nin == 0:  # hapi()
-        if DOPTS['logging']:
-            printf('Reading %s ... ', DOPTS['server_list'])
-        # Last .encode('utf8') needed to make Python 2 and 3 types match
-        data = urlopen(DOPTS['server_list']).read().decode('utf8').split('\n')
-        if DOPTS['logging']: printf('Done.\n')
+        log('Reading %s' % opts['server_list'], opts)
+        # decode('utf8') in following needed to make Python 2 and 3 types match.
+        data = urlopen(opts['server_list']).read().decode('utf8').split('\n')
         data = [x for x in data if x]  # Remove empty items (if blank lines)
         # Display server URLs to console.
-        if DOPTS['logging']:
-            printf('List of HAPI servers in %s:\n', DOPTS['server_list'])
-            for url in data:
-                printf("   %s\n", url)
+        log('List of HAPI servers in %s:\n' % opts['server_list'], opts)
+        for url in data:
+            log("   %s" % url, opts)
         return data
 
     if nin == 1:  # hapi(SERVER)
         # TODO: Cache
         url = SERVER + '/catalog'
-        if DOPTS['logging']:
-            printf('Downloading %s ... ', url)
+        log('Reading %s' % url, opts)
         res = urlopen(url)
         meta = jsonparse(res)
-        if DOPTS['logging']:
-            printf('Done.\n')
-        data = meta
         return meta
 
-    if nin == 2:  # hapi(SERVER,DATASET)
+    if nin == 2:  # hapi(SERVER, DATASET)
         # TODO: Cache
         url = SERVER + '/info?id=' + DATASET
-        if DOPTS['logging']:
-            printf('Downloading %s ... ', url)
+        log('Reading %s' % url, opts)
         res = urlopen(url)
         meta = jsonparse(res)
-        if DOPTS['logging']:
-            printf('Done.\n')
-        data = meta
         return meta
+    
+    if nin == 4:
+        raise ValueError('A stop time is required if a start time is given.')
 
     if nin == 3 or nin == 5:
-        # hapi(SERVER,DATASET,PARAMETERS) or
-        # hapi(SERVER,DATASET,PARAMETERS,START,STOP)
+        # hapi(SERVER, DATASET, PARAMETERS) or
+        # hapi(SERVER, DATASET, PARAMETERS, START, STOP)
+                
+        # urld = url subdirectory of cachedir to store files from SERVER
+        urld = cachedir(opts["cachedir"], SERVER)
 
-        # urld = url directory (cache directory root path)
-        urld = re.sub(r"https*://", "", SERVER)
-        urld = re.sub(r'/', '_', urld)
-        urld = DOPTS["cache_dir"] + os.path.sep + urld
+        if opts["cachedir"]: log('hapi(): file directory = %s' % urld, opts)
 
-        urljson = SERVER + '/info?id=' + DATASET + '&parameters=' + PARAMETERS
-        # Metadata files do not need START/STOP
-        fname = '%s_%s' % (DATASET, re.sub(',', '-', PARAMETERS))
-        fnamejson = urld + os.path.sep + fname + '.json'
-        fnamepkl  = urld + os.path.sep + fname + '.pkl'
+        urljson = SERVER + '/info?id=' + DATASET
+
+        # Output from urljson will be saved in a .json file. Parsed json
+        # will be stored in a .pkl file. Metadata for all parameters is
+        # requested and response is subsetted so only metadata for PARAMETERS
+        # is returned.
+        fnamejson = urld + os.path.sep + DATASET + '.json'
+        fnamepkl  = urld + os.path.sep + DATASET + '.pkl'
 
         if nin == 5: # Data requested
+            # URL to get CSV (will be used if binary response is not available)
+            urlcsv = SERVER + '/data?id=' + DATASET + '&parameters=' + \
+                     PARAMETERS + '&time.min=' + START + '&time.max=' + STOP
+            # URL for binary request
+            urlbin = urlcsv + '&format=binary'
+
+            # Raw CSV and HAPI Binary (no header) will be stored in .csv and 
+            # .bin files. Parsed response of either CSV or HAPI Binary will
+            # be stored in a .npy file.
             fname = '%s_%s_%s_%s' % (DATASET, re.sub(',', '-', PARAMETERS),
                                      re.sub(r'-|:|\.|Z', '', START),
                                      re.sub(r'-|:|\.|Z', '', STOP))
             fnamecsv = urld + os.path.sep + fname + '.csv'
             fnamebin = urld + os.path.sep + fname + '.bin'
-            urlcsv = SERVER + '/data?id=' + DATASET + '&parameters=' + \
-                     PARAMETERS + '&time.min=' + START + '&time.max=' + STOP
-            urlbin = urlcsv + '&format=binary'
             fnamenpy = urld + os.path.sep + fname + '.npy'
+            
+            # fnamepklx will contain additional metadata about the request
+            # including d/l time, parsing time, and the location of files.
+            fnamepklx = request2path(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])
+            fnamepklx = fnamepklx + ".pkl"
 
-        metaloaded = False
-        if DOPTS["use_cache"]:
-            if os.path.isfile(fnamepkl):
-                if DOPTS['logging']: printf('Reading %s ... ', fnamepkl)
+        metaFromCache = False
+        if opts["usecache"]:
+            if nin == 3 and os.path.isfile(fnamepkl):
+                # Read cached metadata from .pkl file.
+                # This returns subsetted metadata with no additional "x_"
+                # information (which is stored in fnamepklx).
+                log('Reading %s' % fnamepkl.replace(urld + '/',''), opts)
                 f = open(fnamepkl, 'rb')
                 meta = pickle.load(f)
                 f.close()
-                if DOPTS['logging']: printf('Done.\n')
-                metaloaded = True
-                if nin == 3: return meta
-            if metaloaded and os.path.isfile(fnamenpy):
-                if DOPTS['logging']: printf('Reading %s ... ', fnamenpy)
-                f = open(fnamenpy, 'rb')
-                data = np.load(f)
+                metaFromCache = True
+                # Remove parameters not requested.
+                meta = subset(meta, PARAMETERS)
+                return meta
+            if os.path.isfile(fnamepklx):
+                # Read subsetted meta file with x_ information
+                log('Reading %s' % fnamepklx.replace(urld + '/',''), opts)
+                f = open(fnamepklx, 'rb')
+                meta = pickle.load(f)
+                metaFromCache = True
                 f.close()
-                if DOPTS['logging']: printf('Done.\n')
-                return data, meta
-
-        if DOPTS["cache"]:
-            # Create cache directory
-            if not os.path.exists(DOPTS["cache_dir"]):
-                os.makedirs(DOPTS["cache_dir"])
-            if not os.path.exists(urld):
-                os.makedirs(urld)
-
-        if not metaloaded:
-            if DOPTS['logging']: printf('Downloading %s ... ', urljson)
+        
+        if not metaFromCache:
+            # No cached metadata loaded so request it from server.
+            log('Reading %s' % urljson.replace(urld + '/',''), opts)
             res = urlopen(urljson)
             meta = jsonparse(res)
-            if DOPTS['logging']: printf('Done.\n')
 
+        # Add information to metdata so we can figure out request needed
+        # to generated it. Will also be used for labeling plots by hapiplot().
         meta.update({"x_server": SERVER})
         meta.update({"x_dataset": DATASET})
-        meta.update({"x_parameters": PARAMETERS})
-        meta.update({"x_metaFile": fnamejson})
-        meta.update({"x_requestDate": datetime.now().isoformat()[0:19]})
-        meta.update({"x_cacheDir": urld})
 
-        if nin == 5:
-            meta.update({"x_time.min": START})
-            meta.update({"x_time.max": STOP})
-            if DOPTS['format'] == 'binary':
-                meta.update({"x_dataFile": fnamebin})
-            else:
-                meta.update({"x_dataFile": fnamecsv})
+        if opts["cache"]:
+            if not os.path.exists(urld): os.makedirs(urld)
 
-        if DOPTS["cache"]:
-            if DOPTS['logging']: printf('Writing %s ... ', fnamejson)
+        if opts["cache"] and not metaFromCache:
+            # Cache metadata for all parameters if it was not already loaded
+            # from cache. Note that fnamepklx is written after data downloaded
+            # and parsed.
+            log('Writing %s ' % fnamejson.replace(urld + '/',''), opts)
             f = open(fnamejson, 'w')
             json.dump(meta, f, indent=4)
             f.close()
-            if DOPTS["logging"]: printf('Done.\n')
+            
+            log('Writing %s ' % fnamepkl.replace(urld + '/',''), opts)
+            f = open(fnamepkl, 'wb')
+            # protocol=2 used for Python 2.7 compatability.
+            pickle.dump(meta, f, protocol=2)
+            f.close()
+
+        # Remove unrequested parameters if they have not have already been
+        # removed (b/c loaded from cache).
+        if not metaFromCache:
+            meta = subset(meta, PARAMETERS)
 
         if nin == 3:
             return meta
 
+        if opts["usecache"] and os.path.isfile(fnamenpy):
+            # Read cached data file.
+            log('Reading %s ' % fnamenpy.replace(urld + '/',''), opts)
+            f = open(fnamenpy, 'rb')
+            data = np.load(f)                    
+            f.close()
+            # There is a possibility that the fnamenpy file existed but
+            # fnamepklx was not found (b/c removed). In this case, the meta 
+            # returned will not have all of the "x_" information inserted below.
+            # Code that uses this information needs to account for this.
+            return data, meta
+
         cformats = ['csv', 'binary']  # client formats
-        if not DOPTS['format'] in cformats:
+        if not opts['format'] in cformats:
+            # Check if requested format is implemented by this client.
             raise ValueError('This client does not handle transport '
                              'format "%s".  Available options: %s'
-                             % (DOPTS['format'], ', '.join(cformats)))
+                             % (opts['format'], ', '.join(cformats)))
 
         # See if server supports binary
-        if DOPTS['format'] != 'csv':
+        if opts['format'] != 'csv':
+            log('Reading %s' % (SERVER + '/capabilities'), opts)
             res = urlopen(SERVER + '/capabilities')
             caps = jsonparse(res)
             sformats = caps["outputFormats"]  # Server formats
-            if not DOPTS['format'] in sformats:
-                warnings.warn('Requested transport format "%s" not avaiable '
+            if not opts['format'] in sformats:
+                warning("hapi", 'Requested transport format "%s" not avaiable '
                               'from %s. Will use "csv". Available options: %s'
-                              % (DOPTS['format'], SERVER, ', '.join(sformats)))
-                DOPTS['format'] = 'csv'
+                              % (opts['format'], SERVER, ', '.join(sformats)))
+                opts['format'] = 'csv'
 
+        ##################################################################
+        # Compute data type varialbe dt used to read HAPI response into
+        # a data structure.
         pnames, psizes, dt = [], [], []
         # Each element of cols is an array with start/end column number of
         # parameter.
         cols = np.zeros([len(meta["parameters"]), 2], dtype=np.int32)
         ss = 0  # running sum of prod(size)
 
-        # HAPI String or ISOTime parameter with no length attribute in metadata
-        # (length attribute is required only for primary time column in CSV)
+        # missing_length = True will be set if HAPI String or ISOTime
+        # parameter has no length attribute in metadata (length attribute is
+        # required for both in binary but only for primary time column in CSV).
+        # When missing_length=True the CSV read gets more complicated.
         missing_length = False
 
+        # Extract sizes and types of parameters.
         for i in range(0, len(meta["parameters"])):
             ptype = str(meta["parameters"][i]["type"])
             pnames.append(str(meta["parameters"][i]["name"]))
@@ -356,25 +389,35 @@ def hapi(*args, **kwargs):
                 psizes.append(1)
 
             # For size = [N] case, readers want
-            # dtype = ('name', type, N) not dtype = ('name', type, [N])
+            # dtype = ('name', type, N)
+            # not 
+            # dtype = ('name', type, [N])
             if type(psizes[i]) is list and len(psizes[i]) == 1:
                 psizes[i] = psizes[i][0]
 
-            cols[i][0] = ss  # First column of parameter
-            cols[i][1] = ss + np.prod(psizes[i]) - 1  # Last column of parameter
+            if type(psizes[i]) is list and len(psizes[i]) > 1:
+                psizes[i] = list(reversed(psizes[i]))
+                
+            # First column of ith parameter.
+            cols[i][0] = ss
+            # Last column of ith parameter.
+            cols[i][1] = ss + np.prod(psizes[i]) - 1
+            # Running sum of columns.
             ss = cols[i][1] + 1
 
-            # HAPI numerical formats are 64-bit LE floating point 32-bit LE
+            # HAPI numerical formats are 64-bit LE floating point and  32-bit LE
             # signed integers.
             if ptype == 'double':
+                #list(reversed(psizes[i]))
                 dtype = (pnames[i], '<d', psizes[i])
+                #import pdb; pdb.set_trace()
             if ptype == 'integer':
                 dtype = (pnames[i], np.dtype('<i4'), psizes[i])
 
-            if DOPTS['format'] == 'binary':
+            if opts['format'] == 'binary':
                 # TODO: If 'length' not available, warn and fall back to CSV.
-                # length attribute required for all parameters if
-                # format=binary.
+                # Technically, server response is invalid b/c length attribute
+                # required for all parameters if format=binary.
                 if ptype == 'string' or ptype == 'isotime':
                     dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
             else:
@@ -393,70 +436,71 @@ def hapi(*args, **kwargs):
                             dtype = (pnames[i], object, psizes[i])
 
             # For testing reader. Force use of slow reader.
-            if DOPTS['format'] == 'csv':
-                if DOPTS['method'] == 'numpynolength' or DOPTS['method'] == 'pandasnolength':
+            if opts['format'] == 'csv':
+                if opts['method'] == 'numpynolength' or opts['method'] == 'pandasnolength':
                     missing_length = True
                     if ptype == 'string' or ptype == 'isotime':
                         dtype = (pnames[i], object, psizes[i])
 
             dt.append(dtype)
+        ##################################################################
+
 
         # length attribute required for all parameters when serving binary but
         # is only required for time parameter when serving CSV. This catches
         # case where server provides binary but is missing a length attribute
-        # in one or more string parameters that were requested.
-        if DOPTS['format'] == 'binary' and missing_length:
-            warnings.warn('Requesting CSV instead of binary because of problem with server metadata.')
-            DOPTS['format'] == 'csv'
+        # in one or more string parameters that were requested. Note that
+        # this is will never be true. Need to update code above.
+        #if opts['format'] == 'binary' and missing_length:
+        #    warnings.warn('Requesting CSV instead of binary because of problem with server metadata.')
+        #    opts['format'] == 'csv'
 
-        # Read the data.
-        if DOPTS['format'] == 'binary':
+        # Read the data. toc0 is time to download (or build buffer); 
+        # toc is time to parse (includes download time if buffered IO is used.)
+        if opts['format'] == 'binary':
             # HAPI Binary
-            if DOPTS["cache"]:
-                if DOPTS['logging']: printf('Saving %s ... ', urlbin)
+            if opts["cache"]:
+                log('Writing %s to %s' % (urlbin, fnamebin.replace(urld + '/','')), opts)
                 tic0 = time.time()
                 urlretrieve(urlbin, fnamebin)
                 toc0 = time.time()-tic0
-                if DOPTS['logging']: printf('Done.\n')
-                if DOPTS['logging']: printf('Reading %s ... ', fnamebin)
+                log('Reading %s' % fnamebin.replace(urld + '/',''), opts)
                 tic = time.time()
                 data = np.fromfile(fnamebin, dtype=dt)
                 toc = time.time() - tic
             else:
                 from io import BytesIO
-                if DOPTS['logging']: printf('Getting %s ... ', urlbin)
+                log('Creating buffer: %s' % urlbin, opts)
                 tic0 = time.time()
-                fnamebin = BytesIO(urlopen(urlbin).read())
+                buff = BytesIO(urlopen(urlbin).read())
                 toc0 = time.time()-tic0
-                if DOPTS['logging']: printf('Done.\n')
-                if DOPTS['logging']: printf('Reading %s ... ', fnamebin)
+                log('Parsing buffer.', opts)
                 tic = time.time()
-                data = np.frombuffer(fnamebin.read(), dtype=dt)
+                data = np.frombuffer(buff.read(), dtype=dt)
                 toc = time.time() - tic
-            if DOPTS['logging']: printf('Done.\n')
         else:
             # HAPI CSV
-            if DOPTS["cache"]:
-                if DOPTS['logging']: printf('Saving %s ... ', urlcsv)
+            if opts["cache"]:
+                log('Saving %s' % urlcsv.replace(urld + '/',''), opts)
                 tic0 = time.time()
                 urlretrieve(urlcsv, fnamecsv)
                 toc0 = time.time() - tic0
+                log('Parsing %s' % fnamecsv.replace(urld + '/',''), opts)
             else:
                 from io import StringIO
-                if DOPTS['logging']: printf('Getting %s ... ', urlcsv)
+                log('Creating buffer: %s' % urlcsv.replace(urld + '/',''), opts)
                 tic0 = time.time()
                 fnamecsv = StringIO(urlopen(urlcsv).read().decode())
                 toc0 = time.time() - tic0
-            if DOPTS['logging']: printf('Done.\n')
-            if DOPTS['logging']: printf('Reading %s ... ', fnamecsv)
+                log('Parsing buffer.', opts)
 
             if not missing_length:
-                # All string and isotime parameters have a length in metadata
+                # All string and isotime parameters have a length in metadata.
                 tic = time.time()
-                if DOPTS['method'] == 'numpy':
+                if opts['method'] == 'numpy':
                     data = np.genfromtxt(fnamecsv, dtype=dt, delimiter=',')
                     toc = time.time() - tic
-                if DOPTS['method'] == 'pandas':
+                if opts['method'] == 'pandas':
                     # Read file into Pandas DataFrame
                     df = pandas.read_csv(fnamecsv, sep=',', header=None)
 
@@ -475,9 +519,11 @@ def hapi(*args, **kwargs):
                     toc = time.time() - tic
             else:
                 # At least one requested string or isotime parameter does not
-                #  have a length in metadata
-                if DOPTS['method'] == 'numpynolength':
-                    tic = time.time()
+                # have a length in metadata. More work to do to read. 
+                tic = time.time()
+                if opts['method'] == 'numpy' or opts['method'] == 'numpynolength':
+                    # If requested method was numpy, use numpynolength method.
+
                     # With dtype='None', the data type is determined automatically
                     table = np.genfromtxt(fnamecsv, dtype=None, delimiter=',',
                                           encoding='utf-8')
@@ -523,8 +569,8 @@ def hapi(*args, **kwargs):
                             tmp = np.squeeze(np.reshape(np.transpose(tmp), shape))
                             data[pnames[pn]] = tmp
 
-                if DOPTS['method'] == 'pandasnolength':
-                    tic = time.time()
+                if  opts['method'] == 'pandas' or opts['method'] == 'pandasnolength':
+                    # If requested method was pandas, use pandasnolength method.
 
                     # Read file into Pandas DataFrame
                     df = pandas.read_csv(fnamecsv, sep=',', header=None)
@@ -542,12 +588,12 @@ def hapi(*args, **kwargs):
                         # Works as expected in numpy 1.10.4
                         data[pnames[i]] = np.squeeze(np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1]+1)], shape))
 
-                # If any of the parameters are strings that do not have an associated
-                # length in the metadata, they will have dtype='O' (object).
+                # Any of the string parameters that do not have an associated
+                # length in the metadata will have dtype='O' (object).
                 # These parameters must be converted to have a dtype='SN', where
                 # N is the maximum string length. N is determined automatically
                 # when using astype('<S') (astype uses largest N needed).
-                dt2 = []
+                dt2 = [] # Will have dtypes with strings lengths calculated.
                 for i in range(0, len(pnames)):
                     if data[pnames[i]].dtype == 'O':
                         dtype = (pnames[i], str(data[pnames[i]].astype('<S').dtype), psizes[i])
@@ -555,7 +601,8 @@ def hapi(*args, **kwargs):
                         dtype = dt[i]
                     dt2.append(dtype)
 
-                # Create new N-D array
+                # Create new N-D array which won't have any parameters with
+                # type = 'O'.
                 data2 = np.ndarray(data.shape, dt2)
 
                 for i in range(0, len(pnames)):
@@ -566,28 +613,49 @@ def hapi(*args, **kwargs):
                         # Save memory by not copying (does this help?)
                         #data2[pnames[i]] = np.array(data[pnames[i]],copy=False)
 
-                toc = time.time() - tic
+            toc = time.time() - tic
 
-            if DOPTS['logging']: printf('Done.\n')
-
+        # Extra metadata associated with request will be saved in
+        # a pkl file with same base name as npy data file.
+        meta.update({"x_server": SERVER})
+        meta.update({"x_dataset": DATASET})
+        meta.update({"x_parameters": PARAMETERS})
+        meta.update({"x_time.min": START})
+        meta.update({"x_time.max": STOP})
+        meta.update({"x_requestDate": datetime.now().isoformat()[0:19]})
+        meta.update({"x_cacheDir": urld})
         meta.update({"x_downloadTime": toc0})
         meta.update({"x_readTime": toc})
+        meta.update({"x_metaFileParsed": fnamepkl})
+        meta.update({"x_dataFileParsed": fnamenpy})
+        meta.update({"x_metaFile": fnamejson})
+        if opts['format'] == 'binary':
+            meta.update({"x_dataFile": fnamebin})
+        else:
+            meta.update({"x_dataFile": fnamecsv})
 
-        if DOPTS["cache"]:
-            if DOPTS['logging']: printf('Writing %s ... ', fnamenpy)
+        # Note that this should only technically be
+        # written if cache=True. Will do this when output is
+        # h = hapi(...)
+        # h.data
+        # h.meta
+        # h.info
+        # Create cache directory
+        if not os.path.exists(opts["cachedir"]):
+            os.makedirs(opts["cachedir"])
+        if not os.path.exists(urld):
+            os.makedirs(urld)
+        log('Writing %s' % fnamepklx, opts)
+        f = open(fnamepklx, 'wb')
+        pickle.dump(meta, f, protocol=2)
+        f.close()
+
+        if opts["cache"]:
+            log('Writing %s' % fnamenpy, opts)
             if missing_length:
                 np.save(fnamenpy, data2)
             else:
                 np.save(fnamenpy, data)
-
-            if DOPTS['logging']: printf('Done.\n')
-
-            if DOPTS['logging']: printf('Writing %s ... ', fnamepkl)
-            f = open(fnamepkl, 'wb')
-            pickle.dump(meta, f, protocol=2)
-            f.close()
-            if DOPTS['logging']:
-                printf('Done.\n')
 
         if missing_length:
             return data2, meta
@@ -640,16 +708,10 @@ def hapitime2datetime(Time, **kwargs):
 
     """
 
-    DOPTS = {}
-    DOPTS.update({'logging': False})
+    opts = {'logging': False}
 
-    # Override defaults
-    for key, value in kwargs.items():
-        if key in DOPTS:
-            DOPTS[key] = value
-        else:
-            warnings.warn('Keyword option "%s" is not valid.' % key)
-
+    opts = setopts(opts, kwargs)
+    
     if type(Time) == list:
         Time = np.asarray(Time)
     if type(Time) == str or type(Time) == bytes:
@@ -657,6 +719,14 @@ def hapitime2datetime(Time, **kwargs):
 
     if type(Time) != np.ndarray:
         print("error")
+    
+    #import pdb; pdb.set_trace()
+    reshape = False
+    if Time.shape[0] != Time.size:
+        reshape = True
+        shape = Time.shape
+        Time = Time.flatten()
+
     if type(Time[0]) == np.bytes_:
         Time = Time.astype('U')
 
@@ -668,8 +738,10 @@ def hapitime2datetime(Time, **kwargs):
         # When infer_datetime_format is used, TimeStamp object returned.
         # When format=... is used, datetime object is used.
         Time = pandas.to_datetime(Time, infer_datetime_format=True).to_pydatetime()
+        if reshape:
+            Time = np.reshape(Time, shape)
         toc = time.time() - tic
-        if DOPTS['logging']: printf("Pandas processing time = %.4fs, Input = %s\n", toc, Time[0])
+        log("Pandas processing time = %.4fs, Input = %s\n" % (toc, Time[0]), opts)
         return Time
     except:
         pass
@@ -743,11 +815,15 @@ def hapitime2datetime(Time, **kwargs):
 
     if re.match(r".*Z$", Time[0]):
         fmt = fmt + "Z"
-
+    
+    # TODO: Why not use pandas.to_datetime here with fmt
     for i in range(0, len(Time)):
         pythonDateTime[i] = datetime.strptime(Time[i], fmt)
 
     toc = time.time() - tic
-    if DOPTS['logging']: printf("Manual processing time = %.4fs, Input = %s, fmto = %s, fmt = %s\n", toc, Time[0], fmto, fmt)
+    log("Manual processing time = %.4fs, Input = %s, fmto = %s, fmt = %s\n" % (toc, Time[0], fmto, fmt), opts)
+
+    if reshape:
+        pythonDateTime = np.reshape(pythonDateTime, shape)
 
     return pythonDateTime
