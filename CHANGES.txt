@@ -10,3 +10,9 @@ v0.0.6:
 		2018-10-04 -- Improve dateticks.py
 		2018-10-04 -- Add hapi_demo.ipynb
 		2018-10-04 -- Other documentation improvements
+v0.0.7: 
+		2018-10-06 -- Improve documentation
+		2018-10-06 -- Add reader tests
+		2018-10-23 -- Improve dateticks and tests
+		2018-10-23 -- Add OO interface for plots; add options
+		2018-11-27 -- Major refactoring and clean-up

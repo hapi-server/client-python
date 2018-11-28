@@ -2,6 +2,11 @@
 from setuptools import setup, find_packages
 import sys
 
+install_requires = ["numpy>=1.14.3","pandas==0.23.0","matplotlib>=2.2.2","isodate>=0.6.0"]
+
+if sys.argv[1] == 'develop':
+    install_requires.append("deepdiff")
+
 # version is modified by misc/setversion.py. See Makefile.
 setup(
     name='hapiclient',
@@ -13,7 +18,7 @@ setup(
     license='LICENSE.txt',
     description='Heliophysics API',
     long_description=open('README.txt').read(),
-    install_requires=["numpy>=1.14.3","pandas==0.23.0","matplotlib>=2.2.2"]
+    install_requires=install_requires
 )
 
 

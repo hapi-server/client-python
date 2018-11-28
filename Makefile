@@ -17,6 +17,8 @@
 #URL=https://test.pypi.org/
 #REP=pypitest
 
+PYTHON=python3.6
+
 URL=https://upload.pypi.org/
 REP=pypi
 
@@ -24,17 +26,46 @@ REP=pypi
 VERSION=0.0.6
 SHELL:= /bin/bash
 
+test:
+	make repository-test
+
 # Test contents in repository using system install of python.
 # 'python setup.py develop' creates symlinks in system package directory.
 repository-test:
+	make repository-test-data PYTHON=python3.6
+	make repository-test-data PYTHON=python2.7
+	make repository-test-plots PYTHON=python3.6
+	make repository-test-plots PYTHON=python2.7
+
+repository-test-data:
 	make clean
 	make README.txt
-	python setup.py develop
-	pytest -v -m 'not long' hapiclient/test/test_hapi.py
-	pytest -v -m 'long' hapiclient/test/test_hapi.py
-	pytest -v hapiclient/test/test_hapitime2datetime.py
-	python3 hapi_demo.py
+	$(PYTHON) setup.py develop
+	$(PYTHON) -m pytest -v -m 'not long' hapiclient/test/test_hapi.py
+	$(PYTHON) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
+	$(PYTHON) -m pytest -v hapiclient/test/test_hapitime2datetime.py
 	#python setup.py develop --uninstall
+
+# These require visual inspection.
+repository-test-plots:
+	make clean
+	make README.txt
+	$(PYTHON) setup.py develop
+	$(PYTHON) hapi_demo.py
+	$(PYTHON) hapiclient/hapiplot_test.py
+	$(PYTHON) hapiclient/hapiplot_test.py
+	$(PYTHON) hapiclient/plot/timeseries_test.py
+	$(PYTHON) hapiclient/gallery/gallery_test.py
+	$(PYTHON) hapiclient/autoplot/autoplot_test.py
+	jupyter-notebook hapi_demo.ipynb
+
+repository-test-server:
+	$(PYTHON) hapiclient/plotserver/hapiplotserver_test.py
+	read -p "Press enter to continue tests."
+	cd hapiclient/plotserver/; \
+		gunicorn -w 4 -b 127.0.0.1:5000 'hapiplotserver:gunicorn(loglevel="debug",use_cache=False)' &
+	read -p "Press enter to continue tests."
+	echo("Open and check http://127.0.0.1:5000/")
 
 release:
 	make version-tag
@@ -109,15 +140,12 @@ README.txt: README.md
 # Use package in ./hapiclient instead of that installed by pip.
 # This seems to not work in Spyder.
 install-local:
-	python setup.py develop
+	python setup.py
 
 install:
 	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple
 	conda list | grep hapiclient
 	pip list | grep hapiclient
-
-test:
-	pytest -v hapiclient/test/test_hapi.py
 
 # Run pytest twice because first run creates test files that
 # subsequent tests use for comparison.
@@ -131,14 +159,33 @@ requirements:
 	pip install pipreqs
 	pipreqs hapiclient/
 
+pngquant: bin/pngquant
+	git clone https://github.com/pornel/pngquant.git
+	make bin/pngquant
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+bin/pngquant:
+	echo $(UNAME_S)
+	echo "--- Attempting to compile pngquant."
+	echo "--- If this fails, you may need to install libpng12 headers."
+	cd pngquant; ./configure CFLAGS="-I../libpng12/" && make;
+endif
+
+ifeq ($(UNAME_S),Darwin)
+bin/pngquant:
+	echo "--- Attempting to compile pngquant."
+	brew install libpng
+	cd pngquant; ./configure && make
+endif
+
 clean:
-	- python setup.py develop --uninstall
+	- python setup.py --uninstall
 	- find . -name __pycache__ | xargs rm -rf {}
 	- find . -name *.pyc | xargs rm -rf {}
 	- find . -name *.DS_Store | xargs rm -rf {}
-	- rm -rf __pycache__
-	- rm -f *.pyc
-	- rm -rf hapi-data	
+	- find . -type d -name __pycache__ | xargs rm -rf {}
+	- find . -name *.pyc | xargs rm -rf {}
 	- rm -f *~
 	- rm -f \#*\#
 	- rm -f README.txt
@@ -147,13 +194,3 @@ clean:
 	- rm -f MANIFEST
 	- rm -rf .pytest_cache/
 	- rm -rf hapiclient.egg-info/
-
-
-
-
-
-
-
-
-
-
