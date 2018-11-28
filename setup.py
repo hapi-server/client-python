@@ -17,7 +17,7 @@ setup(
     url='http://pypi.python.org/pypi/hapiclient/',
     license='LICENSE.txt',
     description='Heliophysics API',
-    long_description=open('README.txt').read(),
+    long_description=open('README.rst').read(),
     install_requires=install_requires
 )
 
