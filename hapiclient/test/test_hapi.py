@@ -1,6 +1,8 @@
 import pytest
 import os
 import pickle
+import numpy as np
+
 from deepdiff import DeepDiff
 from hapiclient.hapi import hapi
 from hapiclient.test.readcompare import readcompare, clearcache
@@ -65,7 +67,7 @@ def test_parameter():
 def test_bad_server_url():
     """Correct error when given bad URL"""
     with pytest.raises(Exception):
-        hapi(serverbad)
+        hapi(serverbad, {'logging': True})
 
 def test_bad_dataset_name():
     """Correct error when given nonexistent dataset name"""
@@ -86,31 +88,120 @@ def test_deprecation():
 
 def test_reader_short():
         
-    # TODO: Check that parameters='scalar' and parameters='scalar,vector'
-    # gives same values for scalar parameter.
-    
-    opts = {'logging': False, 'cache_dir': '/tmp/hapi-data', 'cache': False, 'use_cache': False}
     dataset = 'dataset1'
     run = 'short'
+    
+    # Cache = False (will read data into buffer)    
+    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'usecache': False}
 
-    clearcache(opts)
+    opts['cache'] = False
+
     # Read one parameter
-    assert readcompare(server, dataset, 'scalar', run, opts)
     clearcache(opts)
+    assert readcompare(server, dataset, 'scalar', run, opts)
+
     # Read two parameters
+    clearcache(opts)
+    assert readcompare(server, dataset, 'scalar,vector', run, opts)
+
+    # Read all parameters
+    clearcache(opts)
+    assert readcompare(server, dataset, '', run, opts)
+
+    # Cache = True (will write files then read)
+    opts['cache'] = True
+
+    # Read one parameter
+    clearcache(opts)
+    assert readcompare(server, dataset, 'scalar', run, opts)
+
+    # Read two parameters
+    clearcache(opts)
     assert readcompare(server, dataset, 'scalar,vector', run, opts)
     clearcache(opts)
+
     # Read all parameters
+    clearcache(opts)
     assert readcompare(server, dataset, '', run, opts)
+    
+def test_cache_short():
+    # Compare read with empty cache with read with hot cache and usecache=True
+    dataset = 'dataset1'
+    start = '1970-01-01'
+    stop  = '1970-01-01T00:00:03'
+
+    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'cache': True}
+
+    opts['usecache'] = False
+    clearcache(opts)
+    data, meta  = hapi(server, dataset, 'scalarint,vectorint', start, stop, **opts)
+
+    opts['usecache'] = True
+    data2, meta2  = hapi(server, dataset, 'scalarint,vectorint', start, stop, **opts)
+
+    assert np.array_equal(data, data2)
+
+def test_subset_short():
+    
+    dataset = 'dataset1'
+    start = '1970-01-01'
+    stop  = '1970-01-01T00:00:03'
+    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'cache': True}
+
+    opts['usecache'] = False
+    
+    # Request two subsets with empty cache. Common parts should be same.
+    clearcache(opts)
+    data, meta  = hapi(server, dataset, 'scalarint', start, stop, **opts)
+
+    clearcache(opts)
+    data2, meta2  = hapi(server, dataset, 'scalarint,vectorint', start, stop, **opts)
+
+    ok = np.array_equal(data['Time'], data2['Time'])
+    ok = ok and np.array_equal(data['scalarint'], data2['scalarint'])
+    assert ok
+
+    # Request all parameters and single parameter. Common parameter should be same.
+    clearcache(opts)
+    data, meta  = hapi(server, dataset, '', start, stop, **opts)
+
+    clearcache(opts)
+    data2, meta2  = hapi(server, dataset, 'vectorint', start, stop, **opts)
+        
+    ok = np.array_equal(data['Time'], data2['Time'])
+    ok = ok and np.array_equal(data['vectorint'], data2['vectorint'])
+    assert ok
+
+    opts['usecache'] = True
+    
+    # Request two subsets with hot cache. Common parts should be same.
+    data, meta  = hapi(server, dataset, 'scalarint', start, stop, **opts)
+    data2, meta2  = hapi(server, dataset, 'scalarint,vectorint', start, stop, **opts)
+
+    ok = np.array_equal(data['Time'], data2['Time'])
+    ok = ok and np.array_equal(data['scalarint'], data2['scalarint'])
+    assert ok
+
+    # Request all parameters and single parameter with hot cache. Common parameter should be same.
+    clearcache(opts)
+    data, meta  = hapi(server, dataset, '', start, stop, **opts)
+
+    clearcache(opts)
+    data2, meta2  = hapi(server, dataset, 'vectorint', start, stop, **opts)
+        
+    ok = np.array_equal(data['Time'], data2['Time'])
+    ok = ok and np.array_equal(data['vectorint'], data2['vectorint'])
+    assert ok
 
 @pytest.mark.long
 def test_reader_long():
     
-    opts = {'logging': False, 'cache_dir': '/tmp/hapi-data', 'cache': False, 'use_cache': False}
+    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'cache': False, 'usecache': False}
     dataset = 'dataset1'
     
     run = 'long'
-    clearcache(opts)
+    
     # Read two parameters
+    clearcache(opts)
     assert readcompare(server, dataset, 'scalar,vector', run, opts)
         
