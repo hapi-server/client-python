@@ -1,0 +1,61 @@
+<html>
+	<head>
+		<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+		<title>HAPI Plot Server</title>
+		<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+		<link rel="icon" href="favicon.ico" type="image/x-icon">
+	</head>
+  	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+	<script>
+	var exampleURLs = [
+		"server=http://hapi-server.org/servers/TestData/hapi&id=dataset1&parameters=scalar&time.min=1970-01-01Z&time.max=1970-01-01T00:00:11Z&transparent=false",
+		"server=http://hapi-server.org/servers/TestData/hapi&id=dataset1&format=gallery"
+		];
+
+	$(document).ready(function(){
+		var exampleul = $('#examples');
+		$.each(exampleURLs, function(i)
+			{
+				var li = $('<li>').appendTo(exampleul);
+				var a  = $('<a>')
+							.attr("href","?" + exampleURLs[i])
+							.text("?" + exampleURLs[i])
+							.appendTo(li);
+			});
+	})
+	</script>
+	<body>
+		<p>
+			Plot data from a HAPI server
+		</p>
+		<h3>Usage</h3>
+		<p>
+			Return a PNG image of <code>PARAMETERS</code> plotted over the timerange <code>START/STOP</code>. At present, <code>PARAMETERS
+			</code> can only be a single parameter.
+		</p>
+		<p>
+			<code>?server=HAPIURL&id=ID&amp;parameters=PARAMETERS&time.max=START&time.min=STOP</code> 
+		</p>
+		<p>
+		Open a ViViz gallery
+		<p>
+			<code>?server=HAPIURL&id=ID&format=gallery</code>
+		</p>
+		<p>
+			Other parameters
+		</p>
+		<p>
+			<ul>
+				<li><code>format</code> [png], svg, or pdf</li>
+				<li><code>transparent</code> [true] or false</li>
+				<li><code>usecache</code> [true] or false</li>
+				<li><code>figsize</code> [7,3] image size in inches</li>
+				<li><code>dpi</code> [144] dpi of image</li>
+			</ul>
+		<h3>Usage Examples</h3>
+		<p>
+			<ul id="examples">
+			</ul>
+		</p>
+	</body>
+</html>
