@@ -1,0 +1,239 @@
+'''
+Usage:
+
+Start server at http://localhost:8080/ and open Autoplot GUI:
+   curl -O http://autoplot.org/jnlp/latest/autoplot.jar
+   java -jar autoplot.jar --noAskParams 'server.jy'
+To plot a URI after starting the server, use
+   java -jar autoplot.jar --noAskParams 'server.jy?uri=URI'
+where URI is an encoded URI. server.jy takes options DEBUG and PORT.
+The defaults are
+   java -jar autoplot.jar --noAskParams -DDEBUG=False -DPORT=8079 'server.jy?uri=URI'
+
+When the server is running,
+   curl 'http://localhost:8080/?uri=URI'
+plots the encoded URI in the previously opened Autoplot GUI and
+responds with the string 'OK. See Autoplot GUI for result.'
+   curl 'http://localhost:8080/?uri=URI&format=png' > image.png
+plots the encoded URI in the previously opened Autoplot GUI and
+returns a png of the canvas.
+
+Testing:
+   curl 'http://localhost:8080/simple'
+updates the GUI associated with a server and plots four points.
+   curl 'http://localhost:8080/simple?format={png,pdf,svg}'
+updates the GUI and returns a png, pdf, or svg of the canvas.
+'''
+
+import md5
+import os.path
+import time
+import urllib
+from urlparse import urlparse
+import threading
+import SimpleHTTPServer
+import SocketServer
+
+from java.lang import System
+from java.lang import Runtime
+from java.lang import Thread
+from java.io import File
+from org.autoplot import AutoplotUtil
+
+DEBUG = bool(System.getProperty('DEBUG'))
+if not DEBUG: DEBUG = False
+
+TMPDIR = System.getProperty('HAPI_DATA')
+if not TMPDIR: TMPDIR = '/tmp/'
+if TMPDIR[-1] != '/': TMPDIR = TMPDIR + "/"
+
+PORT = int(System.getProperty('PORT'))
+if PORT is not None: PORT = 8079
+
+SERVER = 'http://localhost:' + str(PORT) + "/"
+
+def parseURL(url):
+    # No native URL parser available in this version (2.2) of Jython
+    # Remove everything before http as urlparse does not handle
+    # properly.
+    i = url.find(':http')
+    if i >= 0:
+        url = url[i+1:]
+    urlparts = urlparse(url)
+    qsd = {}
+    if len(urlparts) >= 5:
+        qs = urlparts[4]
+        if qs != '':
+            qsd = dict([x.split("=") for x in qs.split("&")])
+
+    return qsd
+
+def ploturi(uri, format):
+
+    def removeOffset(r):
+        i= r.find('%')
+        if ( i==-1 ):
+            return '0%'
+        else:
+            return r[0:i+1]
+
+    fname = TMPDIR + md5.new(uri).hexdigest() + '.' + format
+    if format != '' and os.path.isfile(fname): 
+        return fname # cache file found
+    
+    uri = urllib.unquote(uri)
+    qsd = parseURL(uri)
+    parameters = qsd['parameters']
+    parameters_array = parameters.split(',')
+    print(parameters_array)
+    if len(parameters_array) == 1:
+        plot(uri)
+        AutoplotUtil.resetZoomY(dom)
+    else:
+        for i in range(0,len(parameters_array)):
+            urir = uri.replace(parameters, parameters_array[i])
+            print('Plotting ' + urir)
+            plot(i, urir)
+            dom.canvases[0].rows[i].bottom = removeOffset(dom.canvases[0].rows[i].bottom) + "-0.5em"
+            dom.canvases[0].rows[i].top = removeOffset(dom.canvases[0].rows[i].top)
+            dom.plots[i].title = ''
+            AutoplotUtil.resetZoomY( dom, dom.plots[i] )
+            if i < len(parameters_array)-1:
+                dom.plots[i].xaxis.drawTickLabels= False
+        AutoplotUtil.resetZoomY(dom)
+
+    if DEBUG: print('Plotted ' + uri)
+    if format != '':
+        print('Writing ' + fname)
+        if format == 'png': writeToPng(fname) 
+        if format == 'svg': writeToSvg(fname) 
+        if format == 'pdf': writeToPdf(fname) 
+
+    return fname
+
+def plotsimple(format):
+
+    fname = TMPDIR + 'simple.' + format
+    
+    A = [1.0,4.0,16.0,32.0] 
+    x = [1,2,3,4] 
+    plot(x, A, color='red')
+
+    if DEBUG: print('Executed plot([1,2,3,4],[1.0,4.0,9.0,16.0])')
+    if format != '':
+        print('Writing ' + fname)
+        if format == 'png': writeToPng(fname) 
+        if format == 'svg': writeToSvg(fname) 
+        if format == 'pdf': writeToPdf(fname) 
+
+    return fname
+
+class RequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+    if DEBUG: print('Request handler called.')
+    def do_GET(self):
+        if DEBUG: print('path = ' + self.path)
+
+        if self.path == '/':
+            if DEBUG: print('Sending response "OK"')
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            self.wfile.write("OK\n")
+            return
+
+        qsd = parseURL(self.path)
+        if DEBUG: print(qsd)
+
+        format = ''
+        if 'format' in qsd: 
+            format = qsd['format']
+
+        print('format = ' + format)
+        if 'uri' in qsd:
+            if DEBUG: print('qsd = ')
+            if DEBUG: print(qsd)
+            if DEBUG: print('uri = ' + qsd['uri'])
+            if DEBUG: print('format = ' + format)
+            fname = ploturi(qsd['uri'], format)
+        elif self.path.startswith('/simple'):
+            fname = plotsimple(format)
+        else:
+            self.send_error(400, 'A URI argument is required, e.g., /?uri=...')
+            return
+
+        if format == '':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            self.wfile.write("OK. See Autoplot GUI for result.\n")
+            return
+        else:
+            self.send_response(200)
+            self.send_header('Content-type', 'image/'+format)
+            self.end_headers()
+            f = open(fname,'rb')
+            self.wfile.write(f.read())
+            f.close()
+            return
+
+def serverrunning():
+    running = False
+    try:
+        f = urllib.urlopen(SERVER)
+        if f.read().startswith('OK'):
+            running = True
+            if DEBUG: print('Server running.')
+        f.close()
+    except Exception, e:
+        if DEBUG: print('Server not running.')
+
+    return running
+
+def startserver():
+    print('Starting server.')
+
+    #class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+    #    pass
+
+    class StopThread( Thread ):
+        def run( self ):
+            print 'Stopping server.'
+            #print(thread) # Thread of server?
+            #print(Thread) # Thread of script?
+            #print(thread.isAlive())
+            #print(tcpserver)
+            try:
+                #kill_thread.start()
+                tcpserver.shutdown()
+                tcpserver.server_close()
+                #print('tcpserver.shutdown() finished.')
+                thread.stop()
+            except Exception, e:
+                print(e)
+
+    try:
+        Handler = RequestHandler
+        # https://stackoverflow.com/questions/15260558/python-tcpserver-address-already-in-use-but-i-close-the-server-and-i-use-allow
+        SocketServer.TCPServer.allow_reuse_address = True
+        tcpserver = SocketServer.TCPServer(('0.0.0.0', PORT), Handler)
+        thread = threading.Thread(target=tcpserver.serve_forever)
+        thread.daemon = True
+        thread.start()
+        Runtime.getRuntime().addShutdownHook(StopThread())
+        return True
+    except Exception, e:
+        print(e)
+        return False
+
+uri = getParam( 'uri', '' , 'uri')
+format = getParam( 'format', '' , 'format')
+
+running = serverrunning()
+if running:
+    if DEBUG: print("Server is already running. Use server request to update already opened Autoplot GUI.")
+else:
+    started = startserver()
+
+if uri != '':
+    ploturi(uri, format)
+
