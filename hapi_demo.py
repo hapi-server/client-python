@@ -20,11 +20,11 @@ def sscweb():
     server     = 'http://hapi-server.org/servers/SSCWeb/hapi'
     dataset    = 'ace'
     start      = '2001-01-01T05:00:00'
-    stop       = '2001-01-01T06:00:00'
+    stop       = '2001-01-01T10:00:00'
     parameters = 'X_GSE,Y_GSE,Z_GSE'
-    opts       = {'logging': True, 'use_cache': True}
-    data,meta = hapi(server, dataset, parameters, start, stop, **opts)
-    hapiplot(data,meta)
+    opts       = {'logging': True, 'usecache': True}
+    data, meta = hapi(server, dataset, parameters, start, stop, **opts)
+    hapiplot(data, meta, **opts)
 
 def cdaweb():    
 
@@ -35,11 +35,11 @@ def cdaweb():
     server     = 'https://cdaweb.gsfc.nasa.gov/hapi'
     dataset    = 'AC_H0_MFI'
     start      = '2001-01-01T05:00:00'
-    stop       = '2001-01-01T06:00:00'
+    stop       = '2001-01-01T10:00:00'
     parameters = 'Magnitude,BGSEc'
-    opts       = {'logging': True, 'use_cache': True}    
-    data,meta = hapi(server, dataset, parameters, start, stop, **opts)
-    hapiplot(data,meta)
+    opts       = {'logging': True, 'usecache': True}    
+    data, meta = hapi(server, dataset, parameters, start, stop, **opts)
+    hapiplot(data, meta, **opts)
     
     #%% CDAWeb metadata for AC_H0_MFI
     server     = 'https://cdaweb.gsfc.nasa.gov/hapi'

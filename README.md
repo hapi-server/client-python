@@ -10,59 +10,15 @@ Operating system command line:
 pip install hapiclient
 ```
 
-### Fail-safe
-
-Python command line:
-
-```python
-import os
-print(os.popen("pip install hapiclient").read())
-```
-
-The above executes and displays the output of the operating system command `pip install hapiclient` using the shell environment associated with that installation of Python.
-
-This method addresses a problem often encountered when attempting to use `pip` packages in Anaconda. To use a `pip` package in Anaconda, one must use the version of `pip` installed with Anaconda (it is usually under a subdirectory with the name `anaconda/`) as opposed to the one installed with the operating system. To see the location of `pip` used in a given Python session, enter `print(os.popen("which pip").read())`.
+See the [Appendix](#Fail-safe-installation) for a fail-safe installation method.
 
 ## Documentation
 
-See the help string by entering `help(hapi)` on the Python command line.
+See the help string by entering `help(hapi)` or `help(hapiplot)` on the Python command line.
 
-All of the features are extensively demonstrated in [hapi_demo.ipynb](https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb).
+All of the features are extensively demonstrated in the [hapi_demo.ipynb](https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb) Jupyter Notebook. Instructions for local use are shown on this page.
 
-## Demo
-
-The [hapi_demo.py](https://github.com/hapi-server/client-python/blob/master/hapi_demo.py) shows example usage of this package.
-
-### Jypyter Notebook
-
-To execute the demo in a [Jupyter Notebook](https://jupyter-notebook.readthedocs.io/en/stable/examples/Notebook/Notebook%20Basics.html), execute
-```
-curl -L -O https://rawgithub.com/hapi-server/client-python/master/hapi_demo.ipynb
-jupyter-notebook hapi_demo.ipynb
-```
-(A web page should open. To run code in a cell after editng it, enter <code>SHIFT+ENTER</code>.)
-
-### Python Command Line
-
-The following Python commands downloads and executes the [demo](https://github.com/hapi-server/client-python/hapi_demo.py).
-
-#### Python 2
-```python
-# D/L and save hapi_demo.py
-import urllib
-url = 'https://github.com/hapi-server/client-python/raw/master/hapi_demo.py'
-urllib.urlretrieve(url,'hapi_demo.py')
-exec(open("hapi_demo.py").read(), globals())
-```
-
-#### Python 3
-```python
-# D/L and save hapi_demo.py
-import urllib.request
-url = 'https://github.com/hapi-server/client-python/raw/master/hapi_demo.py'
-urllib.request.urlretrieve(url,'hapi_demo.py')
-exec(open("hapi_demo.py").read(), globals())
-```
+The [hapi_demo.py](https://github.com/hapi-server/client-python/blob/master/hapi_demo.py) scripts shows example usage of the functions in this package that can be copied into a script or onto a Python command line.
 
 ## Development
 
@@ -71,14 +27,15 @@ git clone https://github.com/hapi-server/client-python
 cd client-python; python setup.py develop
 ```
 
-(The command <code>python setup.py develop</code> creates symlinks so that the local package is used instead of an installed package. Use `pip uninstall hapi` to ensure the local package is used.)
+(The command <code>python setup.py develop</code> creates symlinks so that the local package is used instead of an installed package. Use `pip uninstall hapiclient` to ensure the local package is used.)
 
 To run tests before a commit, execute
+
 ```bash
 make repository-test
 ```
 
-To run an individual test in a Python session, use, e.g.,
+To run an individual unit test in a Python session, use, e.g.,
 
 ```python
 from hapiclient.test.test_hapi import test_reader
@@ -90,3 +47,19 @@ test_reader()
 Submit bug reports and feature requests on the [repository issue tracker](https://github.com/hapi-server/client-python/issues).
 
 Bob Weigel <rweigel@gmu.edu>
+
+## Appendix
+
+<a name="Fail-safe-installation"></a>
+### Fail-safe installation
+
+Python command line:
+
+```python
+import os
+print(os.popen("pip install hapiclient").read())
+```
+
+The above executes and displays the output of the operating system command `pip install hapiclient` using the shell environment associated with that installation of Python.
+
+This method addresses a problem that is sometimes encountered when attempting to use `pip` packages in Anaconda. To use a `pip` package in Anaconda, one must use the version of `pip` installed with Anaconda (it is usually under a subdirectory with the name `anaconda/`) as opposed to the one installed with the operating system. To see the location of `pip` used in a given Python session, enter `print(os.popen("which pip").read())`.
