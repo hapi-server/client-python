@@ -39,7 +39,6 @@ repository-test:
 
 repository-test-data:
 	make clean
-	make README.txt
 	$(PYTHON) setup.py develop
 	$(PYTHON) -m pytest -v -m 'not long' hapiclient/test/test_hapi.py
 	$(PYTHON) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
@@ -49,7 +48,6 @@ repository-test-data:
 # These require visual inspection.
 repository-test-plots:
 	make clean
-	make README.txt
 	$(PYTHON) setup.py develop
 	$(PYTHON) hapi_demo.py
 	$(PYTHON) hapiclient/hapiplot_test.py
@@ -95,7 +93,6 @@ release-test:
 package:
 	make clean
 	make version-update
-	make README.txt
 	make repository-test
 	python setup.py sdist
 	make package-test
@@ -133,9 +130,6 @@ version-tag:
 	git push
 	git tag -a v$(VERSION) -m "Version "$(VERSION)
 	git push --tags
-
-README.txt: README.md
-	pandoc --from=markdown --to=rst --output=README.txt README.md
 
 # Use package in ./hapiclient instead of that installed by pip.
 # This seems to not work in Spyder.
@@ -188,7 +182,6 @@ clean:
 	- find . -name *.pyc | xargs rm -rf {}
 	- rm -f *~
 	- rm -f \#*\#
-	- rm -f README.txt
 	- rm -rf env
 	- rm -rf dist
 	- rm -f MANIFEST
