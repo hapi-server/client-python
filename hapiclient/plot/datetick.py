@@ -7,7 +7,6 @@ import matplotlib
 gui_env = ['Qt5Agg','QT4Agg','GTKAgg','TKAgg','WXAgg']
 for gui in gui_env:
     try:
-        #print("xtesting", gui)
         matplotlib.use(gui,warn=False, force=True)
         import matplotlib.pyplot as plt
         break
@@ -18,11 +17,16 @@ def datetick(dir, **kwargs):
     '''
     datetick('x') or datetick('y') formats the major and minor tick labels
     of the current figure.
+    
+    datetick('x', axes=ax) or datetick('y', axes=ax) formats the given
+    axes `ax`.
+
     Example:
+    --------
         import datetime as dt
         import numpy as np
         import matplotlib.pyplot as plt
-        from hapiclient.util.datetick import datetick
+        from hapiclient.plot.datetick import datetick
         d1 = dt.datetime(1900, 1, 2)
         d2 = dt.datetime.fromordinal(10 + dt.datetime.toordinal(d1))
         x = np.array([d1, d2], dtype=object)
@@ -43,48 +47,60 @@ def datetick(dir, **kwargs):
     #       a major x-label right below it. This is due to the fact that
     #       MicrosecondLocator() does not take a keyword argument of
     #       "bymicroseconds".
-    
-    def on_xlims_change(ax): datetick('x', set_cb=False)
-    def on_ylims_change(ax): datetick('y', set_cb=False)
-    
+        
     def millis(x, pos):
         'The two args are the value and tick position'
         return '$%1.1fM' % (x*1e-6)
 
-    debug = False
-    
-    axes = plt.gca()
-    fig = plt.gcf()
-    
-    # By default, trigger update of ticks when limits
-    # change due to user interaction.
-    set_cb = True
-    if 'set_cb' in kwargs:
-        set_cb = kwargs['set_cb']
-    if set_cb == True:
-        # Trigger update of ticks when limits change.
+    DOPTS = {}
+    DOPTS.update({'debug': False})
+    DOPTS.update({'set_cb': True})
+    DOPTS.update({'axes': None})
+
+    # Override defaults
+    for key, value in kwargs.items():
+        if key in DOPTS:
+            DOPTS[key] = value
+        else:
+            print('Warning: Keyword option "%s" is not valid.' % key)
+
+    if 'axes' in kwargs:
+        axes = kwargs['axes']
+        fig = axes.figure
+    else:
+        axes = plt.gca()
+        fig = plt.gcf()
+
+    debug = DOPTS['debug']
+
+    def on_xlims_change(ax): datetick('x', axes=ax, set_cb=False)
+    def on_ylims_change(ax): datetick('y', axes=ax, set_cb=False)
+
+    # Trigger update of ticks when limits change due to user interaction.
+    if DOPTS['set_cb']:
         if dir == 'x':
             axes.callbacks.connect('xlim_changed', on_xlims_change)
         else:
             axes.callbacks.connect('ylim_changed', on_ylims_change)
 
-    line = axes.lines[0]
-        
-    datamin = mpld.date2num(line.get_xdata()[0])
-    datamax = mpld.date2num(line.get_xdata()[-1])
+    bbox = axes.dataLim
+
+    if dir == 'x':        
+        datamin = bbox.x0
+        datamax = bbox.x1
+        lim = axes.get_xlim()
+    else:
+        datamin = bbox.y0
+        datamax = bbox.y1    
+        lim = axes.get_ylim()
+
+    tmin = np.max((lim[0], datamin))
+    tmax = np.min((lim[1], datamax))
+    time = mpld.num2date((tmin,tmax))
+
     if debug == True:
         print('Data min time: %f' % datamin)
         print('Data max time: %f' % datamax)
-
-    xlim = axes.get_xlim()
-
-    tmin = np.max((xlim[0], datamin))
-    tmax = np.min((xlim[1], datamax))
-    
-    if dir == 'x':
-        time = mpld.num2date((tmin,tmax))
-    else:
-        time = mpld.num2date(axes.get_ylim())
     
     deltaT = time[-1] - time[0]
     nDays  = deltaT.days
@@ -93,6 +109,9 @@ def datetick(dir, **kwargs):
     if debug == True:
         print("Total seconds: %s" % deltaT.total_seconds())
 
+    # Note that interval=... is specified even when it would seem to be
+    # redundant. It is needed to workaround the bug discussed at
+    # https://stackoverflow.com/questions/31072589/matplotlib-date-ticker-exceeds-locator-maxticks-error-for-no-apparent-reason
     if deltaT.total_seconds() < .1:
         # < 0.1 second
         # At this level of zoom, would need original datetime data
@@ -222,7 +241,7 @@ def datetick(dir, **kwargs):
         # < 1 day
         Mtick = mpld.HourLocator(byhour=list(range(0, 24, 3)) )
         mtick = mpld.HourLocator(byhour=list(range(0, 24, 1)) )
-        fmt   = mpld.DateFormatter('%H:%M')
+        fmt   = mpld.DateFormatter('%H')
         fmt2  = '%Y-%m-%d'
     elif nHours < 48:
         # < 2 days
@@ -232,13 +251,13 @@ def datetick(dir, **kwargs):
         fmt2  = '%Y-%m-%d'
     elif nHours < 72:
         # < 3 days
-        Mtick = mpld.HourLocator(byhour = [0, 6, 12, 18])
+        Mtick = mpld.HourLocator(byhour = list(range(0, 24, 6)))
         mtick = mpld.HourLocator(byhour = list(range(0, 24, 3)))
         fmt   = mpld.DateFormatter('%H')
         fmt2  = '%Y-%m-%d'
     elif nHours < 96:
         # < 4 days
-        Mtick = mpld.HourLocator(byhour = [0, 12])
+        Mtick = mpld.HourLocator(byhour = list(range(0, 24, 12)))
         mtick = mpld.HourLocator(byhour = list(range(0, 24, 3)))
         fmt   = mpld.DateFormatter('%H')
         fmt2  = '%Y-%m-%d'
@@ -249,22 +268,22 @@ def datetick(dir, **kwargs):
         fmt2  = '%Y-%m'
     elif deltaT.days < 16:
         Mtick = mpld.DayLocator(bymonthday=list(range(1, 32, 1)))
-        mtick = mpld.DayLocator(interval=1)
+        mtick = mpld.DayLocator(bymonthday=list(range(1, 32, 1)))
         fmt   = mpld.DateFormatter('%d')
         fmt2  = '%Y-%m'
     elif deltaT.days < 32:
-        Mtick = mpld.DayLocator(bymonthday=list(range(1, 32, 3)))
-        mtick = mpld.DayLocator(interval=1)
+        Mtick = mpld.DayLocator(bymonthday=list(range(1, 32, 4)))
+        mtick = mpld.DayLocator(bymonthday=list(range(1, 32, 1)))
         fmt   = mpld.DateFormatter('%d')
         fmt2  = '%Y-%m'
     elif deltaT.days < 60:
         Mtick = mpld.DayLocator(bymonthday=list(range(1, 32, 7)))
-        mtick = mpld.DayLocator(interval=1)
+        mtick = mpld.DayLocator(bymonthday=list(range(1, 32, 1)))
         fmt   = mpld.DateFormatter('%d')
         fmt2  = '%Y-%m'
     elif deltaT.days < 183:
-        Mtick = mpld.MonthLocator(interval=1)
-        mtick = mpld.DayLocator(list(range(1, 32, 7)))
+        Mtick = mpld.MonthLocator(bymonth=list(range(1,13,1)))
+        mtick = mpld.DayLocator(bymonthday=list(range(1, 32, 7)))
         fmt   = mpld.DateFormatter('%m')
         fmt2  = '%Y'
     elif deltaT.days < 367:
@@ -278,7 +297,7 @@ def datetick(dir, **kwargs):
         fmt   = mpld.DateFormatter('%m')
         fmt2  = '%Y'
     elif deltaT.days < 366*8:
-        Mtick = mpld.YearLocator()
+        Mtick = mpld.YearLocator(1)
         mtick = mpld.MonthLocator(bymonth=7)
         fmt   = mpld.DateFormatter('%Y')
         fmt2  = ''
@@ -316,7 +335,10 @@ def datetick(dir, **kwargs):
         print("Default xticks[0]:  %s" % mpld.num2date(xt[0]))
         print("Default xticks[-1]: %s" % mpld.num2date(xt[-1]))
 
-    fig.canvas.draw()
+    def draw(fig):
+        # Render new ticks and tick labels
+        fig.canvas.draw()
+    
     axes.set_xticks(xt)
 
     if debug:
@@ -325,48 +347,63 @@ def datetick(dir, **kwargs):
         for i in range(0,len(xt)):
             print("Tick: %s" % mpld.num2date(xt[i]))
 
-    fig.canvas.draw() 
+    draw(fig)
+    
     if dir == 'x':
         axes.xaxis.set_major_locator(Mtick)
         axes.xaxis.set_minor_locator(mtick)
         axes.xaxis.set_major_formatter(fmt)
-        fig.canvas.draw() # Render new labels so updated for next line
+        #fig.canvas.draw() 
+        draw(fig)
         labels = [item.get_text() for item in axes.get_xticklabels()]
+        ticks = axes.get_xticks()
+        time = mpld.num2date(ticks)
     else:
         axes.yaxis.set_major_locator(Mtick)
         axes.yaxis.set_minor_locator(mtick)
         axes.yaxis.set_major_formatter(fmt)
-        fig.canvas.draw() # Render new labels so updated for next line
+        #fig.canvas.draw() # Render new labels so updated for next line
+        draw(fig)
         labels = [item.get_text() for item in axes.get_yticklabels()]
+        ticks = axes.get_yticks()
+        time = mpld.num2date(ticks)
 
     if debug:
         print(labels)
 
-    labels[0] = '%s\n%s' % (labels[0],datetime.strftime(time[0],fmt2))
-    xt = axes.get_xticks()
-    time = mpld.num2date(xt)
-
     if fmt2 != '':
         for i in range(1,len(time)):
+            modify = False
             if time[i].year > time[i-1].year:
-                labels[i] = '%s\n%s' % (labels[i], datetime.strftime(mpld.num2date(xt[i]), fmt2))
+                modify = True
             if nDays < 60 and time[i].month > time[i-1].month:
-                labels[i] = '%s\n%s' % (labels[i], datetime.strftime(mpld.num2date(xt[i]), fmt2))
+                modify = True
             if nDays < 4 and time[i].day > time[i-1].day:
-                labels[i] = '%s\n%s' % (labels[i], datetime.strftime(mpld.num2date(xt[i]), fmt2))
+                modify = True
             if nSecs < 60*30 and time[i].hour > time[i-1].hour:
-                labels[i] = '%s\n%s' % (labels[i], datetime.strftime(mpld.num2date(xt[i]), fmt2))
+                modify = True
+
+            if i == 1:
+                # If first two major tick labels have fmt2 applied, the will
+                # likely run together. This keeps fmt2 label for second major tick.
+                if modify and dir == 'x':
+                    labels[1] = '%s\n%s' % (labels[i], datetime.strftime(mpld.num2date(ticks[i]), fmt2))
+                else:
+                    labels[0] = '%s\n%s' % (labels[0], datetime.strftime(time[0], fmt2))
+            else:
+                if modify:
+                    labels[i] = '%s\n%s' % (labels[i], datetime.strftime(mpld.num2date(ticks[i]), fmt2))
 
     if dir == 'x':            
         axes.set_xticklabels(labels)
     if dir == 'y':            
-        axes.set_yticklabels(labels)        
+        axes.set_yticklabels(labels)
 
 def numsize():
     '''Returns (width, height) of number '0' in pixels'''
     # Not used.
     # Based on https://stackoverflow.com/q/5320205
-    # TODO: numsize(fig,dir) should inspect fig to get used fonts
+    # TODO: numsize(fig, dir) should inspect fig to get used fonts
     # for dir='x' and dir='y' and get bounding box for x and y labels.
     r = plt.figure().canvas.get_renderer()
     t = plt.text(0.5, 0.5, '0')    
