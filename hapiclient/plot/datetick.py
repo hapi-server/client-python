@@ -109,6 +109,13 @@ def datetick(dir, **kwargs):
     if debug == True:
         print("Total seconds: %s" % deltaT.total_seconds())
 
+    # fmt is format of the tick labels
+    # fmt2 contains additional information that is used for the first tick label
+    # or when there is a majore change. For example, if
+    # fmt = %M:%S and fmt2 = %H, the labels will have only minute and hour and
+    # the first tick will have a label of %M:%S\n%H. If there is a change
+    # in hour somewhere on the axis, that label will include the new hour.
+    
     # Note that interval=... is specified even when it would seem to be
     # redundant. It is needed to workaround the bug discussed at
     # https://stackoverflow.com/questions/31072589/matplotlib-date-ticker-exceeds-locator-maxticks-error-for-no-apparent-reason
@@ -124,7 +131,6 @@ def datetick(dir, **kwargs):
         # plot(t,y)
         # and then makes first label indicate %Y-%m-%dT%H:%M:%S
         if debug == True:
-            print(line.get_xdata())
             print("Warning: Cannot create accurate time labels with this time resolution.")
         # This does not locate microseconds.
         from matplotlib.ticker import FuncFormatter
