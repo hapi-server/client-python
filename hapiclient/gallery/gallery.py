@@ -41,7 +41,7 @@ def gallery(*args, **kwargs):
 
     from multiprocessing import Process
     from hapiclient.hapi import cachedir
-    from hapiclient.util import error, warning, setopts, input
+    from hapiclient.util import error, warning, setopts, prompt
     from hapiclient.plotserver.hapiplotserver import hapiplotserver
 
     if len(args) != 2 and len(args) !=3:
@@ -99,7 +99,6 @@ def gallery(*args, **kwargs):
     print(" * Opening ViViz in browser in 1 second.")
     time.sleep(1)
     webbrowser.open(url, new=2)
-
-    input("Press a key to terminate ViViz gallery server.")
+    prompt("\n\033[0;34mPress a key at any time to terminate ViViz gallery server.\033[0m\n\n")
     process.terminate()
-    input("ViViz gallery server has terminated.")
+    print("ViViz gallery server has terminated.")
