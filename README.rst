@@ -19,9 +19,14 @@ installation method.
 Documentation
 -------------
 
-All of the features are extensively demonstrated in the
-`hapi\_demo.ipynb <https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb>`__
-Jupyter Notebook. To run the notebook locally, enter the following on the command line.
+All of the features are extensively demonstrated in the `hapi\_demo.ipynb` Jupyter Notebook. 
+
+The output of the read-only version of the notebook can be viewed
+
+* [at jupyter.org](https://nbviewer.jupyter.org/github/hapi-server/client-python/blob/master/hapi_demo.ipynb) or
+* [at GitHub](https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb) (buggy)
+
+To run a read/write version of notebook locally, enter the following on the command line.
 
 .. code:: bash
 
