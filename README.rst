@@ -35,7 +35,7 @@ To run a read/write version of notebook locally, enter the following on the comm
     jupyter-notebook hapi_demo.ipynb # Launches browser window
 
 The
-_hapi\_demo.py <https://github.com/hapi-server/client-python/blob/master/hapi_demo.py>`__
+_`hapi\_demo.py <https://github.com/hapi-server/client-python/blob/master/hapi_demo.py>`__
 scripts shows example usage of the functions in this package that can be
 copied into a script or onto a Python command line.
 
