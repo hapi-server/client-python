@@ -19,9 +19,6 @@ installation method.
 Documentation
 -------------
 
-See the help string by entering ``help(hapi)`` or ``help(hapiplot)`` on
-the Python command line.
-
 All of the features are extensively demonstrated in the
 `hapi\_demo.ipynb <https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb>`__
 Jupyter Notebook. Instructions for local use are shown on this page.
@@ -30,6 +27,20 @@ The
 `hapi\_demo.py <https://github.com/hapi-server/client-python/blob/master/hapi_demo.py>`__
 scripts shows example usage of the functions in this package that can be
 copied into a script or onto a Python command line.
+
+See also the help string by entering on the Python command line
+
+```
+from hapiclient import hapi
+help(hapi)
+``` 
+
+or
+
+```
+from hapiclient import hapiplot
+help(hapiplot)
+```
 
 Development
 -----------
