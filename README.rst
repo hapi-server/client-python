@@ -23,8 +23,8 @@ All of the features are extensively demonstrated in the `hapi\_demo.ipynb` Jupyt
 
 The output of the read-only version of the notebook can be viewed
 
-* [at jupyter.org](https://nbviewer.jupyter.org/github/hapi-server/client-python/blob/master/hapi_demo.ipynb) or
-* [at GitHub](https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb) (buggy)
+* `at jupyter.org <https://nbviewer.jupyter.org/github/hapi-server/client-python/blob/master/hapi_demo.ipynb>`__ or
+* `at GitHub <https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb>`__ (buggy)
 
 To run a read/write version of notebook locally, enter the following on the command line.
 
@@ -35,7 +35,7 @@ To run a read/write version of notebook locally, enter the following on the comm
     jupyter-notebook hapi_demo.ipynb # Launches browser window
 
 The
-`hapi\_demo.py <https://github.com/hapi-server/client-python/blob/master/hapi_demo.py>`__
+_hapi\_demo.py <https://github.com/hapi-server/client-python/blob/master/hapi_demo.py>`__
 scripts shows example usage of the functions in this package that can be
 copied into a script or onto a Python command line.
 
