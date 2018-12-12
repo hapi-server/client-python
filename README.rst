@@ -34,10 +34,7 @@ To run a read/write version of notebook locally, enter the following on the comm
     curl -L -O https://rawgithub.com/hapi-server/client-python/master/hapi_demo.ipynb
     jupyter-notebook hapi_demo.ipynb # Launches browser window
 
-The
-_`hapi\_demo.py <https://github.com/hapi-server/client-python/blob/master/hapi_demo.py>`__
-scripts shows example usage of the functions in this package that can be
-copied into a script or onto a Python command line.
+The `hapi\_demo.py <https://github.com/hapi-server/client-python/blob/master/hapi_demo.py>`__script shows example usage of the functions in this package that can be copied into a script or onto a Python command line.
 
 To view the help string on the Python command line after installing `hapiclient` using `pip install hapiclient`, use
 
