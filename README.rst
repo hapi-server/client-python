@@ -13,7 +13,7 @@ Operating system command line:
 
     pip install hapiclient
 
-See the `Appendix <#Fail-safe-installation>`__ for a fail-safe
+See the `Appendix <#Appendix>`__ for a fail-safe
 installation method.
 
 Documentation
