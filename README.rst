@@ -21,7 +21,7 @@ Documentation
 
 All of the features are extensively demonstrated in the
 `hapi\_demo.ipynb <https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb>`__
-Jupyter Notebook. 
+Jupyter Notebook. To run the notebook locally, enter the following on the command line.
 
 .. code:: bash
 
