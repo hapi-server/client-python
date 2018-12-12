@@ -21,12 +21,12 @@ Documentation
 
 All of the features are extensively demonstrated in the `hapi\_demo.ipynb` Jupyter Notebook. The notebook shows example usage of the functions in this package that can be copied into a script or onto a Python command line.
 
-The output of the read-only version of the notebook can be viewed
+The output of the non-executable version of the notebook can be viewed
 
 * `at jupyter.org <https://nbviewer.jupyter.org/github/hapi-server/client-python/blob/master/hapi_demo.ipynb>`__ or
 * `at GitHub <https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb>`__ (buggy)
 
-To run a read/write version of notebook locally, enter the following on the command line.
+To view and execute this notebook locally, enter the following on the command line.
 
 .. code:: bash
 
