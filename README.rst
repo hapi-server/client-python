@@ -30,17 +30,16 @@ copied into a script or onto a Python command line.
 
 See also the help string by entering on the Python command line
 
-```
-from hapiclient import hapi
-help(hapi)
-``` 
+.. code:: python
+
+     from hapiclient import hapi
+     help(hapi)
 
 or
 
-```
-from hapiclient import hapiplot
-help(hapiplot)
-```
+.. code:: python
+      from hapiclient import hapiplot
+      help(hapiplot)
 
 Development
 -----------
@@ -78,7 +77,7 @@ Bob Weigel rweigel@gmu.edu
 Appendix
 --------
 
- ### Fail-safe installation
+Fail-safe installation
 
 Python command line:
 
