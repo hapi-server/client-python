@@ -129,10 +129,10 @@ def hapiplot(*args, **kwargs):
         >>> data, meta = hapi(server, dataset, params, start, stop, **opts)
         >>> hapiplot(data, meta, **opts)
 
-    Version: 0.0.7
+    Version: 0.0.6
     """
 
-    __version__ = '0.0.7' # This is modified by misc/setversion.py. See Makefile.
+    __version__ = '0.0.6' # This is modified by misc/setversion.py. See Makefile.
 
     if len(args) == 5:
         # For consistency with gallery and autoplot functions, allow usage of
@@ -451,9 +451,4 @@ def hapiplot(*args, **kwargs):
             # plt.tight_layout() 
             # Important: plt.show() must go after plt.savefig() (or png blank).
             plt.show()
-
-
-
-
-
 

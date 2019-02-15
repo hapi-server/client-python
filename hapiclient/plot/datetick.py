@@ -283,13 +283,11 @@ def datetick(dir, **kwargs):
         fmt   = mpld.DateFormatter('%d')
         fmt2  = '%Y-%m'
     elif deltaT.days < 60:
-        # Needs work
         Mtick = mpld.DayLocator(bymonthday=list(range(1, 32, 7)))
         mtick = mpld.DayLocator(bymonthday=list(range(1, 32, 1)))
         fmt   = mpld.DateFormatter('%d')
         fmt2  = '%Y-%m'
     elif deltaT.days < 183:
-        # Needs work
         Mtick = mpld.MonthLocator(bymonth=list(range(1,13,1)))
         mtick = mpld.DayLocator(bymonthday=list(range(1, 32, 7)))
         fmt   = mpld.DateFormatter('%m')

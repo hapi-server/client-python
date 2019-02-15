@@ -9,7 +9,6 @@ from hapiclient.test.readcompare import readcompare, clearcache
 
 serverbad = 'http://hapi-server.org/servers/TestData/xhapi'
 server = 'http://hapi-server.org/servers/TestData/hapi'
-#server = 'http://localhost:8999/TestData/hapi'
 
 # To use in program, use, e.g.,
 # from hapiclient.test.test_hapi import test_reader_short
