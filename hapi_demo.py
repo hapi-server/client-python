@@ -8,9 +8,28 @@
 
 def main():
 
-    sscweb()
-    cdaweb()
+    omniweb()
+    #sscweb()
+    #cdaweb()
 
+def omniweb():
+    
+    from hapiclient import hapi
+    from hapiclient import hapiplot
+        
+    server     = 'https://cdaweb.gsfc.nasa.gov/hapi'
+    dataset    = 'OMNI2_H0_MRG1HR'
+    start      = '2003-09-01T00:00:00'
+    stop       = '2003-12-01T00:00:00'
+    parameters = 'DST1800'
+    opts       = {'logging': True, 'usecache': False}
+    
+    # Get data
+    data, meta = hapi(server, dataset, parameters, start, stop, **opts)
+    
+    # Plot all parameters
+    hapiplot(data, meta)
+    
 def sscweb():
 
     from hapiclient.hapi import hapi
