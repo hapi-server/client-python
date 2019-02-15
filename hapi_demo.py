@@ -9,8 +9,8 @@
 def main():
 
     omniweb()
-    #sscweb()
-    #cdaweb()
+    sscweb()
+    cdaweb()
 
 def omniweb():
     
