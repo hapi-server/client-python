@@ -17,3 +17,6 @@ v0.0.7:
 		2018-10-23 -- Add OO interface for plots; add options
 		2018-11-27 -- Major refactoring and clean-up
 		2018-11-28 -- Add gallery and autoplot plotting options
+v0.0.8:
+		2018-02-14 -- Same as v0.0.7 but packaging fix
+

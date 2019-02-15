@@ -23,7 +23,7 @@ URL=https://upload.pypi.org/
 REP=pypi
 
 # VERSION below is updated in "make version-update" step.
-VERSION=0.0.7
+VERSION=0.0.8
 SHELL:= /bin/bash
 
 test:
@@ -74,7 +74,7 @@ release-upload:
 		-r $(REP) dist/hapiclient-$(VERSION).tar.gz \
 		--config-file misc/.pypirc \
 		&& \
-	echo Uploaded to $(subst upload.,,$(URL))project/hapiclient/
+	echo Uploaded to $(subst upload.,,$(URL))/project/hapiclient/
 
 # See comments above package-test
 release-test:
@@ -187,4 +187,8 @@ clean:
 	- rm -f MANIFEST
 	- rm -rf .pytest_cache/
 	- rm -rf hapiclient.egg-info/
+
+
+
+
 
