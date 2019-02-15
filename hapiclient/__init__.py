@@ -7,9 +7,6 @@ from hapiclient.hapi import hapitime2datetime
 # Allow "from hapiclient import hapiplot"
 from hapiclient.hapiplot import hapiplot
 
-# Allow "from hapiclient import hapiplotserver"
-from hapiclient.plotserver.hapiplotserver import hapiplotserver
-
 # Allow "from hapiclient import autoplot"
 from hapiclient.autoplot.autoplot import autoplot
 
