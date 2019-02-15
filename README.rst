@@ -13,23 +13,41 @@ Operating system command line:
 
     pip install hapiclient
 
-See the `Appendix <#Fail-safe-installation>`__ for a fail-safe
+See the `Appendix <#Appendix>`__ for a fail-safe
 installation method.
 
 Documentation
 -------------
 
-See the help string by entering ``help(hapi)`` or ``help(hapiplot)`` on
-the Python command line.
+All of the features are extensively demonstrated in the `hapi\_demo.ipynb` Jupyter Notebook. The notebook shows example usage of the functions in this package that can be copied into a script or onto a Python command line.
 
-All of the features are extensively demonstrated in the
-`hapi\_demo.ipynb <https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb>`__
-Jupyter Notebook. Instructions for local use are shown on this page.
+The output of the non-executable version of the notebook can be viewed
 
-The
-`hapi\_demo.py <https://github.com/hapi-server/client-python/blob/master/hapi_demo.py>`__
-scripts shows example usage of the functions in this package that can be
-copied into a script or onto a Python command line.
+* `at jupyter.org <https://nbviewer.jupyter.org/github/hapi-server/client-python/blob/master/hapi_demo.ipynb>`__ or
+* `at GitHub <https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb>`__ (buggy)
+
+To view and execute this notebook locally, enter the following on the command line.
+
+.. code:: bash
+
+    pip install hapiclient # Install hapiclient package
+    curl -L -O https://rawgithub.com/hapi-server/client-python/master/hapi_demo.ipynb
+    jupyter-notebook hapi_demo.ipynb # Launches browser window
+
+
+To view the help string on the Python command line after installing `hapiclient` using `pip install hapiclient`, use
+
+.. code:: python
+
+     from hapiclient import hapi
+     help(hapi)
+
+or
+
+.. code:: python
+
+      from hapiclient import hapiplot
+      help(hapiplot)
 
 Development
 -----------
@@ -67,7 +85,7 @@ Bob Weigel rweigel@gmu.edu
 Appendix
 --------
 
- ### Fail-safe installation
+Fail-safe installation
 
 Python command line:
 
