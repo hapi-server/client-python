@@ -233,7 +233,16 @@ def error(msg):
 
 ##############################################################################
 # Start compatability code
+# TODO: Use https://pythonhosted.org/six/ for URL functions.
 def input(msg):
+    '''Python 2/3 imput compatability function. Pauses for user input.
+
+    If Python 3, calls
+    input(msg)
+
+    If Python 2, calls
+    raw_input(msg)
+    '''
     import sys
     if sys.version_info[0] > 2:
         input(msg)
@@ -243,7 +252,7 @@ def input(msg):
 def download(file, url, **kwargs):
     """Download a file if local version is older than server version."""
 
-    #TODO: Make Python 2 compatable.
+    # TODO: Make Python 2 compatable.
 
     from os import stat, utime, path, makedirs
     from time import mktime, strptime
@@ -297,29 +306,29 @@ def download(file, url, **kwargs):
     else:
         log('Local version of ' + file + ' is up-to-date; using it.', kwargs)
 
-def urlerror(e, url):
+def urlerror(err, url):
     """Handle a download error.
 
-    urlerror(e, url) determines if e is a HAPI or URL library error, extracts
+    urlerror(err, url) determines if e is a HAPI or URL library error, extracts
     the error message, and calls error().
     """
 
     from json import load
 
-    def nonhapierror(e):
+    def nonhapierror(err):
 
         body = ""
         try:
-            body = e.read().decode('utf8')
+            body = err.read().decode('utf8')
         except:
             pass
 
         reason = ""
-        if hasattr(e, 'reason'):
-            reason = e.reason
+        if hasattr(err, 'reason'):
+            reason = err.reason
         code = ""
-        if hasattr(e, 'code'):
-            code = e.code
+        if hasattr(err, 'code'):
+            code = err.code
 
         if len(body) > 0:
             error('"HTTP %d - %s" returned by %s. Response body:\n%s' % (code, reason, url, body))
@@ -329,16 +338,24 @@ def urlerror(e, url):
             error('Error message: "%s" when trying to read %s.' % (reason, url))
 
     try:
-        jres = load(e)
+        jres = load(err)
         if 'status' in jres:
             if 'message' in jres['status']:
                 error('\n%s\n  %s\n' % (url, jres['status']['message']))
                 return
-        nonhapierror(e)
+        nonhapierror(err)
     except:
-        nonhapierror(e)
+        nonhapierror(err)
 
 def head(url):
+    '''Python 2/3 compatable HTTP HEAD request on URL.
+
+    If Python 3, returns
+    urllib.request.urlopen(url).info()
+
+    If Python 2, returns
+    urllib2.urlopen(url).info()
+    '''
 
     import sys
 
@@ -363,6 +380,15 @@ def head(url):
     return headers
 
 def urlquote(url):
+    '''Python 2/3 urlquote compatability function.
+
+    If Python 3, returns
+    urllib.parse.quote(url)
+
+    If Python 2, returns
+    urllib.quote(url)
+    '''
+
     import sys
     if sys.version_info[0] > 2:
         import urllib.parse
@@ -370,16 +396,16 @@ def urlquote(url):
     else:
         from urllib import quote
         return quote(url)
-        
-    
-def urlopen(url):
-    """Python 2/3 urllib urlopen compatability function.
 
-    If Python 3, calls
+
+def urlopen(url):
+    """Python 2/3 urlopen compatability function.
+
+    If Python 3, returns
     urllib.request.urlopen(url, fname)
 
-    If Python 2, calls
-    urllib.urlopen(url, fname) (Python 2)
+    If Python 2, returns
+    urllib.urlopen(url, fname)
     """
 
     import sys
@@ -405,13 +431,13 @@ def urlopen(url):
     return res
 
 def urlretrieve(url, fname):
-    """Python 2/3 urllib urlretrieve compatability function.
+    """Python 2/3 urlretrieve compatability function.
 
-    If Python 3, calls
+    If Python 3, returns
     urllib.request.urlretrieve(url, fname)
 
-    If Python 2, calls
-    urllib.urlretrieve(url, fname) (Python 2)
+    If Python 2, returns
+    urllib.urlretrieve(url, fname)
     """
 
     import sys
