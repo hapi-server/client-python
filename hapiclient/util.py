@@ -234,7 +234,7 @@ def error(msg):
 ##############################################################################
 # Start compatability code
 # TODO: Use https://pythonhosted.org/six/ for URL functions.
-def input(msg):
+def prompt(msg):
     '''Python 2/3 imput compatability function. Pauses for user input.
 
     If Python 3, calls
