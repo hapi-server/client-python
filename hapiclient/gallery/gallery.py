@@ -42,7 +42,7 @@ def gallery(*args, **kwargs):
     from multiprocessing import Process
     from hapiclient.hapi import cachedir
     from hapiclient.util import error, warning, setopts, prompt
-    from hapiclient.plotserver.hapiplotserver import hapiplotserver
+    from hapiplotserver.main import hapiplotserver
 
     if len(args) != 2 and len(args) !=3:
         error('Number of arguments must be 2 or 3. See help(gallery).')
