@@ -51,7 +51,6 @@ repository-test-plots:
 	$(PYTHON) setup.py develop
 	$(PYTHON) hapi_demo.py
 	$(PYTHON) hapiclient/hapiplot_test.py
-	$(PYTHON) hapiclient/hapiplot_test.py
 	$(PYTHON) hapiclient/plot/timeseries_test.py
 	$(PYTHON) hapiclient/gallery/gallery_test.py
 	$(PYTHON) hapiclient/autoplot/autoplot_test.py
