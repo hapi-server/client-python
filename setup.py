@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 import sys
 
-install_requires = ["hapiplotserver","numpy>=1.14.3","pandas==0.23.0","matplotlib>=2.2.2","isodate>=0.6.0"]
+install_requires = ["hapiplotserver>=0.0.3","numpy>=1.14.3","pandas==0.23.0","matplotlib>=2.2.2","isodate>=0.6.0"]
 
 if sys.argv[1] == 'develop':
     install_requires.append("deepdiff")
