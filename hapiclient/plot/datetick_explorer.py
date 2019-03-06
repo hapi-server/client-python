@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Button, Slider
 import datetime
 import sys
-sys.path.append('../hapiclient/util')
-from hapiclient.util.datetick import datetick
+#sys.path.append('../hapiclient/util')
+from hapiclient.plot.datetick import datetick
   
 def update(val):
     
@@ -76,7 +76,7 @@ def plotit(xlow,xhigh):
     t1.set_xdata(x)
     ax1.set_xlim(xlow, xhigh)
     ax1.set_title(xlow.isoformat() + " to " + xhigh.isoformat())
-    datetick('x', (plt.gcf(), ax1), debug=True)
+    datetick('x', axes=ax1)
     
 # Globals
 ax1 = None
@@ -97,7 +97,7 @@ if True:
     t1, = ax1.plot(x, y, '*')
     ax1.set_xlim(xlow, xhigh)
     ax1.set_title(xlow.isoformat() + " to " + xhigh.isoformat()) 
-    datetick('x', (plt.gcf(), ax1), debug=True)
+    datetick('x', axes=ax1, debug=True)
 
 
 # designate axes object for sliders

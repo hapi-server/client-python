@@ -10,6 +10,9 @@ def setopts(defaults, given):
 
     # Override defaults
     for key, value in given.items():
+        if type(given[key]) == dict:
+            setopts(defaults[key], given[key])
+            continue
         if key in defaults:
             defaults[key] = value
         else:

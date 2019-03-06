@@ -1,38 +1,41 @@
 import os
 import re
+import hashlib
+import json
 
 import numpy as np
+from matplotlib import rc_context
 
 from hapiclient.hapi import hapitime2datetime
-from hapiclient.util import log, warning, setopts
-from hapiclient.plot.timeseries import timeseries
-from hapiclient.plot.heatmap import heatmap
-
 from hapiclient.hapi import request2path
 from hapiclient.hapi import cachedir
+from hapiclient.util import log, warning
+from hapiclient.plot.timeseries import timeseries
+from hapiclient.plot.heatmap import heatmap
+from hapiclient.plot.util import setopts
 
-def imagepath(server, dataset, parameters, start, stop, **kwargs):
 
-    # Default options
-    opts = {'cachedir': cachedir(), 'format': 'png', 'figsize': (7,3), 'dpi': 144, 'transparent': True}
-    # Override defaults
-    opts = setopts(opts, kwargs)
+def imagepath(meta, i, cachedir, opts):
 
-    fname = request2path(server, dataset, parameters, start, stop, opts['cachedir'])
-    fname = fname \
-            + "_figsize-" + str(opts['figsize'][0]) + "x" + str(opts['figsize'][1]) + "_" \
-            + "dpi-" + str(opts['dpi']) \
-            + "_transparent-" + str(opts['transparent']) \
-            + "." + opts['format']
+    optsmd5 = hashlib.md5(json.dumps(opts, sort_keys=True).encode('utf8')).hexdigest()
 
-    return fname
+    fname = request2path(meta['x_server'],
+                         meta['x_dataset'],
+                         meta['parameters'][i]['name'],
+                         meta['x_time.min'],
+                         meta['x_time.max'],
+                         cachedir)
+
+    return fname + "-" + optsmd5 + "." + opts['savefig.format']
+
 
 def fill2mask(y, fill):
     """Create a masked array for a non-numeric fill value."""
 
     # TODO: Write. Needed for ISOTime parameters with a fill value.
     pass
-    
+
+
 def fill2nan(y, fill):
 
     if fill.lower() == 'nan':
@@ -48,10 +51,11 @@ def fill2nan(y, fill):
     # values stored as floats is converted to binary using double(value)
     # because double(float('-1E31')) = -9.999999848243207e+30. Technically
     # the server is not producing valid results b/c spec says fill values
-    # in file must match double(fill in metadata).
+    # in file must match double(fill string in metadata).
     y[y == np.float32(yfill)] = np.nan
 
     return y
+
 
 def tex(s):
     """Convert string with certain character patterns to a TeX string"""
@@ -64,56 +68,82 @@ def tex(s):
 
     return s
 
+
 def hapiplot(*args, **kwargs):
     """Plot response from HAPI server.
-    
+
+    Demos
+    -----
+    <https://github.com/hapi-server/client-python/blob/master/hapiclient/plot/hapiplot_test.py>
+
+
     Usage
     -----
-        hapiplot(server, dataset, params, start, stop, **kwargs)
-        
-        hapiplot(data, meta, **kwargs) where data and meta are return values
-        from `hapi()`.
-        
-        All parameters in the dataset `dataset` are plotted. If a parameter
-        has a bins attribute, it is plotted using `heatmap()`. Otherwise, it
-        is plotted using `timeseries()`.
+        1.
+        data, meta = hapiplot(server, dataset, params, start, stop, **kwargs)
+
+        2.
+        meta = hapiplot(data, meta, **kwargs) where data and meta are return
+        values from `hapi()`.
+
+        All parameters are plotted. If a parameter has a bins attribute,
+        it is plotted using `heatmap()`. Otherwise, it is plotted using
+        `timeseries()`.
 
     Returns
     -------
-    None, unless `returnimage`=True in which case raw image data is returned.
+        `data` is the same as that returned from `hapi()`.
+        `meta` is the same as that returned from `hapi()` with the additon of
+
+        meta['parameters'][i]['hapiplot']['figure'] is a reference to the
+            figure (e.g., plt.gcf()). Usage example:
+
+            >>> fig = meta['parameters'][i]['hapiplot']['figure']
+            >>> fig.set_facecolor('blue')
+            >>> fig.axes[0].set_ylabel('new y-label')
+            >>> fig.axes[0].set_title('new title\nsubtitle\nsubtitle')
+            >>> fig.tight_layout()
+
+        meta['parameters'][i]['hapiplot']['colorbar'] is a reference to the
+            colorbar on the figure (if parameter plotted as a heatmap)
+
+        meta['parameters'][i]['hapiplot']['image'] is PNG, PDF, or SVG data
+            and is included only if `returnimage=True`. Usage example:
+
+            >>> img = meta['parameters'][i]['hapiplot']['image']
+            >>> Image.open(io.BytesIO(img)).show()
+            >>> # or
+            >>> f = open('/tmp/a.png', 'wb')
+            >>> f.write(img)
+            >>> f.close()
 
     See Also
     ---------
-        hapiplot_test: Demonstrates kwarg options
         hapi: Get data from a HAPI server
         timeseries: Used by `hapiplot()` to HAPI parameters with no `bins`
         heatmap: Used by `hapiplot()` to HAPI parameters with `bins`
-        
+
         <https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb>
-    
+
     kwargs
     ------
-        * logging: [False]
-        * saveimage: [False] Save image to `cachedir`. Ignored if 
-            `pngquant`=True.
-        * saveformat: [png], svg, or pdf
-        * usecache: [True] Use cached data (and cached image if 
-            `returnimage`=True)
-        * cachedir: [cachedir()] The directory returned by 
-            `from hapiclient.hapi import cachedir; print(cachedir())`
-        * transparent: [False] Figure and axis box background are transparent
-        * tskwargs: {} kwargs for the `timeseries()` function
-        * hmkwargs: {} kwargs for the `heatmap()` function
+        * logging: [False] Display console messages
+        * usecache: [True] Use cached data
+        * tsopts: {} kwargs for the `timeseries()` function
+        * hmopts: {} kwargs for the `heatmap()` function
 
+    Other kwargs
+    ------------
         * returnimage: [False] If True, `hapiplot()` returns binary image data
         * returnformat: [png], svg, or pdf
-            * pngquant: [False] Reduce png size using PNGQuant. Applies
-                 if returnformat='png'.
-            * pngquantbinary: [cachedir() + '/pngquant/pngquant'] Location of
-                  pngquant executable.
+        * cachedir: Directory to store images. Default is hapiclient.hapi.cachedir()
+        * useimagecache: [True] Used cached image (when returnimage=True)
+        * saveimage: [False] Save image to `cachedir`
+        * saveformat: [png], svg, or pdf
+        * transparent: [False] Transparent figure and axis box background
 
     Example
-    --------    
+    --------
         >>> server  = 'http://hapi-server.org/servers/TestData/hapi'
         >>> dataset = 'dataset1'
         >>> start   = '1970-01-01T00:00:00'
@@ -125,6 +155,7 @@ def hapiplot(*args, **kwargs):
         >>> hapiplot(server, dataset, params, start, stop, **opts)
         >>>
         >>> # or
+        >>>
         >>> from hapiclient import hapi, hapiplot
         >>> data, meta = hapi(server, dataset, params, start, stop, **opts)
         >>> hapiplot(data, meta, **opts)
@@ -135,7 +166,7 @@ def hapiplot(*args, **kwargs):
     __version__ = '0.0.8' # This is modified by misc/setversion.py. See Makefile.
 
     if len(args) == 5:
-        # For consistency with gallery and autoplot functions, allow usage of
+        # For consistency with gallery and autoplot functions, allow useage of
         # hapiplot(server, dataset, parameters, start, stop, **kwargs)
         from hapiclient.hapi import hapiopts
         from hapiclient.hapi import hapi
@@ -146,62 +177,75 @@ def hapiplot(*args, **kwargs):
             if key in kwargs_allowed:
                 kwargs_reduced[key] = value
         data, meta = hapi(args[0], args[1], args[2], args[3], args[4], **kwargs_reduced)
-        hapiplot(data, meta, **kwargs)
-        return
+        meta = hapiplot(data, meta, **kwargs)
+        return data, meta
     else:
         data = args[0]
         meta = args[1]
-            
+
     # Default options
     opts = {
                 'logging': False,
                 'saveimage': False,
-                'saveformat': 'png',
                 'returnimage': False,
-                'returnformat': 'png',
                 'usecache': True,
+                'useimagecache': True,
                 'cachedir': cachedir(),
+                'backend': 'default',
+                'style': 'fast',
+
+                'title': '',
+                'ztitle': '',
+                'xlabel': '',
+                'ylabel': '',
+                'zlabel': '',
+                'logx': False,
+                'logy': False,
+                'logz': False,
+
+                'tsopts': {},
+                'hmopts': {},
+
+                'backend': 'default',
+                'returnimage': False,
                 'transparent': False,
-                'figsize': (7, 3),
-                'dpi': 144,
-                'format': 'png',
-                'pngquant': False,
-                'pngquantbinary': '/tmp/pngquant/pngquant',
-                'tskwargs': {},
-                'hmkwargs': {}
+
+                'rcParams':
+                    {
+                        'savefig.dpi': 144,
+                        'savefig.format': 'png',
+                        'savefig.bbox': 'standard',
+                        'savefig.transparent': True,
+                        'figure.max_open_warning': 50,
+                        'figure.figsize': (7, 3),
+                        'figure.dpi': 144,
+                        'axes.titlesize': 10
+                    },
+                '_rcParams': {
+                        'figure.bbox': 'standard'
+                }
             }
+
+    # Will use given rc style parameters and style name to generate file name.
+    # Assumes rc parameters of style never change.
+    styleParams = opts['rcParams']
 
     # Override defaults
     opts = setopts(opts, kwargs)
 
-    if opts["returnimage"]:
+    # _rcParams are not actually rcParams:
+    #'figure.bbox': 'standard', # Set to 'tight' to have fig.tight_layout() called before figure shown.
+
+    if opts["saveimage"]:
         # Create cache directory
         dir = cachedir(opts['cachedir'], meta['x_server'])
         if not os.path.exists(dir): os.makedirs(dir)
-
-    # Return cached image (case where we are returning binary image data)
-    # imagepath() options
-    iopts = {
-                'cachedir': opts['cachedir'],
-                'figsize': opts['figsize'],
-                'dpi': opts['dpi'],
-                'transparent': opts['transparent']
-             }
-
-    fnameimg = imagepath(meta['x_server'], meta['x_dataset'], meta['x_parameters'], meta['x_time.min'], meta['x_time.max'], **iopts)
-    if opts['usecache'] and opts['returnimage'] and os.path.isfile(fnameimg):
-            log('Returning cached binary image data in ' + fnameimg, opts)
-            with open(fnameimg, "rb") as f:
-                return f.read()
 
     # Convert from NumPy array of byte literals to NumPy array of
     # datetime objects.
     timename = meta['parameters'][0]['name']
     Time = hapitime2datetime(data[timename])
 
-    # In the following, the x parameter is a datetime object.
-    # If the x parameter is a number, would need to use plt.plot_date()
-    # and much of the code for datetick.py would need to be modified.
     if len(meta["parameters"]) == 1:
         a = 0 # Time is only parameter
     else:
@@ -209,16 +253,31 @@ def hapiplot(*args, **kwargs):
 
     for i in range(a, len(meta["parameters"])):
 
+        meta["parameters"][i]['hapiplot'] = {}
+
+        name = meta["parameters"][i]["name"]
+
+        # Return cached image (case where we are returning binary image data)
+        # imagepath() options. Only need filename under these conditions.
+        if opts['saveimage'] or (opts['returnimage'] and opts['useimagecache']):
+            fnameimg = imagepath(meta, i, opts['cachedir'], styleParams)
+
+        if opts['useimagecache'] and opts['returnimage'] and os.path.isfile(fnameimg):
+            log('Returning cached binary image data in ' + fnameimg, opts)
+
+            meta["parameters"][i]['hapiplot']['imagefile'] = fnameimg
+            with open(fnameimg, "rb") as f:
+                meta["parameters"][i]['hapiplot']['image'] = f.read()
+            continue
+
         name = meta["parameters"][i]["name"]
         log("Plotting parameter '%s'" % name, opts)
 
-        #import pdb;pdb.set_trace()
-
         if len(data[name].shape) > 3:
-            # TODO: Implement more than 3 dimensions?
-            warning('Parameter ' + name + ' has more than 3 dimensions. Plotting not implemented for this many dimensions.')
+            # TODO: Implement more than 2 dimensions?
+            warning('Parameter ' + name + ' has size with more than 2 dimensions. Plotting first two only.')
             continue
-        
+
         # If parameter has a size with two elements, e.g., [N1, N2]
         # create N2 plots.
         if len(data[name].shape) == 3: # (Time, N1, N2)
@@ -226,14 +285,12 @@ def hapiplot(*args, **kwargs):
                 timename = meta['parameters'][0]['name']
                 name_new = name + "[:," + str(j) + "]" # Give name to indicate what is plotted
                 # Reduced data NDArray
-                datar = np.ndarray(shape=(data[name].shape[0]), 
+                datar = np.ndarray(shape=(data[name].shape[0]),
                                    dtype=[
                                            (timename, data.dtype[timename]),
                                            (name_new, data[name].dtype.str, data.dtype[name].shape[1])
                                            ])
-                #import pdb;pdb.set_trace()
 
-                #import pdb;pdb.set_trace()
                 datar[timename] = data[timename]
                 datar[name_new] = data[name][:,j]
                 # Copy metadata to create a reduced metadata object
@@ -253,12 +310,14 @@ def hapiplot(*args, **kwargs):
                     metar["parameters"][1]['bins'] = []
                     #print(j)
                     metar["parameters"][1]['bins'].append(meta["parameters"][i]['bins'][j])
-                hapiplot(datar, metar, **opts)       
-            return
-                        
+                metar = hapiplot(datar, metar, **opts)
+                meta["parameters"][i]['hapiplot'] = metar["parameters"][i]['hapiplot']
+            return meta
+
         title = meta["x_server"] + "\n" + meta["x_dataset"] + " | " + name
 
         if 'bins' in meta['parameters'][i]:
+            # Plot as heatmap
 
             if meta["parameters"][i]["type"] == "string":
                 warning("Plots for only types double, integer, and isotime implemented. Not plotting %s." % meta["parameters"][i]["name"])
@@ -288,7 +347,8 @@ def hapiplot(*args, **kwargs):
             dt = np.diff(Time)
             dtu = np.unique(dt)
             if len(dtu) > 1:
-                warning('Time values are not uniformly spaced. Bin width for time will be based on time separation of consecutive time values.')
+                warning('Time values are not uniformly spaced. Bin width for '
+                        'time will be based on time separation of consecutive time values.')
                 if False and 'cadence' in meta:
 
                     # Cadence != time bin width in general, so don't do this.
@@ -317,27 +377,44 @@ def hapiplot(*args, **kwargs):
                     Time = np.append(Time, Time[-1] + dtu[0])
 
 
+            if opts['xlabel'] != '':
+                opts['hmopts']['xlabel'] = opts['xlabel']
+
+            opts['hmopts']['ylabel'] = ylabel
+            if opts['ylabel'] != '':
+                opts['hmopts']['ylabel'] = opts['ylabel']
+
+            opts['hmopts']['title'] = title
+            if opts['title'] != '':
+                opts['hmopts']['title'] = opts['title']
+
+            opts['hmopts']['zlabel'] = zlabel
+            if opts['ztitle'] != '':
+                opts['hmopts']['xlabel'] = opts['zlabel']
+
+            if opts['logx'] is not False:
+                opts['hmopts']['logx'] = True
+            if opts['logy'] is not False:
+                opts['hmopts']['logy'] = True
+            if opts['logz'] is not False:
+                opts['hmopts']['logz'] = True
+
             hmopts = {
-                        'figsize': opts['figsize'],
-                        'dpi': opts['dpi'],
-                        'title': title,
-                        'ylabel': ylabel,
-                        'zlabel': zlabel,
-                        'returnimage': opts['returnimage']
+                        'returnimage': opts['returnimage'],
+                        'transparent': opts['rcParams']['savefig.transparent']
                     }
 
-            if opts['transparent']:
-                hmopts['figure.facealpha'] = 0
-                hmopts['axes.facealpha'] = 0
+            for key, value in opts['hmopts'].items():
+                hmopts[key] = value
 
-            # Override above options with those given
-            if 'hmkwargs' in kwargs:
-                for key in kwargs['hmkwargs']:
-                    hmopts[key] = kwargs['hmkwargs'][key]
-                
-            plt, fig, canvas, ax, im, cb = heatmap(Time, bins, np.transpose(z), **hmopts)
+            with rc_context(rc=opts['rcParams']):
+                fig, cb = heatmap(Time, bins, np.transpose(z), **hmopts)
+            meta["parameters"][i]['hapiplot']['figure'] = fig
+            meta["parameters"][i]['hapiplot']['colorbar'] = cb
+
         else:
-                
+            # Plot as time series.
+
             ptype = meta["parameters"][i]["type"]
             if ptype == "isotime":
                 y = hapitime2datetime(data[name])
@@ -355,7 +432,9 @@ def hapiplot(*args, **kwargs):
                     if Nremoved > 0:
                         # TODO: Implement masking so connected line plots will
                         # show gaps as they do for NaN values.
-                        warning('Parameter ' + name + ' is of type ' + ptype + ' and has ' + str(Nremoved) + ' fill value(s). Masking is not implemented, so removing fill elements before plotting.')
+                        warning('Parameter ' + name + ' is of type ' + ptype + ' and has '
+                                + str(Nremoved) + ' fill value(s). Masking is not implemented, '
+                                'so removing fill elements before plotting.')
                         Time = Time[Igood]
                         y = y[Igood]
                 if ptype == 'integer':
@@ -369,91 +448,75 @@ def hapiplot(*args, **kwargs):
 
             nl = ""
             if len(name) > 10 or len(units) > 10:
-                nl = "\n"
+                nl = "\n" # TODO: Automatically figure out when this is needed.
 
             if ptype == 'string':
                 ylabel = name
             else:
                 ylabel = name + nl + " [" + units + "]"
 
+            if not 'legendlabels' in opts['tsopts']:
+                legendlabels = []
+                if 'size' in meta['parameters'][i]:
+                    for l in range(0,meta['parameters'][i]['size'][0]):
+                        legendlabels.append('col %d' % l)
+                    opts['tsopts']['legendlabels'] = legendlabels
+
+
+            if opts['xlabel'] != '':
+                opts['tsopts']['xlabel'] = opts['xlabel']
+
+            opts['tsopts']['ylabel'] = ylabel
+            if opts['ylabel'] != '':
+                opts['tsopts']['ylabel'] = opts['ylabel']
+
+            opts['tsopts']['title'] = title
+            if opts['title'] != '':
+                opts['tsopts']['title'] = opts['title']
+
+            if opts['logx'] is not False:
+                opts['tsopts']['logx'] = True
+            if opts['logy'] is not False:
+                opts['tsopts']['logy'] = True
+
             tsopts = {
-                        'figsize': opts['figsize'],
-                        'dpi': opts['dpi'],
-                        'title': title,
-                        'ylabel': ylabel,
-                        'returnimage': opts['returnimage']
+                        'logging': opts['logging'],
+                        'returnimage': opts['returnimage'],
+                        'transparent': opts['rcParams']['savefig.transparent']
                     }
 
-            # Override above options with those given
-            if 'tskwargs' in kwargs:
-                for key in kwargs['tskwargs']:
-                    tsopts[key] = kwargs['tskwargs'][key]
+            # Apply tsopts
+            for key, value in opts['tsopts'].items():
+                tsopts[key] = value
 
-            if opts['transparent']:
-                tsopts['figure.facealpha'] = 0
-                tsopts['axes.facealpha'] = 0
-                
-            plt, fig, canvas, ax = timeseries(Time, y, **tsopts)
+            with rc_context(rc=opts['rcParams']):
+                fig = timeseries(Time, y, **tsopts)
+            meta["parameters"][i]['hapiplot']['figure'] = fig
 
-        pngquant = False
-        if opts['pngquant'] and not opts['saveformat'] == 'png':
-            warning("pngquant = True requires saveformat = 'png'")
 
-        if opts['pngquant'] and opts['saveformat'] == 'png':
-            if os.path.exists(opts["pngquantbinary"]):
-                pngquant = True
-                
-        if opts['saveimage'] or pngquant:
+        if opts['saveimage']:
             log('Writing %s' % fnameimg, opts)
+            meta["parameters"][i]['hapiplot']['imagefile'] = fnameimg
         else:
             from io import BytesIO
             fnameimg = BytesIO()
 
-        # bbox_inches='tight' for file has same effect as fig.tight_layout()
-        # for plot show in plot window.
         if opts['returnimage']:
-            canvas.print_figure(fnameimg, format=opts['saveformat'], bbox_inches='tight', transparent=opts['transparent'], dpi=opts['dpi'])
-        else:
-            fig.savefig(fnameimg, format=opts['saveformat'], bbox_inches='tight', transparent=opts['transparent'], dpi=opts['dpi'])
+            with rc_context(rc=opts['rcParams']):
+                fig.canvas.print_figure(fnameimg, transparent=True)
 
-        if opts['pngquant']:
-            # 66% reduction in filesize using pngquant
-            # Only get ~4% reduction in filesize using
-            #  from PIL import Image
-            #  image = Image.open(fnamepng)
-            #  image.save(fnamepng,quality=2,optimize=True)
-            if os.path.exists(opts["pngquantbinary"]):
-                from hapiclient.util import system
-                fnameimg_quant = fnameimg.replace(".png", ".quant.png")
-                cmd = opts["pngquantbinary"] + ' --quality 20 ' + fnameimg + ' --output ' + fnameimg_quant
-                system(cmd)
-                if opts['logging']:
-                    so = os.stat(fnameimg).st_size
-                    sf = os.stat(fnameimg_quant).st_size
-                    log('PNGQuant reduced file size by %.1fx' % (float(so)/float(sf)), opts)
-                                        
-                fnameimg = fnameimg_quant
+            if opts['saveimage']:
+                with open(fnameimg, mode='rb') as f:
+                    meta["parameters"][i]['hapiplot']['image'] = f.read()
             else:
-                print('Did not find pngquant binary at ' + opts["pngquantdir"])
-
-        if opts['returnimage']:
-            if opts['saveimage'] or pngquant:
-                log('Reading and returning %s.' % fnameimg, opts)
-                with open(fnameimg, "rb") as f:
-                    return f.read()
-            else:
-                return fnameimg.getvalue()
+                meta["parameters"][i]['hapiplot']['image'] = fnameimg.getvalue()
         else:
-            # Two calls to fig.tight_layout() needed b/c of bug in PyQt:
+            with rc_context(rc=opts['rcParams']):
+                fig.savefig(fnameimg)
+
+            # Two calls to fig.tight_layout() may be needed b/c of bug in PyQt:
             # https://github.com/matplotlib/matplotlib/issues/10361
-            fig.tight_layout()
-            fig.tight_layout() 
-            # plt.tight_layout() 
-            # Important: plt.show() must go after plt.savefig() (or png blank).
-            plt.show()
+            if opts['_rcParams']['figure.bbox'] is 'tight':
+                fig.tight_layout()
 
-
-
-
-
-
+    return meta

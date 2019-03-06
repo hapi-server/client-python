@@ -1,9 +1,7 @@
-import os
-import datetime
 import dateutil.parser
 import matplotlib.pyplot as plt
 import numpy as np
-from hapiclient.util.datetick import datetick
+from hapiclient.plot.datetick import datetick
 
 def plotit(ds1, ds2):
     # Plots two points separated by varying time ranges.
@@ -20,8 +18,6 @@ def plotit(ds1, ds2):
 
 ###############################################################################
 # > 50 years
-
-from datetime import timedelta
 
 plotit('1950-01-01T00:00:00Z','2012-01-04T00:00:00Z')
 

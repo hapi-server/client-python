@@ -71,6 +71,9 @@ def datetick(dir, **kwargs):
         axes = plt.gca()
         fig = plt.gcf()
 
+    #import pdb
+    #pdb.set_trace()
+    
     debug = DOPTS['debug']
 
     def on_xlims_change(ax): datetick('x', axes=ax, set_cb=False)
