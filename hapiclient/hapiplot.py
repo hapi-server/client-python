@@ -123,7 +123,7 @@ def hapiplot(*args, **kwargs):
         timeseries: Used by `hapiplot()` to HAPI parameters with no `bins`
         heatmap: Used by `hapiplot()` to HAPI parameters with `bins`
 
-        <https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb>
+        <https://github.com/hapi-server/client-python-notebooks>
 
     kwargs
     ------
@@ -347,8 +347,8 @@ def hapiplot(*args, **kwargs):
             dt = np.diff(Time)
             dtu = np.unique(dt)
             if len(dtu) > 1:
-                warning('Time values are not uniformly spaced. Bin width for '
-                        'time will be based on time separation of consecutive time values.')
+                #warning('Time values are not uniformly spaced. Bin width for '
+                #        'time will be based on time separation of consecutive time values.')
                 if False and 'cadence' in meta:
 
                     # Cadence != time bin width in general, so don't do this.
@@ -377,19 +377,19 @@ def hapiplot(*args, **kwargs):
                     Time = np.append(Time, Time[-1] + dtu[0])
 
 
-            if opts['xlabel'] != '':
+            if opts['xlabel'] != '' or 'xlabel' in kwargs:
                 opts['hmopts']['xlabel'] = opts['xlabel']
 
             opts['hmopts']['ylabel'] = ylabel
-            if opts['ylabel'] != '':
+            if opts['ylabel'] != '' or 'ylabel' in kwargs:
                 opts['hmopts']['ylabel'] = opts['ylabel']
 
             opts['hmopts']['title'] = title
-            if opts['title'] != '':
+            if opts['title'] != '' or 'title' in kwargs:
                 opts['hmopts']['title'] = opts['title']
 
             opts['hmopts']['zlabel'] = zlabel
-            if opts['ztitle'] != '':
+            if opts['ztitle'] != '' or 'zlabel' in kwargs:
                 opts['hmopts']['xlabel'] = opts['zlabel']
 
             if opts['logx'] is not False:
@@ -463,15 +463,15 @@ def hapiplot(*args, **kwargs):
                     opts['tsopts']['legendlabels'] = legendlabels
 
 
-            if opts['xlabel'] != '':
+            if opts['xlabel'] != '' or 'xlabel' in kwargs:
                 opts['tsopts']['xlabel'] = opts['xlabel']
 
             opts['tsopts']['ylabel'] = ylabel
-            if opts['ylabel'] != '':
+            if opts['ylabel'] != '' or 'ylabel' in kwargs:
                 opts['tsopts']['ylabel'] = opts['ylabel']
 
             opts['tsopts']['title'] = title
-            if opts['title'] != '':
+            if opts['title'] != '' or 'title' in kwargs:
                 opts['tsopts']['title'] = opts['title']
 
             if opts['logx'] is not False:
