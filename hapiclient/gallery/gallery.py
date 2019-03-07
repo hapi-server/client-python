@@ -2,7 +2,7 @@ def gallery(*args, **kwargs):
     """Create a web-browsable gallery of plots (aka "PNG Walk").
 
     For additional documentation and demonstration, see hapi_demo.ipynb
-    at <https://github.com/hapi-server/client-python/>
+    at <https://github.com/hapi-server/client-python-notebooks/>
 
     Usage
     ----------
