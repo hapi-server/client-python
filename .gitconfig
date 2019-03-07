@@ -1,0 +1,3 @@
+[filter "clean_ipynb"]
+	clean = misc/ipynb_drop_output
+	smudge = cat
