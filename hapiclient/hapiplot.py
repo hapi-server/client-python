@@ -57,18 +57,6 @@ def fill2nan(y, fill):
     return y
 
 
-def tex(s):
-    """Convert string with certain character patterns to a TeX string"""
-
-    if not re.match('\$', s):
-        s = re.sub(r"(.*)(\^[0-9].*)$",r'\1$^{\2}$', s)
-        s = re.sub(r"(.*)(\^[0-9].*)/(.*)$",r'\1$^{\2}$/\3', s)
-        s = re.sub(r"(.*)(_\w.*)$",r'\1$_{\2}$', s)
-        s = re.sub(r"(.*)(_\w.*)/(.*)$",r'\1$_{\2}$/\3', s)
-
-    return s
-
-
 def hapiplot(*args, **kwargs):
     """Plot response from HAPI server.
 
