@@ -72,7 +72,7 @@ for tn in tests:
         data, meta = hapi(server, dataset, parameters, start, stop, **opts)
 
         popts = {
-                     'usecache': True, 
+                     'usecache': True,
                      'useimagecache': False,
                      'logging': True,
                      'saveimage': False,
@@ -87,10 +87,10 @@ for tn in tests:
         meta = hapiplot(data, meta, **popts)
         img2 = meta['parameters'][1]['hapiplot']['image']
         Image.open(io.BytesIO(img1)).show()
-        
+
         if img1 != img2:
             raise ValueError('Images do not match')
-                
+
     if tn == 4:
         # Transparency
         import io
@@ -108,8 +108,8 @@ for tn in tests:
         data, meta = hapi(server, dataset, parameters, start, stop, **opts)
 
         popts = {
-                    'usecache': True, 
-                    'useimagecache': False, 
+                    'usecache': True,
+                    'useimagecache': False,
                     'logging': True,
                     'saveimage': True,
                     'returnimage': True
@@ -141,8 +141,8 @@ for tn in tests:
         data, meta = hapi(server, dataset, parameters, start, stop, **opts)
 
         popts = {
-                    'usecache': True, 
-                    'useimagecache': False, 
+                    'usecache': True,
+                    'useimagecache': False,
                     'logging': True,
                     'saveimage': True,
                     'returnimage': True,
@@ -150,8 +150,8 @@ for tn in tests:
                         'savefig.transparent': False,
                         'figure.facecolor': 'black',
                         'savefig.facecolor': 'black',
-                        'text.color': 'yellow', 
-                        'xtick.color': 'yellow', 
+                        'text.color': 'yellow',
+                        'xtick.color': 'yellow',
                         'ytick.color': 'yellow',
                         'axes.labelcolor': 'yellow'
                     }
@@ -160,7 +160,7 @@ for tn in tests:
         meta = hapiplot(data, meta, **popts)
         img = meta['parameters'][1]['hapiplot']['image']
         Image.open(io.BytesIO(img)).show()
-        
+
         popts['returnimage'] = False
         hapiplot(data, meta, **popts)
 
@@ -188,11 +188,11 @@ for tn in tests:
                     'logging': True,
                     'saveimage': False,
                     'style': 'classic'
-                }            
+                }
 
         data, meta = hapi(server, dataset, parameters, start, stop, **opts)
 
-        if matplotlib.get_backend() in matplotlib.rcsetup.interactive_bk:        
+        if matplotlib.get_backend() in matplotlib.rcsetup.interactive_bk:
             # Set labels and make tight layout after call to hapiplot
             meta = hapiplot(data, meta, **popts)
             fig = meta['parameters'][1]['hapiplot']['figure']
@@ -201,15 +201,15 @@ for tn in tests:
             fig.show()
             # Two calls to fig.tight_layout() may be needed b/c of bug in PyQt:
             # https://github.com/matplotlib/matplotlib/issues/10361
-    
+
             # Set labels and make tight in call to hapiplot
             popts['_rcParams'] = {'figure.bbox': 'tight'}
             popts['ylabel'] = 'y label\nsub y label\nsub sub ylabel 2'
             meta = hapiplot(data, meta, **popts)
         else:
             print("Skipping test because matplotlib backend is not interactive.")
-        
-        
+
+
     if tn == 7:
         from hapiclient import hapi
         from hapiclient import hapiplot
@@ -248,11 +248,11 @@ for tn in tests:
             # Should be same as previous plot
             meta['timeStampLocation'] = 'center'
             hapiplot(data, meta, **popts)
-    
+
             print(data['Time'][3])
             meta['timeStampLocation'] = 'begin'
             hapiplot(data, meta, **popts)
-    
+
             meta['timeStampLocation'] = 'end'
             hapiplot(data, meta, **popts)
 
@@ -271,7 +271,7 @@ for tn in tests:
 
             meta['timeStampLocation'] = 'end'
             hapiplot(data, meta, **popts)
-    
+
             meta['timeStampLocation'] = 'center'
             hapiplot(data, meta, **popts)
 
@@ -330,4 +330,3 @@ for tn in tests:
                     # Change fill value to be same as second element of parameter array.
                     meta["parameters"][1]['fill'] = data[parameter].take(1).astype('U')
                 hapiplot(data, meta, **opts)
-        
