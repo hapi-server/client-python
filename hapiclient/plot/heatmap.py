@@ -99,9 +99,11 @@ def heatmap(x, y, z, **kwargs):
             dyu = np.unique(dy)
             if len(dyu) > 1:
                 if coord == 'y':
-                    warning('Only bin centers given for y and bin separation distance is not constant. Bin width assumed based on separation distance and data pickers will not work properly.')
+                    warning('Only bin centers given for y and bin separation distance is not constant.')
+                    warning('Bin width assumed based on separation distance and data pickers will not work properly.')
                 else:
-                    warning('Only bin centers given for x and bin separation distance is not constant. Bin width assumed based on separation distance and data pickers will not work properly.')
+                    warning('Only bin centers given for x and bin separation distance is not constant.')
+                    warning('Bin width assumed based on separation distance and data pickers will not work properly.')
                 y = np.append(y, y[-1] + dy[-1])
             else:
                 y = np.append(y, y[-1] + dy[0])
