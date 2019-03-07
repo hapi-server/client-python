@@ -48,18 +48,21 @@ def server2dirname(server):
 def cachedir(*args):
     """HAPI cache directory.
     
-    cachedir() returns the default directory (~/hapi-data)
+    cachedir() returns the default directory hapi-data subdirectory of
+    system tempdir.
 
     cachdir(basedir, server)
     """
-
+    import tempfile
+    
     if len(args) == 2:
         # cachedir(base_dir, server)
         return args[0] + os.path.sep + server2dirname(args[1])
     else:
         # cachedir()
         # Default cachedir
-        return os.path.expanduser("~") + os.path.sep + 'hapi-data'
+        #return os.path.expanduser("~") + os.path.sep + 'hapi-data'
+        return tempfile.gettempdir() + os.path.sep + 'hapi-data'
 
 def request2path(*args):
     # request2path(server, dataset, parameters, start, stop)
@@ -174,11 +177,11 @@ def hapi(*args, **kwargs):
 
     References
     ----------
-        * `HAPI Server Definition <https://github.com/hapi-server/client-python>`
+        * `HAPI Server Definition <https://github.com/hapi-server/data-specification>`
 
     Examples
     ----------
-       See <https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb>
+       See <https://github.com/hapi-server/client-python-notebooks>
     """
 
     __version__ = '0.0.9-beta' # This is modified by misc/setversion.py. See Makefile.
