@@ -262,7 +262,7 @@ def heatmap(x, y, z, **kwargs):
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
     else:
         from matplotlib import pyplot as plt
-        if opts['logging']: print("Using Matplotlib back-end " + matplotlib.get_backend())
+        if opts['logging']: print("heatmap(): Using Matplotlib back-end " + matplotlib.get_backend())
 
     if not opts['cmap.name'] in matplotlib.pyplot.colormaps():
         warning('colormap name "'

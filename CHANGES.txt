@@ -19,6 +19,6 @@ v0.0.7:
 		2018-11-28 -- Add gallery and autoplot plotting options
 v0.0.8:
 		2018-02-14 -- Same as v0.0.7 but packaging fix
-v0.0.9-beta:
+v0.0.9b0:
 		2018-03-06 -- Updates to plot API
 

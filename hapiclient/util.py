@@ -402,7 +402,7 @@ def urlquote(url):
 
 
 def urlopen(url):
-    """Python 2/3 urlopen compatability function.
+    """Python 2/3 urlopen compatibility function.
 
     If Python 3, returns
     urllib.request.urlopen(url, fname)
@@ -421,6 +421,9 @@ def urlopen(url):
             urlerror(e, url)
         except ValueError:
             error("'" + url + "' is not a valid URL")
+        except Exception as e:
+            print(e)
+
     else:
         import urllib
         import urllib2

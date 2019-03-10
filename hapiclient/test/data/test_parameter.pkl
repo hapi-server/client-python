@@ -158,13 +158,13 @@ p79
 Vscalariso
 p80
 sa(dp81
-Vname
+Vdescription
 p82
-Vvector
-p83
-sVdescription 
-p84
 VEach component is a sine wave with a 600 s period with differing phases.
+p83
+sVname
+p84
+Vvector
 p85
 sVunits
 p86
@@ -183,13 +183,13 @@ p92
 (lp93
 I3
 asa(dp94
-Vname
+Vdescription
 p95
-Vvectorint
-p96
-sVdescription 
-p97
 VEach component is a sine wave with a 600 s period with differing phases.
+p96
+sVname
+p97
+Vvectorint
 p98
 sVunits
 p99
@@ -232,7 +232,7 @@ p117
 (lp118
 I3
 asa(dp119
-Vcategorymap
+Vx_categorymap
 p120
 (dp121
 Vpassing
@@ -269,7 +269,7 @@ Vname
 p136
 Vvectoriso
 p137
-sVdescription 
+sVdescription
 p138
 VEach component is a sine wave with a 600 s period with differing phases.
 p139
@@ -293,13 +293,13 @@ p147
 (lp148
 I3
 asa(dp149
-Vname
+Vdescription
 p150
-Vvectormulti
-p151
-sVdescription 
-p152
 VTwo vectors; Each component of each vector is a sine wave with a 600 s period with differing phases.
+p151
+sVname
+p152
+Vvectormulti
 p153
 sVunits
 p154
@@ -652,7 +652,6 @@ aI16
 aI17
 aI18
 aI19
-aI20
 asasVsize
 p272
 (lp273

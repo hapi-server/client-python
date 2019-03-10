@@ -9,9 +9,11 @@
 # 1. make release
 # 2. Wait ~5 minutes and execute
 # 3. make release-test
-#    (Will fail unti new version is available at pypi.org for pip install. 
+#    (Will fail until new version is available at pypi.org for pip install.
 #     Usually takes ~5 minutes even though web page is immediately
 #     updated.)
+# 4. After package is finalized, create new version number in CHANGES.txt ending
+#    with "b0" in setup.py and then run make version-update.
 
 # For using the pypi test repository, use
 #URL=https://test.pypi.org/
@@ -54,21 +56,14 @@ repository-test-plots:
 	$(PYTHON) hapiclient/plot/timeseries_test.py
 	$(PYTHON) hapiclient/gallery/gallery_test.py
 	$(PYTHON) hapiclient/autoplot/autoplot_test.py
-	jupyter-notebook hapi_demo.ipynb
-
-repository-test-server:
-	$(PYTHON) hapiclient/plotserver/hapiplotserver_test.py
-	read -p "Press enter to continue tests."
-	cd hapiclient/plotserver/; \
-		gunicorn -w 4 -b 127.0.0.1:5000 'hapiplotserver:gunicorn(loglevel="debug",use_cache=False)' &
-	read -p "Press enter to continue tests."
-	echo("Open and check http://127.0.0.1:5000/")
+	jupyter-notebook ../client-python-notebooks/hapi_demo.ipynb
 
 release:
 	make version-tag
 	make release-upload
 
-release-upload: 
+release-upload:
+	echo "rweigel, t1p"
 	twine upload \
 		-r $(REP) dist/hapiclient-$(VERSION).tar.gz \
 		--config-file misc/.pypirc \

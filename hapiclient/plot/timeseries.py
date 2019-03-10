@@ -43,7 +43,7 @@ def timeseries(t, y, **kwargs):
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
     else:
         from matplotlib import pyplot as plt
-        if opts['logging']: print("Using Matplotlib back-end " + matplotlib.get_backend())
+        if opts['logging']: print("timeseries(): Using Matplotlib back-end " + matplotlib.get_backend())
 
     if y.shape[0] < 11:
         props = {'linestyle': 'none', 'marker': '.', 'markersize': 16}

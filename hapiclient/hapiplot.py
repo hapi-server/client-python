@@ -128,7 +128,6 @@ def hapiplot(*args, **kwargs):
         * useimagecache: [True] Used cached image (when returnimage=True)
         * saveimage: [False] Save image to `cachedir`
         * saveformat: [png], svg, or pdf
-        * transparent: [False] Transparent figure and axis box background
 
     Example
     --------
@@ -196,7 +195,6 @@ def hapiplot(*args, **kwargs):
 
                 'backend': 'default',
                 'returnimage': False,
-                'transparent': False,
 
                 'rcParams':
                     {
@@ -491,7 +489,7 @@ def hapiplot(*args, **kwargs):
 
         if opts['returnimage']:
             with rc_context(rc=opts['rcParams']):
-                fig.canvas.print_figure(fnameimg, transparent=True)
+                fig.canvas.print_figure(fnameimg)
 
             if opts['saveimage']:
                 with open(fnameimg, mode='rb') as f:
