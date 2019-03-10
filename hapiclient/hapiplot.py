@@ -147,10 +147,10 @@ def hapiplot(*args, **kwargs):
         >>> data, meta = hapi(server, dataset, params, start, stop, **opts)
         >>> hapiplot(data, meta, **opts)
 
-    Version: 0.0.9-beta
+    Version: 0.0.9b0
     """
 
-    __version__ = '0.0.9-beta' # This is modified by misc/setversion.py. See Makefile.
+    __version__ = '0.0.9b0' # This is modified by misc/setversion.py. See Makefile.
 
     if len(args) == 5:
         # For consistency with gallery and autoplot functions, allow useage of
@@ -506,4 +506,5 @@ def hapiplot(*args, **kwargs):
                 fig.tight_layout()
 
     return meta
+
 

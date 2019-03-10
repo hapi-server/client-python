@@ -25,7 +25,7 @@ URL=https://upload.pypi.org/
 REP=pypi
 
 # VERSION below is updated in "make version-update" step.
-VERSION=0.0.9-beta
+VERSION=0.0.9b0
 SHELL:= /bin/bash
 
 test:
@@ -59,8 +59,8 @@ repository-test-plots:
 	jupyter-notebook ../client-python-notebooks/hapi_demo.ipynb
 
 release:
-	make version-tag
 	make package
+	make version-tag
 	make release-upload
 
 release-upload:
@@ -182,6 +182,7 @@ clean:
 	- rm -f MANIFEST
 	- rm -rf .pytest_cache/
 	- rm -rf hapiclient.egg-info/
+
 
 
 
