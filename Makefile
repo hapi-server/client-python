@@ -60,6 +60,7 @@ repository-test-plots:
 
 release:
 	make version-tag
+	make package
 	make release-upload
 
 release-upload:
