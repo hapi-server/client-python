@@ -34,11 +34,11 @@ def log(msg, opts):
         print(pre + msg)
 
 def jsonparse(res):
-    """Try/catch of json.load() function with short error message."""
+    """Try/catch of json.loads() function with short error message."""
 
-    from json import load
+    from json import loads
     try:
-        return load(res)
+        return loads(res.read().decode('utf-8'))
     except:
         error('Could not parse JSON from %s' % res.geturl())
 
@@ -178,7 +178,10 @@ def error(msg):
     from inspect import stack
     from os import path
 
-    from IPython.core.interactiveshell import InteractiveShell
+    try:
+        from IPython.core.interactiveshell import InteractiveShell
+    except:
+        pass
 
     fname = stack()[1][1]
     fname = path.basename(fname)
@@ -206,8 +209,7 @@ def error(msg):
         InteractiveShell.showtraceback = showtraceback_default
 
     def exception_handler(exception_type, exception, traceback):
-
-        if not debug and exception[0].__name__ == "HAPIError":
+        if not debug and exception_type.__name__ == "HAPIError":
             print("%s: %s" % (exception_type.__name__, exception))
         else:
             # Use default.
