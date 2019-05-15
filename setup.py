@@ -2,10 +2,16 @@
 from setuptools import setup, find_packages
 import sys
 
-install_requires = ["hapiplotserver>0.0.4","numpy>=1.14.3","pandas==0.23.0","matplotlib>=2.2.2","isodate>=0.6.0"]
+install_requires = ["hapiplotserver>0.0.4",
+                    "numpy>=1.14.3",
+                    "pandas==0.23.0",
+                    'matplotlib>=2.2.2;python_version>"3.5"',
+                    'matplotlib<3.0;python_version<"3.5"',
+                    "isodate>=0.6.0"]
 
 if sys.argv[1] == 'develop':
-    install_requires.append("deepdiff")
+    install_requires.append("deepdiff<3.3.0")
+    install_requires.append("pytest")
 
 # version is modified by misc/setversion.py. See Makefile.
 setup(
