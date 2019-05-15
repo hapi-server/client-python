@@ -12,6 +12,7 @@ from datetime import datetime
 from hapiclient.util import setopts, log, warning
 from hapiclient.util import urlopen, urlretrieve, jsonparse
 
+
 def subset(meta, params):
     """Extract subset of parameters from meta object returned by hapi()
     
@@ -24,19 +25,20 @@ def subset(meta, params):
         return meta
 
     p = params.split(',')
-    pm = [] # Parameter names in metadata
-    for i in range(0,len(meta['parameters'])):
+    pm = []  # Parameter names in metadata
+    for i in range(0, len(meta['parameters'])):
         pm.append(meta['parameters'][i]['name'])
-    for i in range(0,len(p)):
+    for i in range(0, len(p)):
         if p[i] not in pm:
             raise Exception('Parameter %s is not in dataset' % p[i])
     
-    pa = [meta['parameters'][0]] # First parameter is always the time parameter
-    for i in range(1,len(pm)):
+    pa = [meta['parameters'][0]]  # First parameter is always the time parameter
+    for i in range(1, len(pm)):
         if pm[i] in p:
             pa.append(meta['parameters'][i])
     meta['parameters'] = pa
     return meta
+
 
 def server2dirname(server):
     """Convert a server URL to a directory name."""
@@ -44,7 +46,8 @@ def server2dirname(server):
     urld = re.sub(r"https*://", "", server)
     urld = re.sub(r'/', '_', urld)
     return urld
-    
+
+
 def cachedir(*args):
     """HAPI cache directory.
     
@@ -59,10 +62,8 @@ def cachedir(*args):
         # cachedir(base_dir, server)
         return args[0] + os.path.sep + server2dirname(args[1])
     else:
-        # cachedir()
-        # Default cachedir
-        #return os.path.expanduser("~") + os.path.sep + 'hapi-data'
         return tempfile.gettempdir() + os.path.sep + 'hapi-data'
+
 
 def request2path(*args):
     # request2path(server, dataset, parameters, start, stop)
@@ -81,6 +82,7 @@ def request2path(*args):
                              re.sub(r'-|:|\.|Z', '', args[4]))
 
     return os.path.join(cachedirectory, urldirectory, fname)
+
 
 def hapiopts():
     """Return allowed options for hapi().
@@ -107,7 +109,8 @@ def hapiopts():
     # This should option should be excluded from the help string.
     
     return opts
-    
+
+
 def hapi(*args, **kwargs):
     """Request data from a HAPI server.
 
@@ -184,7 +187,7 @@ def hapi(*args, **kwargs):
        See <https://github.com/hapi-server/client-python-notebooks>
     """
 
-    __version__ = '0.0.9b0' # This is modified by misc/setversion.py. See Makefile.
+    __version__ = '0.0.9b0'  # This is modified by misc/setversion.py. See Makefile.
 
     nin = len(args)
 
@@ -255,7 +258,7 @@ def hapi(*args, **kwargs):
         fnamejson = urld + os.path.sep + DATASET + '.json'
         fnamepkl  = urld + os.path.sep + DATASET + '.pkl'
 
-        if nin == 5: # Data requested
+        if nin == 5:  # Data requested
             # URL to get CSV (will be used if binary response is not available)
             urlcsv = SERVER + '/data?id=' + DATASET + '&parameters=' + \
                      PARAMETERS + '&time.min=' + START + '&time.max=' + STOP
@@ -283,7 +286,7 @@ def hapi(*args, **kwargs):
                 # Read cached metadata from .pkl file.
                 # This returns subsetted metadata with no additional "x_"
                 # information (which is stored in fnamepklx).
-                log('Reading %s' % fnamepkl.replace(urld + '/',''), opts)
+                log('Reading %s' % fnamepkl.replace(urld + '/', ''), opts)
                 f = open(fnamepkl, 'rb')
                 meta = pickle.load(f)
                 f.close()
@@ -293,7 +296,7 @@ def hapi(*args, **kwargs):
                 return meta
             if os.path.isfile(fnamepklx):
                 # Read subsetted meta file with x_ information
-                log('Reading %s' % fnamepklx.replace(urld + '/',''), opts)
+                log('Reading %s' % fnamepklx.replace(urld + '/', ''), opts)
                 f = open(fnamepklx, 'rb')
                 meta = pickle.load(f)
                 metaFromCache = True
@@ -301,7 +304,7 @@ def hapi(*args, **kwargs):
         
         if not metaFromCache:
             # No cached metadata loaded so request it from server.
-            log('Reading %s' % urljson.replace(urld + '/',''), opts)
+            log('Reading %s' % urljson.replace(urld + '/', ''), opts)
             res = urlopen(urljson)
             meta = jsonparse(res)
 
@@ -317,12 +320,12 @@ def hapi(*args, **kwargs):
             # Cache metadata for all parameters if it was not already loaded
             # from cache. Note that fnamepklx is written after data downloaded
             # and parsed.
-            log('Writing %s ' % fnamejson.replace(urld + '/',''), opts)
+            log('Writing %s ' % fnamejson.replace(urld + '/', ''), opts)
             f = open(fnamejson, 'w')
             json.dump(meta, f, indent=4)
             f.close()
             
-            log('Writing %s ' % fnamepkl.replace(urld + '/',''), opts)
+            log('Writing %s ' % fnamepkl.replace(urld + '/', ''), opts)
             f = open(fnamepkl, 'wb')
             # protocol=2 used for Python 2.7 compatability.
             pickle.dump(meta, f, protocol=2)
@@ -338,7 +341,7 @@ def hapi(*args, **kwargs):
 
         if opts["usecache"] and os.path.isfile(fnamenpy):
             # Read cached data file.
-            log('Reading %s ' % fnamenpy.replace(urld + '/',''), opts)
+            log('Reading %s ' % fnamenpy.replace(urld + '/', ''), opts)
             f = open(fnamenpy, 'rb')
             data = np.load(f)                    
             f.close()
@@ -363,7 +366,7 @@ def hapi(*args, **kwargs):
             sformats = caps["outputFormats"]  # Server formats
             if not opts['format'] in sformats:
                 warning("hapi", 'Requested transport format "%s" not avaiable '
-                              'from %s. Will use "csv". Available options: %s'
+                                'from %s. Will use "csv". Available options: %s'
                               % (opts['format'], SERVER, ', '.join(sformats)))
                 opts['format'] = 'csv'
 
@@ -411,9 +414,7 @@ def hapi(*args, **kwargs):
             # HAPI numerical formats are 64-bit LE floating point and  32-bit LE
             # signed integers.
             if ptype == 'double':
-                #list(reversed(psizes[i]))
                 dtype = (pnames[i], '<d', psizes[i])
-                #import pdb; pdb.set_trace()
             if ptype == 'integer':
                 dtype = (pnames[i], np.dtype('<i4'), psizes[i])
 
@@ -448,13 +449,12 @@ def hapi(*args, **kwargs):
             dt.append(dtype)
         ##################################################################
 
-
         # length attribute required for all parameters when serving binary but
         # is only required for time parameter when serving CSV. This catches
         # case where server provides binary but is missing a length attribute
         # in one or more string parameters that were requested. Note that
         # this is will never be true. Need to update code above.
-        #if opts['format'] == 'binary' and missing_length:
+        # if opts['format'] == 'binary' and missing_length:
         #    warnings.warn('Requesting CSV instead of binary because of problem with server metadata.')
         #    opts['format'] == 'csv'
 
@@ -463,11 +463,11 @@ def hapi(*args, **kwargs):
         if opts['format'] == 'binary':
             # HAPI Binary
             if opts["cache"]:
-                log('Writing %s to %s' % (urlbin, fnamebin.replace(urld + '/','')), opts)
+                log('Writing %s to %s' % (urlbin, fnamebin.replace(urld + '/', '')), opts)
                 tic0 = time.time()
                 urlretrieve(urlbin, fnamebin)
                 toc0 = time.time()-tic0
-                log('Reading %s' % fnamebin.replace(urld + '/',''), opts)
+                log('Reading %s' % fnamebin.replace(urld + '/', ''), opts)
                 tic = time.time()
                 data = np.fromfile(fnamebin, dtype=dt)
                 toc = time.time() - tic
@@ -484,14 +484,14 @@ def hapi(*args, **kwargs):
         else:
             # HAPI CSV
             if opts["cache"]:
-                log('Saving %s' % urlcsv.replace(urld + '/',''), opts)
+                log('Saving %s' % urlcsv.replace(urld + '/', ''), opts)
                 tic0 = time.time()
                 urlretrieve(urlcsv, fnamecsv)
                 toc0 = time.time() - tic0
-                log('Parsing %s' % fnamecsv.replace(urld + '/',''), opts)
+                log('Parsing %s' % fnamecsv.replace(urld + '/', ''), opts)
             else:
                 from io import StringIO
-                log('Creating buffer: %s' % urlcsv.replace(urld + '/',''), opts)
+                log('Creating buffer: %s' % urlcsv.replace(urld + '/', ''), opts)
                 tic0 = time.time()
                 fnamecsv = StringIO(urlopen(urlcsv).read().decode())
                 toc0 = time.time() - tic0
@@ -543,15 +543,13 @@ def hapi(*args, **kwargs):
                     data = np.ndarray(shape=(len(table)), dtype=dt)
 
                     # Insert data from 'table' into N-D array 'data'
-                    if table.dtype.names == None:
+                    if table.dtype.names is None:
                         if len(pnames) == 1:
                             # Only time parameter requested.
-                            # import pdb; pdb.set_trace()
                             data[pnames[0]] = table[:]
                         else:
                             # All columns in 'table' have the same data type
                             # so table is a 2-D numpy matrix
-                            #import pdb; pdb.set_trace()
                             for i in range(0, len(pnames)):
                                 shape = np.append(len(data), psizes[i])
                                 data[pnames[i]] = np.squeeze(np.reshape(table[:, np.arange(cols[i][0], cols[i][1]+1)], shape))
@@ -561,18 +559,17 @@ def hapi(*args, **kwargs):
                         # notation, e.g., data['varname'] = table[:][1:3]. Instead,
                         # loop over each parameter (pn) and aggregate columns.
                         # Then insert aggregated columns into N-D array 'data'.
-                        #import pdb; pdb.set_trace()
                         for pn in range(0, len(cols)):
                             shape = np.append(len(data), psizes[pn])
                             for c in range(cols[pn][0], cols[pn][1]+1):
                                 if c == cols[pn][0]:  # New parameter
                                     tmp = table[table.dtype.names[c]]
-                                else: # Aggregate
+                                else:  # Aggregate
                                     tmp = np.vstack((tmp, table[table.dtype.names[c]]))
                             tmp = np.squeeze(np.reshape(np.transpose(tmp), shape))
                             data[pnames[pn]] = tmp
 
-                if  opts['method'] == 'pandas' or opts['method'] == 'pandasnolength':
+                if opts['method'] == 'pandas' or opts['method'] == 'pandasnolength':
                     # If requested method was pandas, use pandasnolength method.
 
                     # Read file into Pandas DataFrame
@@ -596,7 +593,7 @@ def hapi(*args, **kwargs):
                 # These parameters must be converted to have a dtype='SN', where
                 # N is the maximum string length. N is determined automatically
                 # when using astype('<S') (astype uses largest N needed).
-                dt2 = [] # Will have dtypes with strings lengths calculated.
+                dt2 = []  # Will have dtypes with strings lengths calculated.
                 for i in range(0, len(pnames)):
                     if data[pnames[i]].dtype == 'O':
                         dtype = (pnames[i], str(data[pnames[i]].astype('<S').dtype), psizes[i])
@@ -665,6 +662,7 @@ def hapi(*args, **kwargs):
         else:
             return data, meta
 
+
 def hapitime2datetime(Time, **kwargs):
     """Convert HAPI timestamps to Python datetimes.
 
@@ -701,7 +699,7 @@ def hapitime2datetime(Time, **kwargs):
     import numpy as np
 
     hapitime2datetime(np.array([b'1970-01-01T00:00:00.000Z']))
-	hapitime2datetime(np.array(['1970-01-01T00:00:00.000Z']))
+    hapitime2datetime(np.array(['1970-01-01T00:00:00.000Z']))
 
     hapitime2datetime([b'1970-01-01T00:00:00.000Z'])
     hapitime2datetime(['1970-01-01T00:00:00.000Z'])
@@ -723,7 +721,6 @@ def hapitime2datetime(Time, **kwargs):
     if type(Time) != np.ndarray:
         print("error")
     
-    #import pdb; pdb.set_trace()
     reshape = False
     if Time.shape[0] != Time.size:
         reshape = True
