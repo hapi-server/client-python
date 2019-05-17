@@ -39,10 +39,8 @@ plotit('2001-01-01T00:00:00Z','2012-01-04T00:00:00Z')
 ###############################################################################
 # 366*2 days <= dt < 366*8 days
 
-plotit('2001-01-01T00:00:00Z','2003-01-04T00:00:00Z')
 plotit('2001-01-01T00:00:00Z','2008-12-31T00:00:00Z')
-plotit('2001-04-01T00:00:00Z','2002-04-30T00:00:00Z')
-
+plotit('2001-01-01T00:00:00Z','2003-01-04T00:00:00Z')
 
 ###############################################################################
 # 367 <= dt < 366*2 days
@@ -50,6 +48,7 @@ plotit('2001-04-01T00:00:00Z','2002-04-30T00:00:00Z')
 plotit('2001-01-01T00:00:00Z','2002-01-03T00:00:00Z')
 plotit('2001-01-01T00:00:00Z','2002-12-31T00:00:00Z')
 plotit('2001-04-01T00:00:00Z','2002-04-30T00:00:00Z')
+plotit('2001-10-01T00:00:00Z','2003-10-04T00:00:00Z')
 
 ###############################################################################
 # 183 <= dt < 367 days
@@ -127,216 +126,92 @@ plotit('2001-01-01T00:00:00Z','2001-01-01T06:00:00Z')
 plotit('2001-01-01T00:00:00Z','2001-01-01T09:00:00Z')
 plotit('2001-01-01T00:00:00Z','2001-01-01T11:00:00Z')
 
-if False:
-    ###############################################################################
-    # 20 <= dt < 30 second
+# Cross hour boundary
+plotit('2001-01-01T00:59:58Z','2001-01-01T01:00:28Z')
+
+# Cross minute boundary
+plotit('2001-01-01T00:00:58Z','2001-01-01T00:01:18Z')
+
+###############################################################################
+# 20 <= dt < 30 second
+
+plotit('2001-01-01T00:00:00Z','2001-01-01T00:00:21Z')
+
+###############################################################################
+# 10 <= dt < 20 second
+
+# Cross day boundary
+plotit('2001-01-01T23:59:56Z','2001-01-02T00:00:10Z')
+
+# Cross day boundary
+# Problem: Second row of labels overlap
+plotit('2001-01-01T23:59:58Z','2001-01-02T00:00:10Z')
+
+# Cross hour boundary only
+plotit('2001-01-01T00:59:56Z','2001-01-01T01:00:10Z')
+
+# Cross hour boundary/max time span for this tick locator
+plotit('2001-01-01T00:59:56Z','2001-01-01T01:00:15Z')
+
+# Cross hour boundary/min time span for this tick locator
+plotit('2001-01-01T00:59:56Z','2001-01-01T01:00:06')
+
+###############################################################################
+# 5 <= dt < 10 second
+
+plotit('2001-01-01T00:00:00Z','2001-01-01T00:00:07Z')
+plotit('2001-01-01T00:00:00Z','2001-01-01T00:00:09Z')
+plotit('2001-01-01T00:00:01Z','2001-01-01T00:00:06Z')
+
+# Cross day boundary
+plotit('2001-01-01T23:59:58Z','2001-01-02T00:00:05Z')
+
+# Cross day boundary
+# Problem: Second row of labels overlap
+plotit('2001-01-01T23:59:59Z','2001-01-02T00:00:05Z')
+
+# Cross hour boundary only
+plotit('2001-01-01T00:59:58Z','2001-01-01T01:00:05Z')
+
+# Cross hour boundary/max time span for this tick locator
+plotit('2001-01-01T00:59:58Z','2001-01-01T01:00:07Z')
+
+# Cross hour boundary/min time span for this tick locator
+plotit('2001-01-01T00:59:58Z','2001-01-01T01:00:03')
+
+###############################################################################
+# 1 <= dt < 5 second
+
+plotit('2001-01-01T00:00:00Z','2001-01-01T00:00:01Z')
+plotit('2001-01-01T00:00:00Z','2001-01-01T00:00:05Z')
+
+# Cross minute boundary
+plotit('2001-01-01T00:00:59Z','2001-01-01T00:01:03Z')
+
+# Cross hour boundary
+plotit('2001-01-01T00:59:58Z','2001-01-01T01:00:03Z')
+plotit('2001-01-01T00:59:59Z','2001-01-01T01:00:04Z')
+
+# Cross day boundary
+plotit('2001-01-01T23:59:58Z','2001-01-02T00:00:03Z')
     
-    # Simple
-    d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
-    d2 = dateutil.parser.parse('2001-01-01T00:00:21Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Simple
-    d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
-    d2 = dateutil.parser.parse('2001-01-01T00:00:29Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Cross minute boundary
-    d1 = dateutil.parser.parse('2001-01-01T00:00:58Z')
-    d2 = dateutil.parser.parse('2001-01-01T00:01:18Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Cross hour boundary
-    d1 = dateutil.parser.parse('2001-01-01T00:59:58Z')
-    d2 = dateutil.parser.parse('2001-01-01T01:00:28Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    ###############################################################################
-    # 1 <= dt < 5 second
-    
-    # Simple
-    d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
-    d2 = dateutil.parser.parse('2001-01-01T00:00:05Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Simple
-    d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
-    d2 = dateutil.parser.parse('2001-01-01T00:00:01Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Cross day boundary
-    d1 = dateutil.parser.parse('2001-01-01T00:00:59Z')
-    d2 = dateutil.parser.parse('2001-01-01T00:01:03Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Cross hour boundary
-    d1 = dateutil.parser.parse('2001-01-01T00:59:58Z')
-    d2 = dateutil.parser.parse('2001-01-01T01:00:03Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Cross day boundary
-    d1 = dateutil.parser.parse('2001-01-01T23:59:58Z')
-    d2 = dateutil.parser.parse('2001-01-02T00:00:03Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    ###############################################################################
-    # 5 <= dt < 10 second
-    
-    # Simple
-    d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
-    d2 = dateutil.parser.parse('2001-01-01T00:00:07Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Simple
-    d1 = dateutil.parser.parse('2001-01-01T00:00:00Z')
-    d2 = dateutil.parser.parse('2001-01-01T00:00:09Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Simple
-    d1 = dateutil.parser.parse('2001-01-01T00:00:01Z')
-    d2 = dateutil.parser.parse('2001-01-01T00:00:06Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Cross day boundary
-    d1 = dateutil.parser.parse('2001-01-01T23:59:58Z')
-    d2 = dateutil.parser.parse('2001-01-02T00:00:05Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Cross day boundary
-    # Problem: Second row of labels overlap
-    d1 = dateutil.parser.parse('2001-01-01T23:59:59Z')
-    d2 = dateutil.parser.parse('2001-01-02T00:00:05Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Cross hour boundary only
-    d1 = dateutil.parser.parse('2001-01-01T00:59:58Z')
-    d2 = dateutil.parser.parse('2001-01-01T01:00:05Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Cross hour boundary/max time span for this tick locator
-    d1 = dateutil.parser.parse('2001-01-01T00:59:58Z')
-    d2 = dateutil.parser.parse('2001-01-01T01:00:07Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Cross hour boundary/min time span for this tick locator
-    d1 = dateutil.parser.parse('2001-01-01T00:59:58Z')
-    d2 = dateutil.parser.parse('2001-01-01T01:00:03')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    
-    ###############################################################################
-    # 10 <= dt < 20 second
-    
-    # Cross day boundary
-    d1 = dateutil.parser.parse('2001-01-01T23:59:56Z')
-    d2 = dateutil.parser.parse('2001-01-02T00:00:10Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Cross day boundary
-    # Problem: Second row of labels overlap
-    d1 = dateutil.parser.parse('2001-01-01T23:59:58Z')
-    d2 = dateutil.parser.parse('2001-01-02T00:00:10Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Cross hour boundary only
-    d1 = dateutil.parser.parse('2001-01-01T00:59:56Z')
-    d2 = dateutil.parser.parse('2001-01-01T01:00:10Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Cross hour boundary/max time span for this tick locator
-    d1 = dateutil.parser.parse('2001-01-01T00:59:56Z')
-    d2 = dateutil.parser.parse('2001-01-01T01:00:15Z')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
-    # Cross hour boundary/min time span for this tick locator
-    d1 = dateutil.parser.parse('2001-01-01T00:59:56Z')
-    d2 = dateutil.parser.parse('2001-01-01T01:00:06')
-    x = np.array([d1,d2], dtype=object)
-    y = [0.0,0.0]
-    plt.clf()
-    plt.plot(x, y, '*')
-    datetick('x')
-    
+###############################################################################
+# .5 <= dt < 1 second
+
+plotit('2001-01-01T00:00:00.0Z','2001-01-01T00:00:00.5Z')
+plotit('2001-01-01T00:00:00.01Z','2001-01-01T00:00:00.99Z')
+
+# Cross minute boundary
+plotit('2001-01-01T00:00:59.8Z','2001-01-01T00:01:00.3Z')
+
+# Cross hour boundary
+plotit('2001-01-01T00:59:59.8Z','2001-01-01T01:00:03Z')
+
+# Cross day boundary
+plotit('2001-01-01T23:59:59.8Z','2001-01-02T00:00:03Z')
+
+###############################################################################
+# 0.1 <= dt < 0.5 second
+
+plotit('2001-01-01T00:00:00.0Z','2001-01-01T00:00:00.2Z')
+plotit('2001-01-01T00:00:00.0Z','2001-01-01T00:00:00.1Z')
