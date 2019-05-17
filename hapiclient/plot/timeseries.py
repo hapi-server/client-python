@@ -107,9 +107,9 @@ def timeseries(t, y, **kwargs):
 
     ax.grid()
 
-    if isinstance(t.take(0), datetime.datetime):
+    if isinstance(t[0], datetime.datetime):
         datetick('x', axes=ax)
-    if isinstance(y.take(0), datetime.datetime):
+    if isinstance(y[0], datetime.datetime):
         datetick('y', axes=ax)
 
     # savefig.transparent=True requires the following for the saved image
