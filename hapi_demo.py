@@ -2,17 +2,19 @@
 #   pip install hapiclient
 # from command line to install hapiclient package.
 
-# Note
+# Note:
 # In IPython, enter %matplotlib qt on command line to open plots in 
 # new window. Enter %matplotlib inline to revert.
 
+# For a more extensive demo, see
+# https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb
 
 def main():
 
     omniweb()
     sscweb()
     cdaweb()
-
+    cassini()
 
 def omniweb():
     
@@ -85,6 +87,21 @@ def cdaweb():
     servers = hapi(logging=True)  # servers is an array of URLs
     print('')
     
+def cassini():
+    from hapiclient import hapi
+    from hapiclient import hapiplot
+    
+    server     = 'http://datashop.elasticbeanstalk.com/hapi';
+    dataset    = 'CHEMS_PHA_BOX_FLUXES_FULL_TIME_RES';
+    parameters = 'HPlus_BEST_T1';
+    start      = '2004-07-01T04:00:00Z';
+    stop       = '2004-07-01T06:00:00Z';
+    opts       = {'usecache': True}
+    
+    data, meta = hapi(server, dataset, parameters, start, stop, **opts)
+    
+    popts = {'logging': False, 'logy': True, 'logz': True}
+    hapiplot(data, meta, **popts)
 
 if __name__ == '__main__':
     main()
