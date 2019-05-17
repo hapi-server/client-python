@@ -3,8 +3,10 @@ import warnings
 import numpy as np
 
 import matplotlib
+from matplotlib import colors
 from matplotlib.patches import Patch
 from matplotlib.colors import LogNorm
+from matplotlib import rc_context
 
 from hapiclient.plot.datetick import datetick
 
@@ -53,7 +55,7 @@ def heatmap(x, y, z, **kwargs):
         * logy - All y values must be either >= 0 or <= 0.
         * logz - All z values must be either >= 0 or <= 0. The zero values rectangles are colored using logz0color.
         * logz0.legend
-        * log.auto^
+        * log.auto
 
         Tile edges, gaps, and NaN
         -------------------------
@@ -99,11 +101,11 @@ def heatmap(x, y, z, **kwargs):
             dyu = np.unique(dy)
             if len(dyu) > 1:
                 if coord == 'y':
-                    warning('Only bin centers given for y and bin separation distance is not constant.')
-                    warning('Bin width assumed based on separation distance and data pickers will not work properly.')
+                    warning('Only bin centers given for y and bin separation distance is not constant. ' + \
+                            'Bin width assumed based on separation distance and data pickers will not work properly.')
                 else:
-                    warning('Only bin centers given for x and bin separation distance is not constant.')
-                    warning('Bin width assumed based on separation distance and data pickers will not work properly.')
+                    warning('Only bin centers given for x and bin separation distance is not constant. ' + \
+                            'Bin width assumed based on separation distance and data pickers will not work properly.')
                 y = np.append(y, y[-1] + dy[-1])
             else:
                 y = np.append(y, y[-1] + dy[0])
@@ -186,24 +188,6 @@ def heatmap(x, y, z, **kwargs):
 
         return yc, ycl
 
-    def array2cmap(X):
-
-        N = X.shape[0]
-
-        # https://stackoverflow.com/questions/48387847/overlaying-two-plots-using-pcolor
-        from matplotlib import colors
-        r = np.linspace(0., 1., N+1)
-        r = np.sort(np.concatenate((r, r)))[1:-1]
-        rd = np.concatenate([[X[i, 0], X[i, 0]] for i in range(N)])
-        gr = np.concatenate([[X[i, 1], X[i, 1]] for i in range(N)])
-        bl = np.concatenate([[X[i, 2], X[i, 2]] for i in range(N)])
-
-        rd = tuple([(r[i], rd[i], rd[i]) for i in range(2 * N)])
-        gr = tuple([(r[i], gr[i], gr[i]) for i in range(2 * N)])
-        bl = tuple([(r[i], bl[i], bl[i]) for i in range(2 * N)])
-
-        cdict = {'red': rd, 'green': gr, 'blue': bl}
-        return colors.LinearSegmentedColormap('my_colormap', cdict, N)
     ###########################################################################
 
     opts = {
@@ -284,10 +268,39 @@ def heatmap(x, y, z, **kwargs):
         fig = plt.gcf()
         ax = plt.gca()
 
+    if type(x) == list:
+        x = np.array(x)
+    if type(y) == list:
+        y = np.array(y)
+    if type(z) == list:
+        z = np.array(z)
+            
     # Number of x values (columns)
     Nx = z.shape[1] if len(z.shape) == 2 else 1
     # Number of y values (rows)
     Ny = z.shape[0] if len(z.shape) == 2 else 1
+
+    # Note: categoricalx and categoricaly are very similar.
+    categoricalx = False
+    if isinstance(x[0], np.character):
+        if len(x.shape) > 1:
+            raise ValueError('If x contains characters, it must have one column or one row.')
+        if not len(x) == Nx:
+            raise ValueError('If x contains characters, number of elements must match number of rows in z.')
+        categoricalx = True
+        xcategories = x
+        x = np.linspace(0, x.shape[0]-1, x.shape[0], dtype='int32')
+
+    categoricaly = False
+    if isinstance(y[0], np.character):
+        if len(y.shape) > 1:
+            raise ValueError('If y contains characters, it must have one column or one row.')
+        if not len(y) == Ny:
+            raise ValueError('If y contains characters, number of elements must match number of rows in z.')
+        categoricaly = True
+        ycategories = y
+        y = np.linspace(0, y.shape[0]-1, y.shape[0], dtype='int32')
+
 
     # If y is a matrix, assume it has two columns.
     # First column is lower edge, second is upper edge.
@@ -303,12 +316,12 @@ def heatmap(x, y, z, **kwargs):
         if x.shape[1] != 2 and x.shape[0] == 2:
             warning('If x is a matrix, it should have two columns. Two rows found. Transposing.')
             x = np.transpose(x)
-        if x.shape[0] !=2 and x.shape[1] != 2:
+        if x.shape[0] != 2 and x.shape[1] != 2:
             raise ValueError('If x is a matrix, it must have two columns or two rows.')
 
-    if not (len(x) == Nx or len(x) == Nx+1):
+    if x.ndim == 1 and not (len(x) == Nx or len(x) == Nx+1):
         raise ValueError('Required: len(x) == z.shape[1] or len(x) == z.shape[1] + 1.')
-    if not (len(y) == Ny or len(y) == Ny+1):
+    if y.ndim == 1 and not (len(y) == Ny or len(y) == Ny+1):
         raise ValueError('Required: len(y) == z.shape[0] or len(y) == z.shape[0] + 1.')
 
     if len(x.shape) == 1 and len(x) == Nx:
@@ -346,9 +359,8 @@ def heatmap(x, y, z, **kwargs):
     legendh = []
     havegaps = False
     if len(xgaps) > 0 or len(ygaps) > 0:
-        # TODO: Add alpha to nancolor and change array2cmap to accept alpha.
         havegaps = True
-        cmapg = array2cmap(np.array([opts['gap.color']]))
+        cmapg = colors.LinearSegmentedColormap.from_list('gap',[opts['gap.color'],opts['gap.color']],2)
         zg = np.nan*np.copy(z)
         if len(xgaps) > 0:
             zg[:,xgaps] = 1
@@ -358,16 +370,19 @@ def heatmap(x, y, z, **kwargs):
             ax.pcolormesh(x, y, zg, cmap=cmapg)
         else:
             # pcolormesh does not support hatch
-            ax.pcolor(x, y, zg, cmap=cmapg, hatch=opts['gap.hatch'],
-                      edgecolor=opts['gap.hatch.color'])
+            # TODO: Must set hatch.color through rc params and context manager.
+            # opts['nan.hatch.color']
+            # https://stackoverflow.com/a/42672782/1491619
+            with rc_context(rc={'hatch.color': opts['gap.hatch.color']}):
+                ax.pcolor(x, y, zg, cmap=cmapg, hatch=opts['gap.hatch'])
         if opts['gap.legend']:
-            legendh.append(Patch(facecolor=opts['gap.color'],
-                        hatch=opts['gap.hatch']+opts['gap.hatch'],
-                        edgecolor=opts['edgecolor'], label='No data'))
+            with rc_context(rc={'hatch.color': opts['gap.hatch.color']}):
+                legendh.append(Patch(facecolor=opts['gap.color'],
+                                     hatch=opts['gap.hatch']+opts['gap.hatch'],
+                                     edgecolor=opts['edgecolor'], label='No data'))
 
     if havenans:
-        # TODO: Add alpha to nancolor and change array2cmap to accept alpha.
-        cmapn = array2cmap(np.array([opts['nan.color']]))
+        cmapn = colors.LinearSegmentedColormap.from_list('nan',[opts['nan.color'],opts['nan.color']],2)        
         zn = np.nan*np.copy(z)
         if havegaps:
             inan = np.where(np.logical_and(np.isnan(z),zg != 1))
@@ -375,15 +390,16 @@ def heatmap(x, y, z, **kwargs):
         if opts['nan.hatch'] == '':
             ax.pcolormesh(x, y, zn, cmap=cmapn)
         else:
-            # pcolormesh does not support hatch
-            ax.pcolor(x, y, zn, cmap=cmapn, hatch=opts['nan.hatch'],
-                      edgecolor=opts['nan.hatch.color'])
+            # Must set hatch.color through rc params and context manager.
+            with rc_context(rc={'hatch.color': opts['nan.hatch.color']}):
+                ax.pcolor(x, y, zn, cmap=cmapn, hatch=opts['nan.hatch'])
         if opts['nan.legend']:
-            legendh.append(Patch(facecolor=opts['nan.color'],
-                        hatch=opts['nan.hatch']+opts['nan.hatch'],
-                        edgecolor=opts['edgecolor'], label='NaN'))
+            with rc_context(rc={'hatch.color': opts['nan.hatch.color']}):
+                legendh.append(Patch(facecolor=opts['nan.color'],
+                                     hatch=opts['nan.hatch']+opts['nan.hatch'],
+                                     edgecolor=opts['edgecolor'], label='NaN'))
 
-    zc = np.array([])
+    zc = np.array([])   
     categorical = False
     if not 'cmap' in kwargs:
         Ig = ~np.isnan(z)
@@ -392,9 +408,14 @@ def heatmap(x, y, z, **kwargs):
             categorical = True
             zc = np.unique(z[Ig])
             nc = zc[-1]-zc[0] + 1
-            cmap = matplotlib.pyplot.get_cmap(opts['cmap.name'], nc)
-            # TODO: Warn that cmap_numcolors will be over-ridden if
-            # nc != default?
+            if 'cmap.numcolors' in kwargs:
+                if opts['cmap.numcolors'] != nc:
+                    warning('Over-riding requested number of colors. Using number of colors that equals number of unique values in z')
+            cmap_name = opts['cmap.name']
+            if len(Ig) == 2 and not 'cmap.name' in kwargs:
+                # Binary. Plot black and white.
+                cmap_name = 'gray'
+            opts['cmap'] = matplotlib.pyplot.get_cmap(cmap_name, nc)
 
     zmin = np.nanmin(z)
     zmax = np.nanmax(z)
@@ -421,7 +442,7 @@ def heatmap(x, y, z, **kwargs):
         im = ax.pcolormesh(x, y, z, cmap=opts['cmap'], norm=norm,
                            edgecolor=opts['edgecolor'])
         if havelogz0:
-            cmapz = array2cmap(np.array([opts['logz0.color']]))
+            cmapz = colors.LinearSegmentedColormap.from_list('logz0',[opts['logz0.color'],opts['logz0.color']],2)
             z = np.nan*z
             z[logz0idx] = 1
             ax.pcolormesh(x, y, z, cmap=cmapz)
@@ -450,6 +471,28 @@ def heatmap(x, y, z, **kwargs):
         if len(ycl) > 0:
             # Relabel y-ticks b/c nonuniform center spacing.
             ax.set_yticklabels(ycl)
+
+    # Note: categoricalx and categoricaly are very similar.
+    if categoricalx:
+        ax.set_xticklabels(xcategories)
+        ax.set_xticks(list(ax.get_xticks()) + [-0.5] + list(ax.get_xticks()+0.5))
+        k = 0
+        l = ax.get_xticklines()
+        for l in ax.get_xticklines():
+            if k < 2*len(xcategories):
+                l.set_markeredgewidth(0)
+            k = k+1
+
+    # Note: categoricalx and categoricaly are very similar.            
+    if categoricaly:
+        ax.set_yticklabels(ycategories)
+        ax.set_yticks(list(ax.get_yticks()) + [-0.5] + list(ax.get_yticks()+0.5))
+        k = 0
+        l = ax.get_yticklines()
+        for l in ax.get_yticklines():
+            if k < 2*len(ycategories):
+                l.set_markeredgewidth(0)
+            k = k+1
 
     ax.set_ylim(y[0], y[-1])
     if opts['xlabel']:
