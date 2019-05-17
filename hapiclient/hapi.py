@@ -148,7 +148,7 @@ def hapi(*args, **kwargs):
         Results depend on the input parameters.
 
         Servers = hapi() returns a list of available HAPI server URLs from
-        <https://github.com/hapi-server/data-specification/blob/master/servers.txt>
+        <https://github.com/hapi-server/data-specification/blob/master/all.txt>
 
         Dataset = hapi(Server) returns a dict of datasets available from a
         URL given by the string Server.  The dictionary structure follows the

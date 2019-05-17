@@ -67,12 +67,10 @@ def hapiplot(*args, **kwargs):
 
     Usage
     -----
-        1.
-        data, meta = hapiplot(server, dataset, params, start, stop, **kwargs)
-
-        2.
-        meta = hapiplot(data, meta, **kwargs) where data and meta are return
-        values from `hapi()`.
+            data, meta = hapiplot(server, dataset, params, start, stop, **kwargs)
+        or    
+            meta = hapiplot(data, meta, **kwargs)
+        where data and meta are return values from `hapi()`.
 
         All parameters are plotted. If a parameter has a bins attribute,
         it is plotted using `heatmap()`. Otherwise, it is plotted using
@@ -89,7 +87,7 @@ def hapiplot(*args, **kwargs):
             >>> fig = meta['parameters'][i]['hapiplot']['figure']
             >>> fig.set_facecolor('blue')
             >>> fig.axes[0].set_ylabel('new y-label')
-            >>> fig.axes[0].set_title('new title\nsubtitle\nsubtitle')
+            >>> fig.axes[0].set_title('new title\\nsubtitle\\nsubtitle')
             >>> fig.tight_layout()
 
         meta['parameters'][i]['hapiplot']['colorbar'] is a reference to the
