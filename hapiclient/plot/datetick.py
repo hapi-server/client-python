@@ -1,6 +1,7 @@
 import matplotlib.dates as mpld
 from datetime import datetime
 import numpy as np
+import warnings
 
 # To allow to run from command line, find a back-end that works
 import matplotlib
@@ -47,10 +48,15 @@ def datetick(dir, **kwargs):
     #       a major x-label right below it. This is due to the fact that
     #       MicrosecondLocator() does not take a keyword argument of
     #       "bymicroseconds".
-        
+    # TODO: Adjust lower and upper limits as in 366*8 span
+
     def millis(x, pos):
-        'The two args are the value and tick position'
-        return '$%1.1fM' % (x*1e-6)
+        x = matplotlib.dates.num2date(x)
+        label = x.strftime('.%f')
+        label = label[0:3]
+        #label = label.rstrip(".")
+        return label
+    
 
     DOPTS = {}
     DOPTS.update({'debug': False})
@@ -78,13 +84,7 @@ def datetick(dir, **kwargs):
 
     def on_xlims_change(ax): datetick('x', axes=ax, set_cb=False)
     def on_ylims_change(ax): datetick('y', axes=ax, set_cb=False)
-
-    # Trigger update of ticks when limits change due to user interaction.
-    if DOPTS['set_cb']:
-        if dir == 'x':
-            axes.callbacks.connect('xlim_changed', on_xlims_change)
-        else:
-            axes.callbacks.connect('ylim_changed', on_ylims_change)
+    def draw(fig): fig.canvas.draw() # Render new ticks and tick labels
 
     bbox = axes.dataLim
 
@@ -122,7 +122,7 @@ def datetick(dir, **kwargs):
     # Note that interval=... is specified even when it would seem to be
     # redundant. It is needed to workaround the bug discussed at
     # https://stackoverflow.com/questions/31072589/matplotlib-date-ticker-exceeds-locator-maxticks-error-for-no-apparent-reason
-    if deltaT.total_seconds() < .1:
+    if deltaT.total_seconds() < 0.1:
         # < 0.1 second
         # At this level of zoom, would need original datetime data
         # which has not been converted by date2num and then re-plot
@@ -133,27 +133,34 @@ def datetick(dir, **kwargs):
         # plotd() calls
         # plot(t,y)
         # and then makes first label indicate %Y-%m-%dT%H:%M:%S
-        if debug == True:
-            print("Warning: Cannot create accurate time labels with this time resolution.")
+        warnings.warn("Warning: Cannot create accurate time labels with this time resolution.")
         # This does not locate microseconds.
+        Mtick = mpld.MicrosecondLocator(interval=10000)
+        mtick = mpld.MicrosecondLocator(interval=2000)
         from matplotlib.ticker import FuncFormatter
-        formatter = FuncFormatter(millis)
-        Mtick = mpld.MicrosecondLocator(formatter)
-        mtick = mpld.MicrosecondLocator(interval=1000)
-        fmt   = mpld.DateFormatter('%M:%S:%f')
-        fmt2  = '%Y-%m-%dT%H'
+        fmt = FuncFormatter(millis)
+        fmt2  = '%H:%M:%S\n%Y-%m-%d'
+    if deltaT.total_seconds() < 0.5:
+        # < 0.5 seconds
+        # Locators don't locate at this resolution. 
+        # Need to do this manually. See comment above.
+        warnings.warn("Warning: Cannot create accurate time labels with this time resolution.")
+        Mtick = mpld.MicrosecondLocator(interval=50000)
+        mtick = mpld.MicrosecondLocator(interval=10000)
+        from matplotlib.ticker import FuncFormatter
+        fmt = FuncFormatter(millis)
+        fmt2  = '%H:%M:%S\n%Y-%m-%d'
     if deltaT.total_seconds() < 1:
         # < 1 second
-        #import pdb; pdb.set_trace()
-        #Mtick = mpld.SecondLocator(bysecond=list(range(time[0].second,60,1)) )
         # https://matplotlib.org/api/dates_api.html#matplotlib.dates.MicrosecondLocator
         # MircosecondLocator() does not have a "bymicrosecond" option. If
         # First point is not at zero microseconds, it won't be labeled.
-        Mtick = mpld.MicrosecondLocator(interval=200000)
-        mtick = mpld.MicrosecondLocator(interval=100000)
-        #fmt   = mpld.DateFormatter('%M:%S')
-        fmt   = mpld.DateFormatter('%M:%S.%f')
-        fmt2  = '%Y-%m-%dT%H'
+        Mtick = mpld.MicrosecondLocator(interval=100000)
+        mtick = mpld.MicrosecondLocator(interval=20000)
+        from matplotlib.ticker import FuncFormatter
+        fmt = FuncFormatter(millis)
+        #fmt   = mpld.DateFormatter('%M:%S.%f')
+        fmt2  = '%H:%M:%S\n%Y-%m-%d'
     elif deltaT.total_seconds() < 5:
         # < 5 seconds
         Mtick = mpld.SecondLocator(bysecond=list(range(0, 60, 1)) )
@@ -291,30 +298,47 @@ def datetick(dir, **kwargs):
         fmt   = mpld.DateFormatter('%d')
         fmt2  = '%Y-%m'
     elif deltaT.days < 183:
-        Mtick = mpld.MonthLocator(bymonth=list(range(1,13,1)))
+        Mtick = mpld.MonthLocator(bymonth=list(range(1, 13, 1)))
         mtick = mpld.DayLocator(bymonthday=list(range(1, 32, 7)))
         fmt   = mpld.DateFormatter('%m')
         fmt2  = '%Y'
     elif deltaT.days < 367:
-        Mtick = mpld.MonthLocator(bymonth=list(range(1,13,1)))
+        Mtick = mpld.MonthLocator(bymonth=list(range(1, 13, 1)))
         mtick = mpld.MonthLocator(bymonth=list(range(1, 13, 1)))
         fmt   = mpld.DateFormatter('%m')
         fmt2  = '%Y'
     elif deltaT.days < 366*2:
-        Mtick = mpld.MonthLocator(bymonth=list(range(1,13,2)))
+        Mtick = mpld.MonthLocator(bymonth=list(range(1, 13, 2)))
         mtick = mpld.MonthLocator(bymonth=list(range(1, 13, 1)))
         fmt   = mpld.DateFormatter('%m')
         fmt2  = '%Y'
     elif deltaT.days < 366*8:
         Mtick = mpld.YearLocator(1)
-        mtick = mpld.MonthLocator(bymonth=7)
+        mtick = mpld.MonthLocator(bymonth=list(range(1, 13, 4)))
         fmt   = mpld.DateFormatter('%Y')
         fmt2  = ''
     elif deltaT.days < 366*15:
-        Mtick = mpld.YearLocator(2)
+        to = axes.lines[0].get_xdata()[0]
+        tf = axes.lines[0].get_xdata()[-1]
+        print(to)
+        print(tf)
+        # Ideally would set byyear=list(range(to.year, tf.year,2)) but
+        # byyear is not a kwarg. Would need to something like
+        # https://stackoverflow.com/questions/48428729/matplotlib-dates-yearlocator-with-odd-intervals
+        Mtick = mpld.YearLocator(1) 
         mtick = mpld.YearLocator(1)
         fmt   = mpld.DateFormatter('%Y')
         fmt2  = ''
+        if False:
+            xl = axes.get_xlim()
+            a = mpld.num2date(xl[0])
+            print(a)
+            import pdb;pdb.set_trace()
+            a = mpld.date2num(a.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0))
+            b = mpld.num2date(xl[1])
+            b = mpld.date2num(b.replace(year=(b.year+1), month=1, day=1, hour=0, minute=0, second=0, microsecond=0))
+            axes.set_xlim([a, b])
+
     elif deltaT.days < 366*40:
         Mtick = mpld.YearLocator(5)
         mtick = mpld.YearLocator(1)
@@ -338,32 +362,26 @@ def datetick(dir, **kwargs):
 
     xt = axes.get_xticks()
     xl = axes.get_xlim()
+
     if debug:
         print("Default xlim[0]:    %s" % mpld.num2date(xl[0]))
         print("Default xlim[1]:    %s" % mpld.num2date(xl[1]))
         print("Default xticks[0]:  %s" % mpld.num2date(xt[0]))
         print("Default xticks[-1]: %s" % mpld.num2date(xt[-1]))
-
-    def draw(fig):
-        # Render new ticks and tick labels
-        fig.canvas.draw()
     
-    axes.set_xticks(xt)
-
     if debug:
         print("Start: %s" % mpld.num2date(xl[0]))
         print("Stop:  %s" % mpld.num2date(xl[1]))
         for i in range(0,len(xt)):
             print("Tick: %s" % mpld.num2date(xt[i]))
 
-    draw(fig)
+    draw(fig) # Needed?
     
     if dir == 'x':
         axes.xaxis.set_major_locator(Mtick)
         axes.xaxis.set_minor_locator(mtick)
         axes.xaxis.set_major_formatter(fmt)
-        #fig.canvas.draw() 
-        draw(fig)
+        draw(fig) # Render new labels so updated for next line
         labels = [item.get_text() for item in axes.get_xticklabels()]
         ticks = axes.get_xticks()
         time = mpld.num2date(ticks)
@@ -371,18 +389,40 @@ def datetick(dir, **kwargs):
         axes.yaxis.set_major_locator(Mtick)
         axes.yaxis.set_minor_locator(mtick)
         axes.yaxis.set_major_formatter(fmt)
-        #fig.canvas.draw() # Render new labels so updated for next line
-        draw(fig)
+        draw(fig) # Render new labels so updated for next line
         labels = [item.get_text() for item in axes.get_yticklabels()]
         ticks = axes.get_yticks()
         time = mpld.num2date(ticks)
 
     if debug:
         print(labels)
+        xl = axes.get_xlim()
+        print(mpld.num2date(xl[0]))
+        print(mpld.num2date(ticks[0]))        
+        print(mpld.num2date(xl[1]))
+        print(mpld.num2date(ticks[-1]))
+        if ticks[0] < xl[0]:
+            print('Left-most tick label will be clipped.')
+        if ticks[-1] > xl[1]:
+            print('Right-most tick label will be clipped.')
+        for i in range(0,len(ticks)):
+            print("Tick: %s" % mpld.num2date(ticks[i]))
 
     if fmt2 != '':
-        for i in range(1,len(time)):
-            modify = False
+        first = 0
+        if ticks[0] < xl[0]:
+            # Work-around for bug in Matplotlib where left-most tick is less than
+            # lower x-limit.
+            first = 1
+
+        # Always apply fmt2 to first tick label
+        labels[first] = '%s\n%s' % (labels[first], datetime.strftime(time[first], fmt2))
+
+        for i in range(first+1,len(time)):
+            # First label will always have fmt applied.
+            # Modify labels after first under certain conditions.            
+            modify = False 
+            
             if time[i].year > time[i-1].year:
                 modify = True
             if nDays < 60 and time[i].month > time[i-1].month:
@@ -391,22 +431,33 @@ def datetick(dir, **kwargs):
                 modify = True
             if nSecs < 60*30 and time[i].hour > time[i-1].hour:
                 modify = True
+            if nSecs < 1 and time[i].minute > time[i-1].minute:
+                modify = True
+            if nSecs < 1 and time[i].second > time[i-1].second:
+                modify = True
 
-            if i == 1:
+            if not modify: continue
+
+            if i == first + 1 and dir == 'x':
                 # If first two major tick labels have fmt2 applied, the will
-                # likely run together. This keeps fmt2 label for second major tick.
-                if modify and dir == 'x':
-                    labels[1] = '%s\n%s' % (labels[i], datetime.strftime(mpld.num2date(ticks[i]), fmt2))
-                else:
-                    labels[0] = '%s\n%s' % (labels[0], datetime.strftime(time[0], fmt2))
+                # likely run together. This keeps fmt2 label for second major
+                # tick.
+                #labels[i] = '%s\n%s' % (labels[i], datetime.strftime(mpld.num2date(ticks[i]), fmt2))
+                pass
             else:
-                if modify:
-                    labels[i] = '%s\n%s' % (labels[i], datetime.strftime(mpld.num2date(ticks[i]), fmt2))
+                labels[i] = '%s\n%s' % (labels[i], datetime.strftime(mpld.num2date(ticks[i]), fmt2))
 
     if dir == 'x':            
         axes.set_xticklabels(labels)
     if dir == 'y':            
         axes.set_yticklabels(labels)
+
+    # Trigger update of ticks when limits change due to user interaction.
+    if DOPTS['set_cb']:
+        if dir == 'x':
+            axes.callbacks.connect('xlim_changed', on_xlims_change)
+        else:
+            axes.callbacks.connect('ylim_changed', on_ylims_change)
 
 def numsize():
     '''Returns (width, height) of number '0' in pixels'''
