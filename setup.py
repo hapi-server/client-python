@@ -2,9 +2,8 @@
 from setuptools import setup, find_packages
 import sys
 
-install_requires = ["hapiplotserver>0.0.4",
-                    "numpy>=1.14.3",
-                    "pandas==0.23.0",
+install_requires = ["numpy>=1.14.3",
+                    "pandas>=0.23.*,<=0.24.*",
                     'matplotlib>=2.2.2;python_version>"3.5"',
                     'matplotlib<3.0;python_version<"3.5"',
                     "isodate>=0.6.0"]
