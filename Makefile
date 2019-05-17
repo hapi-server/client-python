@@ -1,23 +1,31 @@
-# Development: Test repository contents:
-#   make repository-test
+# First-time use, need to create the following virtual environments for testing:
+# conda create -n python2.7 python=2.7; conda install jupyter; conda install spyder
+# conda create -n python3.5 python=3.5; conda install jupyter; conda install spyder
+# conda create -n python3.6 python=3.6; conda install jupyter; conda install spyder
+# conda create -n python3.7 python=3.7; conda install jupyter; conda install spyder
 #
-# Make and test a candidate release package in virtual environment:
+# Development:
+# Test hapi() data read functions using repository code:
+#   make repository-test-data
+#
+# Test hapiplot() functions using repository code:
+#   make repository-test-plots
+#
+# Making a local package:
 # 1. Update CHANGES.txt to have a new version line
 # 2. make package
 #
-# Make release package, upload to pypi.org, and test package
+# Upload package to pypi.org test starting with uploaded package:
 # 1. make release
 # 2. Wait ~5 minutes and execute
 # 3. make release-test
 #    (Will fail until new version is available at pypi.org for pip install.
-#     Usually takes ~5 minutes even though web page is immediately
+#     Sometimes takes ~5 minutes even though web page is immediately
 #     updated.)
 # 4. After package is finalized, create new version number in CHANGES.txt ending
-#    with "b0" in setup.py and then run make version-update.
-
-# For using the pypi test repository, use
-#URL=https://test.pypi.org/
-#REP=pypitest
+#    with "b0" in setup.py and then run make version-update. This will update the
+#    version information in the repository to indicate it is now in a pre-release
+#    state.
 
 PYTHON=python3.6
 
@@ -31,31 +39,30 @@ SHELL:= /bin/bash
 test:
 	make repository-test
 
-# Test contents in repository using system install of python.
-# 'python setup.py develop' creates symlinks in system package directory.
+# Test contents in repository using different python versions
 repository-test:
-	make repository-test-data PYTHON=python3.6
 	make repository-test-data PYTHON=python2.7
-	make repository-test-plots PYTHON=python3.6
-	make repository-test-plots PYTHON=python2.7
+	make repository-test-data PYTHON=python3.5
+	make repository-test-data PYTHON=python3.6
+	make repository-test-data PYTHON=python3.7
 
+# 'python setup.py develop' creates symlinks in system package directory.
 repository-test-data:
 	make clean
-	$(PYTHON) setup.py develop
-	$(PYTHON) -m pytest -v -m 'not long' hapiclient/test/test_hapi.py
-	$(PYTHON) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
-	$(PYTHON) -m pytest -v hapiclient/test/test_hapitime2datetime.py
-	#python setup.py develop --uninstall
+	source activate $(PYTHON); $(PYTHON) setup.py develop
+	source activate $(PYTHON); $(PYTHON) -m pytest -v -m 'not long' hapiclient/test/test_hapi.py
+	source activate $(PYTHON); $(PYTHON) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
+	source activate $(PYTHON); $(PYTHON) -m pytest -v hapiclient/test/test_hapitime2datetime.py
 
 # These require visual inspection.
 repository-test-plots:
 	make clean
-	$(PYTHON) setup.py develop
-	$(PYTHON) hapi_demo.py
-	$(PYTHON) hapiclient/hapiplot_test.py
-	$(PYTHON) hapiclient/plot/timeseries_test.py
-	$(PYTHON) hapiclient/gallery/gallery_test.py
-	$(PYTHON) hapiclient/autoplot/autoplot_test.py
+	source activate $(PYTHON); $(PYTHON) setup.py develop
+	source activate $(PYTHON); $(PYTHON) hapi_demo.py
+	source activate $(PYTHON); $(PYTHON) hapiclient/hapiplot_test.py
+	source activate $(PYTHON); $(PYTHON) hapiclient/plot/timeseries_test.py
+	source activate $(PYTHON); $(PYTHON) hapiclient/gallery/gallery_test.py
+	source activate $(PYTHON); $(PYTHON) hapiclient/autoplot/autoplot_test.py
 	jupyter-notebook ../client-python-notebooks/hapi_demo.ipynb
 
 release:
@@ -67,11 +74,9 @@ release-upload:
 	echo "rweigel, t1p"
 	twine upload \
 		-r $(REP) dist/hapiclient-$(VERSION).tar.gz \
-		--config-file misc/.pypirc \
-		&& \
-	echo Uploaded to $(subst upload.,,$(URL))/project/hapiclient/
+		&& echo Uploaded to $(subst upload.,,$(URL))/project/hapiclient/
 
-# See comments above package-test
+# TODO: Need to test using supported versions of Python.
 release-test:
 	rm -rf env
 	python3 -m virtualenv env
@@ -95,7 +100,7 @@ package:
 # Test package in a virtual environment
 # Enter "deactivate" to exit virtual environment
 # On OS-X (at least), I need to close windows for next plot to be shown 
-# (virutal environment has different windows manager than system)
+# (virtual environment has different window manager than system)
 # Note: pytest uses script in local directory. Need to figure out how to
 # use version in installed package.
 package-test:
@@ -126,10 +131,9 @@ version-tag:
 	git tag -a v$(VERSION) -m "Version "$(VERSION)
 	git push --tags
 
-# Use package in ./hapiclient instead of that installed by pip.
-# This seems to not work in Spyder.
+# Install package in local directory
 install-local:
-	python setup.py
+	python setup.py .
 
 install:
 	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple
@@ -182,10 +186,3 @@ clean:
 	- rm -f MANIFEST
 	- rm -rf .pytest_cache/
 	- rm -rf hapiclient.egg-info/
-
-
-
-
-
-
-
