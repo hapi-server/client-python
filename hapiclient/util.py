@@ -30,6 +30,7 @@ def log(msg, opts):
             # Don't show full path information.
             msg = msg.replace(opts['cachedir'] + '/', '')
             msg = msg.replace(opts['cachedir'], '')
+#        import pdb; pdb.set_trace()
         pre = sys._getframe(1).f_code.co_name + '(): '
         print(pre + msg)
 
@@ -113,6 +114,13 @@ def warning_test():
 
     warn('Normal warning 3')
     warn('Normal warning 4')
+
+
+# Deal with this issue: https://github.com/matplotlib/matplotlib/issues/13118
+import warnings
+import matplotlib.cbook
+warnings.filterwarnings(action="ignore", message=r'\n.*rcparam was deprecated', category=matplotlib.cbook.MatplotlibDeprecationWarning)
+
 
 def warning(*args):
     """Display a short warning message.
@@ -429,8 +437,16 @@ def urlopen(url):
     else:
         import urllib
         import urllib2
+        import ssl
+
+        # PEP 0476 fixed bug in urllib2 which causes error to be thrown
+        # when request is for HTTPS resource. This reverts to previous behavior.
+        # TODO: Switch to using requests package which handles this and
+        # supports Python 2/3 without needing a version test as used here.s
+        # https: //www.python.org/dev/peps/pep-0476/
+        context = ssl._create_unverified_context()
         try:
-            res = urllib2.urlopen(url)
+            res = urllib2.urlopen(url, context=context)
         except urllib2.URLError as e:
             urlerror(e, url)
         except ValueError:
