@@ -477,9 +477,11 @@ def urlretrieve(url, fname):
             error("'" + url + "' is not a valid URL")
     else:
         import urllib
+        import ssl
         import urllib2
         try:
-            res = urllib.urlretrieve(url, fname)
+            context = ssl._create_unverified_context()
+            res = urllib.urlretrieve(url, fname, context=context)
             return res
         except urllib2.URLError as e:
             urlerror(e, url)
