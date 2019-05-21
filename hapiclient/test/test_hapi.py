@@ -15,14 +15,15 @@ server = 'http://hapi-server.org/servers/TestData/hapi'
 # test_reader_short()
 
 def writepickle(fname, var):
-    fname = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data',fname)
-    with open(fname, 'wb') as pickle_file: 
+    print("!!!!!!!!!!!!!!")
+    print("Writing " + fname)
+    print("!!!!!!!!!!!!!!")
+    with open(fname, 'wb') as pickle_file:
         pickle.dump(var, pickle_file)
     pickle_file.close()
 
 def readpickle(fname):
-    fname = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data',fname)
-    with open(fname, 'rb') as pickle_file: 
+    with open(fname, 'rb') as pickle_file:
         var = pickle.load(pickle_file)
     pickle_file.close()
     return var
@@ -44,6 +45,7 @@ def test_dataset():
     """Request for dataset returns correct dataset metadata"""
     meta = hapi(server,'dataset1')
     pklFile = 'test_dataset.pkl'
+    pklFile = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data',pklFile)
     if not os.path.isfile(pklFile):
         writepickle(pklFile,meta)
         assert True
@@ -56,6 +58,7 @@ def test_parameter():
     """Request for dataset returns correct parameter metadata"""
     meta = hapi(server,'dataset1')
     pklFile = 'test_parameter.pkl'
+    pklFile = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data',pklFile)
     if not os.path.isfile(pklFile):
         writepickle(pklFile,meta)
         assert True
@@ -78,13 +81,6 @@ def test_bad_parameter():
     """Correct error when given nonexistent parameter name"""
     with pytest.raises(Exception):
         hapi(server,'dataset1','scalarx')
-
-def test_deprecation():
-    import warnings
-    warnings.warn(
-        "This is deprecated, but shouldn't raise an exception, unless "
-        "enable_deprecations_as_exceptions() called from conftest.py",
-        DeprecationWarning)
 
 def test_reader_short():
         
