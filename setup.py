@@ -4,9 +4,12 @@ import sys
 
 install_requires = ["numpy>=1.14.3",
                     "pandas>=0.23.*,<=0.24.*",
-                    'matplotlib>=2.2.2;python_version>"3.5"',
-                    'matplotlib<3.0;python_version<"3.5"',
                     "isodate>=0.6.0"]
+
+if sys.version_info > (3, 5):
+    install_requires.append('matplotlib>=2.2.2')
+else:
+    install_requires.append('matplotlib==2.*')
 
 if sys.argv[1] == 'develop':
     install_requires.append("deepdiff<3.3.0")
@@ -15,7 +18,7 @@ if sys.argv[1] == 'develop':
 # version is modified by misc/setversion.py. See Makefile.
 setup(
     name='hapiclient',
-    version='0.0.9b0',
+    version='0.0.9b1',
     author='Bob Weigel',
     author_email='rweigel@gmu.edu',
     packages=find_packages(),
@@ -25,34 +28,3 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=install_requires
 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
