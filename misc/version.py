@@ -24,7 +24,7 @@ for lineo in fin:
 fin.close()
 assert updated is False, "Problem updating version in Makefile."
 with open("Makefile.tmp", "w") as fout:
-    fout.write(lines + "\n")
+    fout.write(lines)
 fout.close()    
 print("Wrote Makefile.tmp")
 
@@ -37,7 +37,7 @@ for lineo in fin:
 fin.close()
 assert updated is False, "Problem updating version in setup.py."
 with open("setup.py.tmp", "w") as fout:
-    fout.write(lines + "\n")
+    fout.write(lines)
 fout.close()    
 print("Wrote setup.py.tmp")
 
@@ -54,6 +54,6 @@ for fname in ("hapiclient/hapi.py","hapiclient/hapiplot.py"):
 	fin.close()
 	assert updated1 is False or updated2 is False, "Problem updating version in " + fname + "."
 	with open(fname + ".tmp", "w") as fout:
-	    fout.write(lines + "\n")
+	    fout.write(lines)
 	fout.close()    
 	print("Wrote " + fname + ".tmp")

@@ -18,7 +18,7 @@ if sys.argv[1] == 'develop':
 # version is modified by misc/setversion.py. See Makefile.
 setup(
     name='hapiclient',
-    version='0.0.9b1',
+    version='0.1.0',
     author='Bob Weigel',
     author_email='rweigel@gmu.edu',
     packages=find_packages(),
@@ -28,5 +28,6 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=install_requires
 )
+
 
 

@@ -34,7 +34,7 @@ URL=https://upload.pypi.org/
 REP=pypi
 
 # VERSION below is updated in "make version-update" step.
-VERSION=0.0.9b1
+VERSION=0.1.0
 SHELL:= /bin/bash
 
 target:
@@ -198,6 +198,7 @@ clean:
 	- rm -f MANIFEST
 	- rm -rf .pytest_cache/
 	- rm -rf hapiclient.egg-info/
+
 
 
 
