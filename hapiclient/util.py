@@ -115,13 +115,6 @@ def warning_test():
     warn('Normal warning 3')
     warn('Normal warning 4')
 
-
-# Deal with this issue: https://github.com/matplotlib/matplotlib/issues/13118
-import warnings
-import matplotlib.cbook
-warnings.filterwarnings(action="ignore", message=r'\n.*rcparam was deprecated', category=matplotlib.cbook.MatplotlibDeprecationWarning)
-
-
 def warning(*args):
     """Display a short warning message.
 
