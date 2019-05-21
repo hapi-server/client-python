@@ -21,4 +21,10 @@ v0.0.8:
 		2018-02-14 -- Same as v0.0.7 but packaging fix
 v0.0.9b0:
 		2018-03-06 -- Updates to plot API
+v0.0.9b1:
+		2018-03-06 -- load(res) -> load(res.json()) in util.jsonparse().
+		2018-03-06 -- Add tests for more Python versions.
+		2008-05-15 -- SSL issue for urlopen.
+		2008-05-17 -- Fixes for heatmap and Matplotlib 3.1.
+v0.1.0  2018-05-21 -- Tagged and pip-installable version
 

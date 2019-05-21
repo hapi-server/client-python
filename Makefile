@@ -27,24 +27,32 @@
 #    version information in the repository to indicate it is now in a pre-release
 #    state.
 
+PYTHONVERS=python2.7 python3.5 python3.6 python3.7
 PYTHON=python3.6
 
 URL=https://upload.pypi.org/
 REP=pypi
 
 # VERSION below is updated in "make version-update" step.
-VERSION=0.0.9b0
+VERSION=0.0.9b1
 SHELL:= /bin/bash
 
+target:
+
 test:
-	make repository-test
+	make repository-test-data-all
+	make repository-test-plots-all
 
 # Test contents in repository using different python versions
-repository-test:
-	make repository-test-data PYTHON=python2.7
-	make repository-test-data PYTHON=python3.5
-	make repository-test-data PYTHON=python3.6
-	make repository-test-data PYTHON=python3.7
+repository-test-data-all:
+	@ for version in $(PYTHONVERS) ; do \
+		make repository-test-data PYTHON=$$version ; \
+	done
+
+repository-test-plots-all:
+	@ for version in $(PYTHONVERS) ; do \
+		make repository-test-plots PYTHON=$$version ; \
+	done
 
 # 'python setup.py develop' creates symlinks in system package directory.
 repository-test-data:
@@ -59,8 +67,11 @@ repository-test-plots:
 	make clean
 	source activate $(PYTHON); $(PYTHON) setup.py develop
 	source activate $(PYTHON); $(PYTHON) hapi_demo.py
+
+repository-test-plots-other:
 	source activate $(PYTHON); $(PYTHON) hapiclient/hapiplot_test.py
 	source activate $(PYTHON); $(PYTHON) hapiclient/plot/timeseries_test.py
+	source activate $(PYTHON); $(PYTHON) hapiclient/plot/heatmap_test.py
 	source activate $(PYTHON); $(PYTHON) hapiclient/gallery/gallery_test.py
 	source activate $(PYTHON); $(PYTHON) hapiclient/autoplot/autoplot_test.py
 	jupyter-notebook ../client-python-notebooks/hapi_demo.ipynb
@@ -76,10 +87,14 @@ release-upload:
 		-r $(REP) dist/hapiclient-$(VERSION).tar.gz \
 		&& echo Uploaded to $(subst upload.,,$(URL))/project/hapiclient/
 
-# TODO: Need to test using supported versions of Python.
+release-test-all:
+	@ for version in $(PYTHONVERS) ; do \
+		make repository-test PYTHON=$$version ; \
+	done
+
 release-test:
 	rm -rf env
-	python3 -m virtualenv env
+	source activate $(PYTHON); pip install virtualenv; $(PYTHON) -m virtualenv env
 	cp hapi_demo.py /tmp
 	source env/bin/activate && \
 		pip install pytest && \
@@ -88,24 +103,21 @@ release-test:
 			--index-url $(URL)/simple  \
 			--extra-index-url https://pypi.org/simple && \
 		env/bin/pytest -v hapiclient/test/test_hapi.py && \
-		env/bin/python3 /tmp/hapi_demo.py
+		env/bin/python /tmp/hapi_demo.py
 
 package:
 	make clean
 	make version-update
-	#make repository-test
 	python setup.py sdist
-	#make package-test
 
-# Test package in a virtual environment
-# Enter "deactivate" to exit virtual environment
-# On OS-X (at least), I need to close windows for next plot to be shown 
-# (virtual environment has different window manager than system)
-# Note: pytest uses script in local directory. Need to figure out how to
-# use version in installed package.
+package-test-all:
+	@ for version in $(PYTHONVERS) ; do \
+		make repository-test-plots PYTHON=$$version ; \
+	done
+
 package-test:
 	rm -rf env
-	python3 -m virtualenv env
+	source activate $(PYTHON); pip install virtualenv; $(PYTHON) -m virtualenv env
 	cp hapi_demo.py /tmp
 	source env/bin/activate && \
 		pip install pytest && \
@@ -115,7 +127,7 @@ package-test:
 			--extra-index-url https://pypi.org/simple && \
 		env/bin/pytest -v hapiclient/test/test_hapi.py && \
 		env/bin/pytest -v hapiclient/test/test_hapitime2datetime.py && \
-		env/bin/python3 /tmp/hapi_demo.py
+		env/bin/python /tmp/hapi_demo.py
 
 # Update version based on content of CHANGES.txt
 version-update:
@@ -186,3 +198,13 @@ clean:
 	- rm -f MANIFEST
 	- rm -rf .pytest_cache/
 	- rm -rf hapiclient.egg-info/
+
+
+
+
+
+
+
+
+
+
