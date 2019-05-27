@@ -1,3 +1,13 @@
+# Default Python version to use for tests
+PYTHON=python3.6
+
+# Python versions to test
+PYTHONVERS=python2.7 python3.5 python3.6 python3.7
+
+# VERSION is updated in "make version-update" step. Do not edit.
+VERSION=0.1.0
+SHELL:= /bin/bash
+
 # First-time use, need to create the following virtual environments for testing:
 # conda create -n python2.7 python=2.7; conda install jupyter; conda install spyder
 # conda create -n python3.5 python=3.5; conda install jupyter; conda install spyder
@@ -6,19 +16,22 @@
 #
 # Development:
 # Test hapi() data read functions using repository code:
-#   make repository-test-data
+#   make repository-test-data     # Test using $(PYTHON)
+#   make repository-test-data-all # Test on all versions in $(PYTHONVERS)
 #
 # Test hapiplot() functions using repository code:
-#   make repository-test-plots
+#   make repository-test-plots     # Test using $(PYTHON)
+#   make repository-test-plots-all # Test on all versions in $(PYTHONVERS)
 #
 # Making a local package:
 # 1. Update CHANGES.txt to have a new version line
 # 2. make package
+# 3. make package-test-all
 #
 # Upload package to pypi.org test starting with uploaded package:
 # 1. make release
 # 2. Wait ~5 minutes and execute
-# 3. make release-test
+# 3. make release-test-all
 #    (Will fail until new version is available at pypi.org for pip install.
 #     Sometimes takes ~5 minutes even though web page is immediately
 #     updated.)
@@ -27,22 +40,14 @@
 #    version information in the repository to indicate it is now in a pre-release
 #    state.
 
-PYTHONVERS=python2.7 python3.5 python3.6 python3.7
-PYTHON=python3.6
-
 URL=https://upload.pypi.org/
 REP=pypi
-
-# VERSION below is updated in "make version-update" step.
-VERSION=0.1.0
-SHELL:= /bin/bash
-
-target:
 
 test:
 	make repository-test-data-all
 	make repository-test-plots-all
 
+##########################################################################
 # Test contents in repository using different python versions
 repository-test-data-all:
 	@ for version in $(PYTHONVERS) ; do \
@@ -75,36 +80,9 @@ repository-test-plots-other:
 	source activate $(PYTHON); $(PYTHON) hapiclient/gallery/gallery_test.py
 	source activate $(PYTHON); $(PYTHON) hapiclient/autoplot/autoplot_test.py
 	jupyter-notebook ../client-python-notebooks/hapi_demo.ipynb
+##########################################################################
 
-release:
-	make package
-	make version-tag
-	make release-upload
-
-release-upload:
-	echo "rweigel, t1p"
-	twine upload \
-		-r $(REP) dist/hapiclient-$(VERSION).tar.gz \
-		&& echo Uploaded to $(subst upload.,,$(URL))/project/hapiclient/
-
-release-test-all:
-	@ for version in $(PYTHONVERS) ; do \
-		make repository-test PYTHON=$$version ; \
-	done
-
-release-test:
-	rm -rf env
-	source activate $(PYTHON); pip install virtualenv; $(PYTHON) -m virtualenv env
-	cp hapi_demo.py /tmp
-	source env/bin/activate && \
-		pip install pytest && \
-		pip install deepdiff && \
-		pip install 'hapiclient==$(VERSION)' \
-			--index-url $(URL)/simple  \
-			--extra-index-url https://pypi.org/simple && \
-		env/bin/pytest -v hapiclient/test/test_hapi.py && \
-		env/bin/python /tmp/hapi_demo.py
-
+##########################################################################
 package:
 	make clean
 	make version-update
@@ -128,6 +106,38 @@ package-test:
 		env/bin/pytest -v hapiclient/test/test_hapi.py && \
 		env/bin/pytest -v hapiclient/test/test_hapitime2datetime.py && \
 		env/bin/python /tmp/hapi_demo.py
+##########################################################################
+
+##########################################################################
+release:
+	make package
+	make version-tag
+	make release-upload
+
+release-upload:
+	echo "rweigel, t1p"
+	twine upload \
+		-r $(REP) dist/hapiclient-$(VERSION).tar.gz \
+		&& echo Uploaded to $(subst upload.,,$(URL))/project/hapiclient/
+
+release-test-all:
+	@ for version in $(PYTHONVERS) ; do \
+		make release-test PYTHON=$$version ; \
+	done
+
+release-test:
+	rm -rf env
+	source activate $(PYTHON); pip install virtualenv; $(PYTHON) -m virtualenv env
+	cp hapi_demo.py /tmp
+	source env/bin/activate && \
+		pip install pytest && \
+		pip install deepdiff && \
+		pip install 'hapiclient==$(VERSION)' \
+			--index-url $(URL)/simple  \
+			--extra-index-url https://pypi.org/simple && \
+		env/bin/pytest -v hapiclient/test/test_hapi.py && \
+		env/bin/python /tmp/hapi_demo.py
+##########################################################################
 
 # Update version based on content of CHANGES.txt
 version-update:
@@ -152,6 +162,7 @@ install:
 	conda list | grep hapiclient
 	pip list | grep hapiclient
 
+
 # Run pytest twice because first run creates test files that
 # subsequent tests use for comparison.
 test-clean:
@@ -159,6 +170,22 @@ test-clean:
 	pytest -v hapiclient/test/test_hapi.py
 	pytest -v hapiclient/test/test_hapi.py
 
+clean:
+	- python setup.py --uninstall
+	- find . -name __pycache__ | xargs rm -rf {}
+	- find . -name *.pyc | xargs rm -rf {}
+	- find . -name *.DS_Store | xargs rm -rf {}
+	- find . -type d -name __pycache__ | xargs rm -rf {}
+	- find . -name *.pyc | xargs rm -rf {}
+	- rm -f *~
+	- rm -f \#*\#
+	- rm -rf env
+	- rm -rf dist
+	- rm -f MANIFEST
+	- rm -rf .pytest_cache/
+	- rm -rf hapiclient.egg-info/
+
+##########################################################################
 # Not used
 requirements:
 	pip install pipreqs
@@ -183,29 +210,3 @@ bin/pngquant:
 	brew install libpng
 	cd pngquant; ./configure && make
 endif
-
-clean:
-	- python setup.py --uninstall
-	- find . -name __pycache__ | xargs rm -rf {}
-	- find . -name *.pyc | xargs rm -rf {}
-	- find . -name *.DS_Store | xargs rm -rf {}
-	- find . -type d -name __pycache__ | xargs rm -rf {}
-	- find . -name *.pyc | xargs rm -rf {}
-	- rm -f *~
-	- rm -f \#*\#
-	- rm -rf env
-	- rm -rf dist
-	- rm -f MANIFEST
-	- rm -rf .pytest_cache/
-	- rm -rf hapiclient.egg-info/
-
-
-
-
-
-
-
-
-
-
-
