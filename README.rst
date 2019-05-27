@@ -8,15 +8,37 @@ Operating system command line:
 
 .. code:: bash
 
-    pip install hapiclient
+    pip install hapiclient --upgrade
 
 or
 
 .. code:: bash
 
-    pip install https://github.com/hapi-server/client-python
+    pip install https://github.com/hapi-server/client-python --upgrade
 
 See the `Appendix <#Appendix>`__ for a fail-safe installation method.
+
+Basic Example
+-------------
+
+.. code:: python
+
+    # Get and plot Dst index from CDAWeb HAPI server
+    from hapiclient import hapi
+    from hapiclient import hapiplot
+
+    server     = 'https://cdaweb.gsfc.nasa.gov/hapi'
+    dataset    = 'OMNI2_H0_MRG1HR'
+    start      = '2003-09-01T00:00:00'
+    stop       = '2003-12-01T00:00:00'
+    parameters = 'DST1800'
+    opts       = {'logging': True}
+
+    # Get data
+    data, meta = hapi(server, dataset, parameters, start, stop, **opts)
+
+    # Plot all parameters
+    hapiplot(data, meta)
 
 Documentation
 -------------

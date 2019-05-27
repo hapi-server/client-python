@@ -1,6 +1,6 @@
-# To execute, first run
-#   pip install hapiclient
-# from command line to install hapiclient package.
+# Basic demo of hapiclient. Install package using
+#   pip install hapiclient --upgrade
+# from command line.
 
 # Note:
 # In IPython, enter %matplotlib qt on command line to open plots in 

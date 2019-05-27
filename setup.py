@@ -1,4 +1,3 @@
-#from distutils.core import setup
 from setuptools import setup, find_packages
 import sys
 
@@ -15,7 +14,7 @@ if sys.argv[1] == 'develop':
     install_requires.append("deepdiff<3.3.0")
     install_requires.append("pytest")
 
-# version is modified by misc/setversion.py. See Makefile.
+# version is modified by misc/version.py (executed from Makefile). Do not edit.
 setup(
     name='hapiclient',
     version='0.1.0',

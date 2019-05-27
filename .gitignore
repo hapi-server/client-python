@@ -1,4 +1,3 @@
-misc/.pipirc
 hapi-data/
 *.pyc
 tmp/
@@ -8,8 +7,7 @@ misc/tmp/
 hapiclient.egg-info/
 dist/
 MANIFEST
-README.txt
 .pytest_cache/
 .ipynb_checkpoints/
 .vscode/
-.idea
+.idea/

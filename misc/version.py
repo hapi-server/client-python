@@ -3,6 +3,7 @@ Reads CHANGES.txt and finds last version. Updates version strings in Makefile,
 setup.py, hapi.py, and hapiclient.py to match this version.
 
 TODO: Find better way to manage this.
+TODO: Update copyright year in LICENSE.txt
 """
 
 import re
