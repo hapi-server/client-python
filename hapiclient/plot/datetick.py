@@ -356,7 +356,7 @@ def datetick(dir, **kwargs):
         fmt2  = ''
     else:
         Mtick = mpld.YearLocator(50)
-        mtick = mpld.YearLocator(byyear=10)
+        mtick = mpld.YearLocator(10)
         fmt   = mpld.DateFormatter('%Y')
         fmt2  = ''
 
