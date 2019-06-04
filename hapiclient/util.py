@@ -34,14 +34,14 @@ def log(msg, opts):
         pre = sys._getframe(1).f_code.co_name + '(): '
         print(pre + msg)
 
-def jsonparse(res):
+def jsonparse(res, url):
     """Try/catch of json.loads() function with short error message."""
 
     from json import loads
     try:
         return loads(res.read().decode('utf-8'))
     except:
-        error('Could not parse JSON from %s' % res.geturl())
+        error('Could not parse JSON from %s' % url)
 
 def printf(format, *args):
     """Emulation of more common printf() print function."""
@@ -369,21 +369,27 @@ def head(url):
         import urllib.request, urllib.error
         try:
             headers = urllib.request.urlopen(url).info()
+            return headers
         except urllib.error.URLError as e:
             urlerror(e, url)
         except ValueError:
             error("'" + url + "' is not a valid URL")
+        except Exception as e:
+            print(e)
+                
     else:
         import urllib
         import urllib2
         try:
             headers = urllib2.urlopen(url).info()
+            return headers
         except urllib2.URLError as e:
             urlerror(e, url)
         except ValueError:
             error("'" + url + "' is not a valid URL")
+        except Exception as e:
+            print(e)
 
-    return headers
 
 def urlquote(url):
     '''Python 2/3 urlquote compatability function.
@@ -420,6 +426,7 @@ def urlopen(url):
         import urllib.request, urllib.error
         try:
             res = urllib.request.urlopen(url)
+            return res
         except urllib.error.URLError as e:
             urlerror(e, url)
         except ValueError:
@@ -433,19 +440,19 @@ def urlopen(url):
         import ssl
 
         # PEP 0476 fixed bug in urllib2 which causes error to be thrown
-        # when request is for HTTPS resource. This reverts to previous behavior.
+        # when request is for HTTPS resource, but this fix breaks previously
+        # working code [https: //www.python.org/dev/peps/pep-0476/].
+        # This reverts to previous behavior.
         # TODO: Switch to using requests package which handles this and
-        # supports Python 2/3 without needing a version test as used here.s
-        # https: //www.python.org/dev/peps/pep-0476/
+        # supports Python 2/3 without needing a version test as used here.
         context = ssl._create_unverified_context()
         try:
             res = urllib2.urlopen(url, context=context)
+            return res
         except urllib2.URLError as e:
             urlerror(e, url)
         except ValueError:
             error("'" + url + "' is not a valid URL")
-
-    return res
 
 def urlretrieve(url, fname):
     """Python 2/3 urlretrieve compatability function.

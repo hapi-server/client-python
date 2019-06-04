@@ -228,7 +228,7 @@ def hapi(*args, **kwargs):
         url = SERVER + '/catalog'
         log('Reading %s' % url, opts)
         res = urlopen(url)
-        meta = jsonparse(res)
+        meta = jsonparse(res, url)
         return meta
 
     if nin == 2:  # hapi(SERVER, DATASET)
@@ -236,7 +236,7 @@ def hapi(*args, **kwargs):
         url = SERVER + '/info?id=' + DATASET
         log('Reading %s' % url, opts)
         res = urlopen(url)
-        meta = jsonparse(res)
+        meta = jsonparse(res, url)
         return meta
     
     if nin == 4:
@@ -308,7 +308,7 @@ def hapi(*args, **kwargs):
             # No cached metadata loaded so request it from server.
             log('Reading %s' % urljson.replace(urld + '/', ''), opts)
             res = urlopen(urljson)
-            meta = jsonparse(res)
+            meta = jsonparse(res, urljson)
 
         # Add information to metdata so we can figure out request needed
         # to generated it. Will also be used for labeling plots by hapiplot().
@@ -364,7 +364,7 @@ def hapi(*args, **kwargs):
         if opts['format'] != 'csv':
             log('Reading %s' % (SERVER + '/capabilities'), opts)
             res = urlopen(SERVER + '/capabilities')
-            caps = jsonparse(res)
+            caps = jsonparse(res, SERVER + '/capabilities')
             sformats = caps["outputFormats"]  # Server formats
             if 'format' in kwargs and not kwargs['format'] in sformats:
                 warning("hapi", 'Requested transport format "%s" not avaiable '
