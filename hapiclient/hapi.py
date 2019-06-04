@@ -16,7 +16,7 @@ from hapiclient.util import urlopen, urlretrieve, jsonparse
 def subset(meta, params):
     """Extract subset of parameters from meta object returned by hapi()
     
-    metar = subset(meta, parameters) modifies meta.parameters array so
+    metar = subset(meta, parameters) modifies meta["parameters"] array so
     it only contains elements for the time variable and the parameters in
     the comma-separated list `parameters`.
     """
@@ -30,7 +30,7 @@ def subset(meta, params):
         pm.append(meta['parameters'][i]['name'])
     for i in range(0, len(p)):
         if p[i] not in pm:
-            raise Exception('Parameter %s is not in dataset' % p[i])
+            raise Exception('Parameter %s is not in meta' % p[i])
     
     pa = [meta['parameters'][0]]  # First parameter is always the time parameter
     for i in range(1, len(pm)):
@@ -51,10 +51,9 @@ def server2dirname(server):
 def cachedir(*args):
     """HAPI cache directory.
     
-    cachedir() returns the default directory hapi-data subdirectory of
-    system tempdir.
+    cachedir() returns tempfile.gettempdir() + os.path.sep + 'hapi-data'
 
-    cachdir(basedir, server)
+    cachdir(basedir, server) returns basedir + os.path.sep + server2dirname(server)
     """
     import tempfile
     
@@ -62,6 +61,7 @@ def cachedir(*args):
         # cachedir(base_dir, server)
         return args[0] + os.path.sep + server2dirname(args[1])
     else:
+        # cachedir()
         return tempfile.gettempdir() + os.path.sep + 'hapi-data'
 
 
@@ -100,13 +100,15 @@ def hapiopts():
                 'method': 'pandas'
             }
 
-    # format = 'binary' is used by default and CSV used if binary is not available from server.
-    # This should option should be excluded from the help string.
+    """
+    format = 'binary' is used by default and CSV used if binary is not available from server.
+    This should option should be excluded from the help string.
  
-    # method = 'pandas' is used by default. Other methods 
-    # (numpy, pandasnolength, numpynolength)can be used for testing
-    # CSV read methods. See test_hapi.py for comparsion.
-    # This should option should be excluded from the help string.
+    method = 'pandas' is used by default. Other methods 
+    (numpy, pandasnolength, numpynolength) can be used for testing
+    CSV read methods. See test/test_hapi.py for comparison.
+    This should option should be excluded from the help string.
+    """
     
     return opts
 
@@ -122,18 +124,18 @@ def hapi(*args, **kwargs):
     Parameters
     ----------
     server : str
-        A string with the url to the HAPI compliant server. A HAPI URL
-        always ends with "/hapi".
+        A string with the URL to a HAPI compliant server. (A HAPI URL
+        always ends with "/hapi").
     dataset : str
         A string specifying a dataset from a server
     parameters: str
-        Comma-separated list of parameters in dataset
-    start_time: str
+        A Comma-separated list of parameters in dataset
+    start: str
         The start time of the requested data
-    end_time: str
+    stop: str
         The end time of the requested data; end times are exclusive - the
-        last data record returned by a HAPI server should be before the
-        given end_time.
+        last data record returned by a HAPI server should have a timestamp
+        before end_time.
     options : dict
         The following options are available.
             logging (False) - Log to console
@@ -162,7 +164,7 @@ def hapi(*args, **kwargs):
         associated each parameter in the comma-separated string Parameters. The
         dictionary structure follows the HAPI JSON structure.
 
-        Data = hapi(Server, Dataset, Parameters, Start, Stop) returns a 
+        Data = hapi(Server, Dataset, Parameters, Start, Stop) returns a
         dictionary with elements corresponding to Parameters, e.g., if
         Parameters = 'scalar,vector' and the number of records in the time
         range Start <= t < Stop returned is N, then
@@ -187,7 +189,7 @@ def hapi(*args, **kwargs):
        See <https://github.com/hapi-server/client-python-notebooks>
     """
 
-    __version__ = '0.1.0'  # This is modified by misc/setversion.py. See Makefile.
+    __version__ = '0.1.0'  # Do not edit. This is updated by misc/setversion.py. See Makefile.
 
     nin = len(args)
 
@@ -247,7 +249,7 @@ def hapi(*args, **kwargs):
         # urld = url subdirectory of cachedir to store files from SERVER
         urld = cachedir(opts["cachedir"], SERVER)
 
-        if opts["cachedir"]: log('hapi(): file directory = %s' % urld, opts)
+        if opts["cachedir"]: log('file directory = %s' % urld, opts)
 
         urljson = SERVER + '/info?id=' + DATASET
 
@@ -301,7 +303,7 @@ def hapi(*args, **kwargs):
                 meta = pickle.load(f)
                 metaFromCache = True
                 f.close()
-        
+
         if not metaFromCache:
             # No cached metadata loaded so request it from server.
             log('Reading %s' % urljson.replace(urld + '/', ''), opts)
@@ -364,14 +366,16 @@ def hapi(*args, **kwargs):
             res = urlopen(SERVER + '/capabilities')
             caps = jsonparse(res)
             sformats = caps["outputFormats"]  # Server formats
-            if not opts['format'] in sformats:
+            if 'format' in kwargs and not kwargs['format'] in sformats:
                 warning("hapi", 'Requested transport format "%s" not avaiable '
                                 'from %s. Will use "csv". Available options: %s'
-                              % (opts['format'], SERVER, ', '.join(sformats)))
+                              % (opts['format'], SERVER, ', '.join(sformats)))        
                 opts['format'] = 'csv'
+            if not 'binary' in sformats:
+                opts['format'] = 'csv'                
 
         ##################################################################
-        # Compute data type varialbe dt used to read HAPI response into
+        # Compute data type variable dt used to read HAPI response into
         # a data structure.
         pnames, psizes, dt = [], [], []
         # Each element of cols is an array with start/end column number of
@@ -411,7 +415,7 @@ def hapi(*args, **kwargs):
             # Running sum of columns.
             ss = cols[i][1] + 1
 
-            # HAPI numerical formats are 64-bit LE floating point and  32-bit LE
+            # HAPI numerical formats are 64-bit LE floating point and 32-bit LE
             # signed integers.
             if ptype == 'double':
                 dtype = (pnames[i], '<d', psizes[i])
@@ -420,13 +424,13 @@ def hapi(*args, **kwargs):
 
             if opts['format'] == 'binary':
                 # TODO: If 'length' not available, warn and fall back to CSV.
-                # Technically, server response is invalid b/c length attribute
+                # Technically, server response is invalid in this case b/c length attribute
                 # required for all parameters if format=binary.
                 if ptype == 'string' or ptype == 'isotime':
                     dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
             else:
-                # length attribute may not be given (but must be given for
-                # first parameter technically)
+                # When format=csv, length attribute may not be given (but must be given for
+                # first parameter according to the HAPI spec).
                 if ptype == 'string' or ptype == 'isotime':
                     if 'length' in meta["parameters"][i]:
                         # length is specified for parameter in metadata. Use it.
@@ -439,7 +443,7 @@ def hapi(*args, **kwargs):
                         if ptype == 'string' or ptype == 'isotime':
                             dtype = (pnames[i], object, psizes[i])
 
-            # For testing reader. Force use of slow reader.
+            # For testing reader. Force use of slow read method.
             if opts['format'] == 'csv':
                 if opts['method'] == 'numpynolength' or opts['method'] == 'pandasnolength':
                     missing_length = True
@@ -667,7 +671,8 @@ def hapitime2datetime(Time, **kwargs):
     """Convert HAPI timestamps to Python datetimes.
 
     A HAPI-compliant server represents time as an ISO 8601 string
-    (with several constraints - see the HAPI specification).
+    (with several constraints - see the `HAPI specification
+    <https://github.com/hapi-server/data-specification/blob/master/hapi-dev/HAPI-data-access-spec-dev.md#representation-of-time>`)
     hapi() reads these into a NumPy array of Python byte literals.
 
     This function converts the byte literals to Python datetime objects.
@@ -827,6 +832,3 @@ def hapitime2datetime(Time, **kwargs):
         pythonDateTime = np.reshape(pythonDateTime, shape)
 
     return pythonDateTime
-
-
-
