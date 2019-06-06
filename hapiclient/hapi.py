@@ -119,7 +119,7 @@ def hapi(*args, **kwargs):
     For additional documentation and demonstration, see
     <https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb>
 
-    Version: 0.1.0
+    Version: 0.1.1b
 
     Parameters
     ----------
@@ -188,8 +188,6 @@ def hapi(*args, **kwargs):
     ----------
        See <https://github.com/hapi-server/client-python-notebooks>
     """
-
-    __version__ = '0.1.0'  # Do not edit. This is updated by misc/setversion.py. See Makefile.
 
     nin = len(args)
 

@@ -5,7 +5,7 @@ PYTHON=python3.6
 PYTHONVERS=python2.7 python3.5 python3.6 python3.7
 
 # VERSION is updated in "make version-update" step. Do not edit.
-VERSION=0.1.0
+VERSION=0.1.1b
 SHELL:= /bin/bash
 
 # First-time use, need to create the following virtual environments for testing:
@@ -142,10 +142,6 @@ release-test:
 # Update version based on content of CHANGES.txt
 version-update:
 	python misc/version.py
-	mv setup.py.tmp setup.py
-	mv hapiclient/hapi.py.tmp hapiclient/hapi.py
-	mv hapiclient/hapiplot.py.tmp hapiclient/hapiplot.py
-	mv Makefile.tmp Makefile
 
 version-tag:
 	git commit -a -m "Last $(VERSION) commit"

@@ -19,3 +19,4 @@ from hapiclient.autoplot.autoplot import autoplot
 # Allow "from hapiclient import gallery"
 from hapiclient.gallery.gallery import gallery
 
+__version__ = '0.1.1b'
