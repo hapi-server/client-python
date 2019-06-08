@@ -148,8 +148,6 @@ def hapiplot(*args, **kwargs):
     Version: 0.1.0
     """
 
-    __version__ = '0.1.0' # This is modified by misc/setversion.py. See Makefile.
-
     if len(args) == 5:
         # For consistency with gallery and autoplot functions, allow useage of
         # hapiplot(server, dataset, parameters, start, stop, **kwargs)
@@ -217,6 +215,9 @@ def hapiplot(*args, **kwargs):
     # Override defaults
     opts = setopts(opts, kwargs)
 
+    from hapiclient import __version__
+    log('Running hapi.py version %s' % __version__, opts)
+
     # _rcParams are not actually rcParams:
     #'figure.bbox': 'standard', # Set to 'tight' to have fig.tight_layout() called before figure shown.
 
@@ -264,11 +265,11 @@ def hapiplot(*args, **kwargs):
 
         # If parameter has a size with two elements, e.g., [N1, N2]
         # create N2 plots.
-        if len(data[name].shape) == 3: # (Time, N1, N2)
-            for j in range(0, data[name].shape[1]):
+        if len(data[name].shape) == 3:  # (Time, N1, N2)
+            for j in range(data[name].shape[1]):
                 timename = meta['parameters'][0]['name']
                 name_new = name + "[:," + str(j) + "]" # Give name to indicate what is plotted
-                # Reduced data NDArray
+                # Reduced data ND Array
                 datar = np.ndarray(shape=(data[name].shape[0]),
                                    dtype=[
                                            (timename, data.dtype[timename]),
@@ -276,9 +277,9 @@ def hapiplot(*args, **kwargs):
                                            ])
 
                 datar[timename] = data[timename]
-                datar[name_new] = data[name][:,j]
+                datar[name_new] = data[name][:, j]
                 # Copy metadata to create a reduced metadata object
-                metar = meta.copy() # Shallow copy
+                metar = meta.copy()  # Shallow copy
                 metar["parameters"] = []
                 # Create parameters array with elements of Time parameter ...
                 metar["parameters"].append(meta["parameters"][0])
@@ -292,7 +293,6 @@ def hapiplot(*args, **kwargs):
 
                 if 'bins' in metar["parameters"][1]:
                     metar["parameters"][1]['bins'] = []
-                    #print(j)
                     metar["parameters"][1]['bins'].append(meta["parameters"][i]['bins'][j])
                 metar = hapiplot(datar, metar, **opts)
                 meta["parameters"][i]['hapiplot'] = metar["parameters"][i]['hapiplot']
@@ -300,7 +300,11 @@ def hapiplot(*args, **kwargs):
 
         title = meta["x_server"] + "\n" + meta["x_dataset"] + " | " + name
 
-        if 'bins' in meta['parameters'][i]:
+        as_heatmap = False
+        if 'size' in meta['parameters'][i] and meta['parameters'][i]['size'][0] > 10:
+            as_heatmap = True
+            
+        if as_heatmap or 'bins' in meta['parameters'][i]:
             # Plot as heatmap
 
             if meta["parameters"][i]["type"] == "string":
@@ -314,7 +318,10 @@ def hapiplot(*args, **kwargs):
                     z = z.astype('<f8', copy=False)
                 z = fill2nan(z, meta["parameters"][i]['fill'])
 
-            ylabel = meta["parameters"][i]['bins'][0]["name"] + " [" + meta["parameters"][i]['bins'][0]["units"] + "]"
+            if 'bins' in meta['parameters'][i]:
+                ylabel = meta["parameters"][i]['bins'][0]["name"] + " [" + meta["parameters"][i]['bins'][0]["units"] + "]"
+            else:    
+                ylabel = "col %d" % i
 
             units = meta["parameters"][i]["units"]
             nl = ""
@@ -323,10 +330,13 @@ def hapiplot(*args, **kwargs):
 
             zlabel = name + nl + " [" + units + "]"
 
-            if 'ranges' in meta["parameters"][i]['bins'][0]:
-                bins = np.array(meta["parameters"][i]['bins'][0]["ranges"])
+            if 'bins' in meta['parameters'][i]:
+                if 'ranges' in meta["parameters"][i]['bins'][0]:
+                    bins = np.array(meta["parameters"][i]['bins'][0]["ranges"])
+                else:
+                    bins = np.array(meta["parameters"][i]['bins'][0]["centers"])
             else:
-                bins = np.array(meta["parameters"][i]['bins'][0]["centers"])
+                bins = np.arange(meta['parameters'][i]['size'][0])           
 
             dt = np.diff(Time)
             dtu = np.unique(dt)
@@ -361,20 +371,20 @@ def hapiplot(*args, **kwargs):
                     Time = np.append(Time, Time[-1] + dtu[0])
 
 
-            if opts['xlabel'] != '' or 'xlabel' in kwargs:
+            if opts['xlabel'] != '':
                 opts['hmopts']['xlabel'] = opts['xlabel']
 
             opts['hmopts']['ylabel'] = ylabel
-            if opts['ylabel'] != '' or 'ylabel' in kwargs:
+            if opts['ylabel'] != '':
                 opts['hmopts']['ylabel'] = opts['ylabel']
 
             opts['hmopts']['title'] = title
-            if opts['title'] != '' or 'title' in kwargs:
+            if opts['title'] != '':
                 opts['hmopts']['title'] = opts['title']
 
             opts['hmopts']['zlabel'] = zlabel
-            if opts['ztitle'] != '' or 'zlabel' in kwargs:
-                opts['hmopts']['xlabel'] = opts['zlabel']
+            if opts['ztitle'] != '':
+                opts['hmopts']['xlabel'] = opts['xlabel']
 
             if opts['logx'] is not False:
                 opts['hmopts']['logx'] = True
@@ -447,15 +457,15 @@ def hapiplot(*args, **kwargs):
                     opts['tsopts']['legendlabels'] = legendlabels
 
 
-            if opts['xlabel'] != '' or 'xlabel' in kwargs:
+            if opts['xlabel'] != '':
                 opts['tsopts']['xlabel'] = opts['xlabel']
 
             opts['tsopts']['ylabel'] = ylabel
-            if opts['ylabel'] != '' or 'ylabel' in kwargs:
+            if opts['ylabel'] != '':
                 opts['tsopts']['ylabel'] = opts['ylabel']
 
             opts['tsopts']['title'] = title
-            if opts['title'] != '' or 'title' in kwargs:
+            if opts['title'] != '':
                 opts['tsopts']['title'] = opts['title']
 
             if opts['logx'] is not False:
