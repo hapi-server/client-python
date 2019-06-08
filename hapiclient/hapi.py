@@ -208,6 +208,7 @@ def hapi(*args, **kwargs):
     # Override defaults
     opts = setopts(hapiopts(), kwargs)
     
+    from hapiclient import __version__
     log('Running hapi.py version %s' % __version__, opts)
 
     if nin == 0:  # hapi()
