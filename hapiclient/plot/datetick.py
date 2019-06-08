@@ -97,8 +97,26 @@ def datetick(dir, **kwargs):
         datamax = bbox.y1    
         lim = axes.get_ylim()
 
+    try:
+        mpld.num2date(lim[0])
+    except:
+        raise ValueError('Lower axis limit of %f is not a valid Matplotlib datenum' % lim[0])
+    try:
+        mpld.num2date(lim[1])
+    except:
+        raise ValueError('Upper axis limit of %f is not a valid Matplotlib datenum' % lim[1])
+    try:
+        mpld.num2date(datamin)
+    except:
+        raise ValueError('Minimum data value of %f is not a valid Matplotlib datenum' % datamin)
+    try:
+        mpld.num2date(datamax)
+    except:
+        raise ValueError('Maximum data value of %f is not a valid Matplotlib datenum' % datamax)
+
     tmin = np.max((lim[0], datamin))
     tmax = np.min((lim[1], datamax))
+            
     time = mpld.num2date((tmin,tmax))
 
     if debug == True:
