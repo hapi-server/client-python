@@ -42,7 +42,7 @@ def heatmap(x, y, z, **kwargs):
         Colorbar
         ------
         * zlabel
-        * cbtitle
+        * ztitle
         * clim - Ignore if ...
         * cmap
         * cmap.name (ignored if cmap given)
@@ -408,6 +408,7 @@ def heatmap(x, y, z, **kwargs):
             categorical = True
             zc = np.unique(z[Ig])
             nc = zc[-1]-zc[0] + 1
+            nc = np.min([10000, nc])
             if 'cmap.numcolors' in kwargs:
                 if opts['cmap.numcolors'] != nc:
                     warning('Over-riding requested number of colors. Using number of colors that equals number of unique values in z')
@@ -515,9 +516,12 @@ def heatmap(x, y, z, **kwargs):
         # tick label at center of color patch.
         # If zc > 10, won't be able to tell that ticks don't line
         # up with center of patch, so use default tick positions.
-        cb.set_ticks(np.arange(zc[0],zc[-1]+1,1))
+        # TODO: Creates too many ticks if zc[-1] - zc[0] large.
+        # See heatmap_test.py tn = 29.
+        cb.set_ticks(np.arange(zc[0], zc[-1] + 1, 1))
+        cb.set_ticks(zc)
         if not opts['cmap.clim']:
-            im.set_clim(zc[0]-0.5, zc[-1]+0.5)
+            im.set_clim(zc[0]-0.5, zc[-1] + 0.5)
         #cb.ax.set_yticklabels(['%d' % x for x in np.arange(zc[0],zc[-1],1)])
     if opts['cmap.clim']:
         im.set_clim(opts['cmap.clim'])
@@ -553,11 +557,44 @@ def heatmap(x, y, z, **kwargs):
     if isinstance(y[0], datetime.datetime):
         datetick('y', axes=ax)
 
+    # The following two conditions will be replaced by more general
+    # code that calculates ax and cb position and dimensions based on
+    # computed text box sizes. Note that plt.tight_subplot() and
+    # bbox_inches='tight' have many issues that indicate they probably will 
+    # require significant work-arounds to be developed:
+    # https://github.com/matplotlib/matplotlib/issues/12355/
+    # https://stackoverflow.com/questions/48128546/why-is-the-legend-not-present-in-the-generated-image-if-i-use-tight-for-bbox-i
+    # https://stackoverflow.com/questions/10101700/moving-matplotlib-legend-outside-of-the-axis-makes-it-cutoff-by-the-figure-box
+    ax_w = 0.8
+    if opts['zlabel'].count('\n') > 0:
+        ax_w = 0.75
+        
+    ax_h = 0.73
+    if opts['title'].count('\n') > 0:
+        ax_h = 0.73
+
     # Set positions of axes and colorbar
-    ax.set_position([0.1,0.14,0.8,0.73])
-    cb.ax.set_position([0.905,0.14,0.10,0.73])
+    ax_x = 0.1   # Offset from left
+    ax_y = 0.14  # Offset from bottom
+    ax_h = ax_h  # Height
+    cb_x = ax_x+ax_w+0.005 # Offset from left
+    cb_y = ax_y  # Offset from bottom
+    cb_w = 0.1   # Width
+    cb_h = ax_h  # Height
+    
+    ax.set_position([ax_x,ax_y,ax_w,ax_h])
+    cb.ax.set_position([cb_x,cb_y,cb_w,cb_h])
+
+    #fig.canvas.draw()
+    #cb.ax.yaxis.get_offset_text().set_visible(False)
+    #import pdb;pdb.set_trace()
+    #zlabels = cb.ax.get_yticklabels()
 
     # NaN, logz0, and gap legend
+    # fig.tight_subplot() and
+    # plt.savefig(..., bbox_inches='tight')
+    # issues discussed here
+    # https://stackoverflow.com/questions/48128546/why-is-the-legend-not-present-in-the-generated-image-if-i-use-tight-for-bbox-i    
     if len(legendh) > 0:
         fig.legend(frameon=False, borderaxespad=0.25, borderpad=0.15,
                    handles=legendh, loc='upper right',

@@ -7,7 +7,8 @@ from hapiclient.plot.heatmap import heatmap
 from datetime import datetime, timedelta
 import numpy as np
 
-tests = range(0,29)
+#tests = range(0,29)
+tests = range(29,30)
 
 for tn in tests:
 
@@ -18,12 +19,14 @@ for tn in tests:
         z = np.array([[1]])
         title = 'test #' + str(tn) + '  z=1x1 int; col center and row center'
         heatmap(x, y, z, title=title)
+
     if tn == 1:
         x = np.array([1]) # Columns
         y = np.array([0,10]) # Rows
         z = np.array([[1]])
         title = 'test #' + str(tn) + '  z=1x1 int; col center and row edges'
         heatmap(x, y, z, title=title)
+
     if tn == 2:
         x = np.array([0,10]) # Columns
         y = np.array([0,5]) # Rows
@@ -38,18 +41,21 @@ for tn in tests:
         z = np.array([[1],[2]])
         title = 'test #' + str(tn) + '  z=2x1 ints; col center and row centers'
         heatmap(x, y, z, title=title)
+
     if tn == 4:
         x = np.array([1,2]) # Columns
         y = np.array([1,2]) # Rows
         z = np.array([[1],[2]])
         title = 'test #' + str(tn) + '  z=2x1 ints; col edges and row centers'
         heatmap(x, y, z, title=title)
+
     if tn == 5:
         x = np.array([1]) # Columns
         y = np.array([1,2,3]) # Rows
         z = np.array([[1],[2]])
         title = 'test #' + str(tn) + '  z=2x1 ints; col center and row edges'
         heatmap(x, y, z, title=title)
+
     if tn == 6:
         x = np.array([1,4]) # Columns
         y = np.array([1,2,3]) # Rows
@@ -63,18 +69,21 @@ for tn in tests:
         z = np.array([[1,2]])
         title = 'test #' + str(tn) + '  z=1x2 ints; col centers and row center'
         heatmap(x, y, z, title=title)
+
     if tn == 8:
         x = np.array([1,2]) # Columns
         y = np.array([1,2]) # Rows
         z = np.array([[1,2]])
         title = 'test #' + str(tn) + '  z=1x2 ints; col centers and row edges'
         heatmap(x, y, z, title=title)
+
     if tn == 9:
         x = np.array([1,2,3]) # Columns
         y = np.array([1]) # Rows
         z = np.array([[1,2]])
         title = 'test #' + str(tn) + '  z=1x2 ints; col edges and row center'
         heatmap(x, y, z, title=title)
+
     if tn == 10:
         x = np.array([1,3,4]) # Columns
         y = np.array([1,2.5]) # Rows
@@ -90,18 +99,21 @@ for tn in tests:
         z = np.array([[1.0,2.0],[4.0,5.0]])
         title = 'test #' + str(tn) + '  z=2x2 ints; col centers and row centers'
         heatmap(x, y, z, title=title)
+
     if tn == 12:
         x = np.array([1,2,3]) # Columns
         y = np.array([1,2,3]) # Rows
         z = np.array([[1,2,3],[4,5,6],[7,8,9]])
         title = 'test #' + str(tn) + '  z=3x3 ints; col centers and row centers'
         heatmap(x, y, z, title=title)
+
     if tn == 13:
         x = np.array(np.arange(1,11,1)) # Columns
         y = np.array(np.arange(1,11,1)) # Rows
         z = np.reshape(np.arange(1,101,1),(10,10))
         title = 'test #' + str(tn) + '  z=10x10 ints; col centers and row centers'
         heatmap(x, y, z, title=title)
+
     if tn == 14:
         x = np.array(np.arange(1,11,1)) # Columns
         y = np.array(np.arange(1,11,1)) # Rows
@@ -126,6 +138,7 @@ for tn in tests:
         z = np.array([[1,2,3],[4,5,6],[7,8,9]])
         title = 'test #' + str(tn) + '  3x3; uniform col centers nonuniform row centers + warning'
         heatmap(x, y, z, title=title)
+
     if tn == 17:
         # Will generate warning b/c non-uniform centers
         x = np.array([1,2.5,3]) # Columns
@@ -133,6 +146,7 @@ for tn in tests:
         z = np.array([[1,2,3],[4,5,6],[7,8,9]])
         title = 'test #' + str(tn) + '  3x3; nonuniform col centers uniform row centers + warning'
         heatmap(x, y, z, title=title)
+
     if tn == 18:
         # Will generate warning b/c non-uniform centers
         x = np.array([1,2.5,3]) # Columns
@@ -148,18 +162,21 @@ for tn in tests:
         z = np.array([[1.0,2.0],[4.0,5.0]])
         title = 'test #' + str(tn) + '  2x2 col centers and row edges w/gap'
         heatmap(x, y, z, title=title)
+
     if tn == 20:
         x = np.array([[1,2],[3,4]]) # Columns
         y = np.array([[1,2],[2.5,3]]) # Rows
         title = 'test #' + str(tn) + '  2x2 col edges w/gap and row edges w/gap'
         z = np.array([[1.0,2.0],[4.0,5.0]])
         heatmap(x, y, z, title=title)
+
     if tn == 21:
         x = np.array([1,2,3]) # Columns
         y = np.array([[1,2.5],[3,4],[7,8]]) # Rows
         z = np.array([[1,2,3],[4,5,6],[7,8,9]])
         title = 'test #' + str(tn) + '  3x3 col centers and row edges w/gaps'
         heatmap(x, y, z, title=title)
+
     if tn == 22:
         x = np.array([[1,2.5],[3,4],[7,8]]) # Columns
         y = np.array([[1,2.5],[3,4],[7,8]]) # Rows
@@ -262,4 +279,34 @@ for tn in tests:
                 'gap.hatch': 'x',
                 'gap.hatch.color':'k'}
         heatmap(x, y, z, **opts)
+
+    if tn == 29:
+
+        from matplotlib import rc_context
+
+        rcParams = {
+                    'savefig.dpi': 144,
+                    'savefig.format': 'png',
+                    'savefig.bbox': 'standard',
+                    'savefig.transparent': True,
+                    'figure.max_open_warning': 50,
+                    'figure.figsize': (7, 3),
+                    'figure.dpi': 144,
+                    'axes.titlesize': 10}
+        
+        x = np.array(np.arange(1,11,1)) # Columns
+        y = np.array(np.arange(1,11,1)) # Rows
+        z = np.reshape(np.arange(1,101,1),(10,10))
+        title = 'test #' + str(tn) + '  z=10x10 ints; col centers and row centers'
+        with rc_context(rc=rcParams):
+            heatmap(x, y, z, title=title, zlabel="A")
+            heatmap(x, y, z, title=title, zlabel="A\nB")
+            heatmap(x, y, z, title=title, zlabel="A\nB\nC")
+
+    if tn == 30:
+        x = np.array([1,2,3,4]) # Columns
+        y = np.array([1,2,3,4]) # Rows
+        z = np.array([[0,1e9,0,10],[0,10,0,10],[0,10,0,10],[0,10,0,10]])
+        title = 'test #' + str(tn) + '  z=4x4 ints; col centers'
+        fig, cb = heatmap(x, y, z, title=title)
         
