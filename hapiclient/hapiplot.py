@@ -266,7 +266,13 @@ def hapiplot(*args, **kwargs):
         # If parameter has a size with two elements, e.g., [N1, N2]
         # create N2 plots.
         if len(data[name].shape) == 3:  # (Time, N1, N2)
-            for j in range(data[name].shape[1]):
+
+            nplts = data[name].shape[1]
+            if opts['returnimage']:
+                warning('Only returning first plot for parameter with size[1] > 1.')
+                nplts = 1
+            
+            for j in range(nplts):
                 timename = meta['parameters'][0]['name']
                 name_new = name + "[:," + str(j) + "]" # Give name to indicate what is plotted
                 # Reduced data ND Array
