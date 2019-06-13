@@ -2,6 +2,7 @@
 PYTHON=python3.6
 
 # Python versions to test
+# TODO: Use tox.
 PYTHONVERS=python2.7 python3.5 python3.6 python3.7
 
 # VERSION is updated in "make version-update" step. Do not edit.
