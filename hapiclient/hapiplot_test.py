@@ -1,5 +1,6 @@
+import numpy as np
 
-tests = [8]
+tests = [9]
 #tests = range(0,9)
 
 for tn in tests:
@@ -227,6 +228,9 @@ for tn in tests:
         hapiplot(data, meta, **popts)
 
     if tn == 8:
+        from hapiclient import hapi
+        from hapiclient import hapiplot
+
         # Spectra w/ only bin centers and different timeStampLocations
         server     = 'http://hapi-server.org/servers/TestData/hapi'
         dataset    = 'dataset1'
@@ -240,40 +244,36 @@ for tn in tests:
 
         data['spectra'][3,3] = -1e31 # Add a fill value
 
+        # Default
+        hapiplot(data, meta, **popts)
 
-        if False:
-            # Default
-            hapiplot(data, meta, **popts)
+        # Should be same as previous plot
+        meta['timeStampLocation'] = 'center'
+        hapiplot(data, meta, **popts)
 
-            # Should be same as previous plot
-            meta['timeStampLocation'] = 'center'
-            hapiplot(data, meta, **popts)
+        meta['timeStampLocation'] = 'begin'
+        hapiplot(data, meta, **popts)
 
-            print(data['Time'][3])
-            meta['timeStampLocation'] = 'begin'
-            hapiplot(data, meta, **popts)
+        meta['timeStampLocation'] = 'end'
+        hapiplot(data, meta, **popts)
 
-            meta['timeStampLocation'] = 'end'
-            hapiplot(data, meta, **popts)
+        # Remove 6th time value so cadence is not uniform
+        # Missing time value is at 00:00:06. Note that data at this time
+        # takes on the value of data at 00:00:05. If we knew the bin,
+        # width was uniform, values at 00:00:06 could be set as NaN.
+        # heatmap does not assume the bin width is uniform. Some software
+        # will assume bin width is uniform and equal to the difference
+        # between timestamps.
+        data = np.delete(data, 6, 0)
 
-        if False:
-            # Remove 6th time value so cadence is not uniform
-            # Missing time value is at 00:00:06. Note that data at this time
-            # takes on the value of data at 00:00:05. If we knew the bin,
-            # width was uniform, values at 00:00:06 could be set as NaN.
-            # heatmap does not assume the bin width is uniform. Some software
-            # will assume bin width is uniform and equal to the difference
-            # between timestamps.
-            data = np.delete(data, 6, 0)
+        meta['timeStampLocation'] = 'begin'
+        hapiplot(data, meta, **popts)
 
-            meta['timeStampLocation'] = 'begin'
-            hapiplot(data, meta, **popts)
+        meta['timeStampLocation'] = 'end'
+        hapiplot(data, meta, **popts)
 
-            meta['timeStampLocation'] = 'end'
-            hapiplot(data, meta, **popts)
-
-            meta['timeStampLocation'] = 'center'
-            hapiplot(data, meta, **popts)
+        meta['timeStampLocation'] = 'center'
+        hapiplot(data, meta, **popts)
 
     if tn == 9:
         # Spectra w/centers and ranges with gaps
