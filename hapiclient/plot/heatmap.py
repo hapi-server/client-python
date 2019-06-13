@@ -585,16 +585,7 @@ def heatmap(x, y, z, **kwargs):
     ax.set_position([ax_x,ax_y,ax_w,ax_h])
     cb.ax.set_position([cb_x,cb_y,cb_w,cb_h])
 
-    #fig.canvas.draw()
-    #cb.ax.yaxis.get_offset_text().set_visible(False)
-    #import pdb;pdb.set_trace()
-    #zlabels = cb.ax.get_yticklabels()
-
     # NaN, logz0, and gap legend
-    # fig.tight_subplot() and
-    # plt.savefig(..., bbox_inches='tight')
-    # issues discussed here
-    # https://stackoverflow.com/questions/48128546/why-is-the-legend-not-present-in-the-generated-image-if-i-use-tight-for-bbox-i    
     if len(legendh) > 0:
         fig.legend(frameon=False, borderaxespad=0.25, borderpad=0.15,
                    handles=legendh, loc='upper right',
