@@ -319,7 +319,7 @@ def urlerror(err, url):
     the error message, and calls error().
     """
 
-    from json import load
+    from json import load, decoder
 
     def nonhapierror(err):
 
@@ -350,8 +350,12 @@ def urlerror(err, url):
                 error('\n%s\n  %s\n' % (url, jres['status']['message']))
                 return
         nonhapierror(err)
-    except:
-        nonhapierror(err)
+        return
+    except decoder.JSONDecodeError as e:
+        # TODO: Append a note to error message that HAPI Error JSON could not be parsed.
+        pass
+
+    nonhapierror(err)
 
 def head(url):
     '''Python 2/3 compatable HTTP HEAD request on URL.
