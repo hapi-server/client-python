@@ -22,7 +22,7 @@ def autoplot(server, dataset, parameters, start, stop, **kwargs):
 
     version : string ['devel']
         The version of Autoplot to use. Can be a version string, e.g.,
-        'v2018_a11', 'devel', 'latest', or 'nightly'. See 
+        'v2018a_11', 'devel', 'latest', or 'nightly'. See 
         <http://autoplot.org/developer#Development_Versions> for a
         description of the difference between versions.
 
