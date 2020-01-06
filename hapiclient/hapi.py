@@ -117,7 +117,7 @@ def hapi(*args, **kwargs):
     """Request data from a HAPI server.
 
     For additional documentation and demonstration, see
-    <https://github.com/hapi-server/client-python/blob/master/hapi_demo.ipynb>
+    <https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb>
 
     Version: 0.1.1b
 
