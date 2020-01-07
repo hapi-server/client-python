@@ -190,7 +190,6 @@ def hapiplot(*args, **kwargs):
                 'hmopts': {},
 
                 'backend': 'default',
-                'returnimage': False,
 
                 'rcParams':
                     {
