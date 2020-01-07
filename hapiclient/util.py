@@ -20,6 +20,7 @@ def setopts(defaults, given):
 
     return defaults
 
+
 def log(msg, opts):
     """Print message to console."""
 
@@ -33,6 +34,7 @@ def log(msg, opts):
 #        import pdb; pdb.set_trace()
         pre = sys._getframe(1).f_code.co_name + '(): '
         print(pre + msg)
+
 
 def jsonparse(res, url):
     """Try/catch of json.loads() function with short error message."""
