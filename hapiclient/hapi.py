@@ -28,15 +28,32 @@ def subset(meta, params):
     pm = []  # Parameter names in metadata
     for i in range(0, len(meta['parameters'])):
         pm.append(meta['parameters'][i]['name'])
+
+    # Check for parameters requested that are not in metadata
     for i in range(0, len(p)):
         if p[i] not in pm:
             raise Exception('Parameter %s is not in meta' % p[i])
     
-    pa = [meta['parameters'][0]]  # First parameter is always the time parameter
+    pa = [meta['parameters'][0]]  # First parameter is always the time parameter 
+
+    params_reordered = [] # Re-ordered params
+    # If time parameter explicity requested, put it first in params_reordered.
+    if meta['parameters'][0] in p:
+        params_reordered = [meta['parameters'][0]]
+
+    # Create subset of parameter metadata
     for i in range(1, len(pm)):
         if pm[i] in p:
             pa.append(meta['parameters'][i])
+            params_reordered.append(pm[i])
     meta['parameters'] = pa
+
+    params_reordered_str = ','.join(params_reordered)
+    if not params == params_reordered_str:
+        msg = "\n\n" + "Order requested: " + params
+        msg = msg + "\n\n" + "Order required: " + params_reordered_str
+        raise ValueError('Order of requested parameters does not match order of parameters in server info metadata.' + msg)
+    
     return meta
 
 
@@ -244,7 +261,7 @@ def hapi(*args, **kwargs):
     if nin == 3 or nin == 5:
         # hapi(SERVER, DATASET, PARAMETERS) or
         # hapi(SERVER, DATASET, PARAMETERS, START, STOP)
-                
+
         # urld = url subdirectory of cachedir to store files from SERVER
         urld = cachedir(opts["cachedir"], SERVER)
 
@@ -379,6 +396,7 @@ def hapi(*args, **kwargs):
         pnames, psizes, dt = [], [], []
         # Each element of cols is an array with start/end column number of
         # parameter.
+
         cols = np.zeros([len(meta["parameters"]), 2], dtype=np.int32)
         ss = 0  # running sum of prod(size)
 
