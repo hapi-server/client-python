@@ -188,6 +188,26 @@ def heatmap(x, y, z, **kwargs):
 
         return yc, ycl
 
+    def iscategorical(x):
+        return isinstance(x[0], np.character)
+    
+    def categoryinfo(x):
+        if len(x.shape) > 1:
+            raise ValueError('If x contains characters, it must have one column or one row.')
+        if not len(x) == Nx:
+            raise ValueError('If x contains characters, number of elements must match number of rows in z.')
+        xcategories = x
+        x = np.linspace(0, x.shape[0]-1, x.shape[0], dtype='int32')
+        return xcategories, x
+
+    def allint(x):
+
+        Ig = ~np.isnan(x)
+        if np.all(np.equal(x[Ig], np.int32(x[Ig]))):
+            return True
+        else:
+            return False
+
     ###########################################################################
 
     opts = {
@@ -248,6 +268,8 @@ def heatmap(x, y, z, **kwargs):
         from matplotlib import pyplot as plt
         if opts['logging']: print("heatmap(): Using Matplotlib back-end " + matplotlib.get_backend())
 
+    from matplotlib.ticker import MaxNLocator
+
     if not opts['cmap.name'] in matplotlib.pyplot.colormaps():
         warning('colormap name "'
                 + opts['cmap.name']
@@ -279,28 +301,6 @@ def heatmap(x, y, z, **kwargs):
     Nx = z.shape[1] if len(z.shape) == 2 else 1
     # Number of y values (rows)
     Ny = z.shape[0] if len(z.shape) == 2 else 1
-
-    # Note: categoricalx and categoricaly are very similar.
-    categoricalx = False
-    if isinstance(x[0], np.character):
-        if len(x.shape) > 1:
-            raise ValueError('If x contains characters, it must have one column or one row.')
-        if not len(x) == Nx:
-            raise ValueError('If x contains characters, number of elements must match number of rows in z.')
-        categoricalx = True
-        xcategories = x
-        x = np.linspace(0, x.shape[0]-1, x.shape[0], dtype='int32')
-
-    categoricaly = False
-    if isinstance(y[0], np.character):
-        if len(y.shape) > 1:
-            raise ValueError('If y contains characters, it must have one column or one row.')
-        if not len(y) == Ny:
-            raise ValueError('If y contains characters, number of elements must match number of rows in z.')
-        categoricaly = True
-        ycategories = y
-        y = np.linspace(0, y.shape[0]-1, y.shape[0], dtype='int32')
-
 
     # If y is a matrix, assume it has two columns.
     # First column is lower edge, second is upper edge.
@@ -399,24 +399,22 @@ def heatmap(x, y, z, **kwargs):
                                      hatch=opts['nan.hatch']+opts['nan.hatch'],
                                      edgecolor=opts['edgecolor'], label='NaN'))
 
+    
     zc = np.array([])   
-    categorical = False
-    if not 'cmap' in kwargs:
+    allintz = allint(z)
+    if not 'cmap' in kwargs and allintz:
         Ig = ~np.isnan(z)
-        if np.all(np.equal(z[Ig], np.int32(z[Ig]))):
-            # All z values are integer. Colorbar will label integer categories.
-            categorical = True
-            zc = np.unique(z[Ig])
-            nc = zc[-1]-zc[0] + 1
-            nc = np.min([10000, nc])
-            if 'cmap.numcolors' in kwargs:
-                if opts['cmap.numcolors'] != nc:
-                    warning('Over-riding requested number of colors. Using number of colors that equals number of unique values in z')
-            cmap_name = opts['cmap.name']
-            if len(Ig) == 2 and not 'cmap.name' in kwargs:
-                # Binary. Plot black and white.
-                cmap_name = 'gray'
-            opts['cmap'] = matplotlib.pyplot.get_cmap(cmap_name, nc)
+        zc = np.unique(z[Ig])
+        nc = zc[-1]-zc[0] + 1
+        nc = np.min([1024, nc])
+        if 'cmap.numcolors' in kwargs:
+            if opts['cmap.numcolors'] != nc:
+                warning('Overriding requested number of colors. Using number of colors = ' + str(nc))
+        cmap_name = opts['cmap.name']
+        if len(Ig) == 2 and not 'cmap.name' in kwargs:
+            # Binary. Plot black and white.
+            cmap_name = 'gray'
+        opts['cmap'] = matplotlib.pyplot.get_cmap(cmap_name, nc)
 
     zmin = np.nanmin(z)
     zmax = np.nanmax(z)
@@ -474,7 +472,10 @@ def heatmap(x, y, z, **kwargs):
             ax.set_yticklabels(ycl)
 
     # Note: categoricalx and categoricaly are very similar.
+    categoricalx = iscategorical(x)
     if categoricalx:
+        xcategories, x = categoryinfo(x)
+        # TODO: This will create too many ticks if # of categories is large
         ax.set_xticklabels(xcategories)
         ax.set_xticks(list(ax.get_xticks()) + [-0.5] + list(ax.get_xticks()+0.5))
         k = 0
@@ -484,8 +485,9 @@ def heatmap(x, y, z, **kwargs):
                 l.set_markeredgewidth(0)
             k = k+1
 
-    # Note: categoricalx and categoricaly are very similar.            
+    categoricaly = iscategorical(y)
     if categoricaly:
+        ycategories, y = categoryinfo(y)
         ax.set_yticklabels(ycategories)
         ax.set_yticks(list(ax.get_yticks()) + [-0.5] + list(ax.get_yticks()+0.5))
         k = 0
@@ -494,6 +496,11 @@ def heatmap(x, y, z, **kwargs):
             if k < 2*len(ycategories):
                 l.set_markeredgewidth(0)
             k = k+1
+
+    # TODO: categoricalz not implemented.
+    categoricalz = iscategorical(z)
+    if categoricalz:
+        zcategories, z = categoryinfo(z)
 
     ax.set_ylim(y[0], y[-1])
     if opts['xlabel']:
@@ -511,18 +518,20 @@ def heatmap(x, y, z, **kwargs):
 
     cb = fig.colorbar(im, ax=ax, pad=0.01)
 
-    if categorical and zc.size <= 10:
-        # If number of unique zc values is <= 10, put
-        # tick label at center of color patch.
-        # If zc > 10, won't be able to tell that ticks don't line
-        # up with center of patch, so use default tick positions.
-        # TODO: Creates too many ticks if zc[-1] - zc[0] large.
-        # See heatmap_test.py tn = 29.
-        cb.set_ticks(np.arange(zc[0], zc[-1] + 1, 1))
-        cb.set_ticks(zc)
+    if False and allint(x):
+        xa = ax.get_yaxis()
+        xa.set_major_locator(MaxNLocator(integer=True, steps=[1, 2, 4, 5, 10]))
+
+    if False and allint(y):
+        ya = ax.get_yaxis()
+        ya.set_major_locator(MaxNLocator(integer=True, steps=[1, 2, 4, 5, 10]))
+        
+    if allintz:
+        # Put tick label at center of color patch.
         if not opts['cmap.clim']:
             im.set_clim(zc[0]-0.5, zc[-1] + 0.5)
-        #cb.ax.set_yticklabels(['%d' % x for x in np.arange(zc[0],zc[-1],1)])
+        za = cb.ax.get_yaxis()
+        za.set_major_locator(MaxNLocator(integer=True, min_n_ticks=1, steps=[1, 2, 4, 5, 10]))
     if opts['cmap.clim']:
         im.set_clim(opts['cmap.clim'])
 

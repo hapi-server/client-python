@@ -2,8 +2,7 @@
 
 * Demo of using "fit" for plots
 * Use requests package for URL read
-* Add option "stack" to all plot functions, which will create a stack plot.
-* Images with error messages should not be saved.
+* Add option create stack plot of all parameters
+* Deal with parameters with len(size) > 1
 * Use standard logging module?
-
-
+* Deal with sizing image based on text labels. See discussion in heatmap.py about why this is difficult.

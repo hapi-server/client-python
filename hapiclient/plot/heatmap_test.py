@@ -7,8 +7,10 @@ from hapiclient.plot.heatmap import heatmap
 from datetime import datetime, timedelta
 import numpy as np
 
-#tests = range(0,29)
-tests = range(29,30)
+#tests = range(0,31)
+#tests = range(29,30)
+#tests = range(23,24)
+tests = range(0,2)
 
 for tn in tests:
 
@@ -282,6 +284,27 @@ for tn in tests:
 
     if tn == 29:
 
+        x = np.array(np.arange(20)) # Columns
+        y = np.array(np.arange(20)) # Rows
+        z = np.random.rand(20,20)
+
+        title = 'test #' + str(tn) + '  '
+        fig, cb = heatmap(x, y, z, title=title)
+
+        x = np.array([1,2,3,4]) # Columns
+        y = np.array([1,2,3,4]) # Rows
+        z = np.array([[0,3,0,3],[0,3,0,3],[0,3,0,3],[0,3,0,3]])
+        title = 'test #' + str(tn) + '  '
+        fig, cb = heatmap(x, y, z, title=title)
+
+        x = np.array([1,2,3,4]) # Columns
+        y = np.array([1,2,3,4]) # Rows
+        z = np.array([[0,1e9,0,10],[0,10,0,10],[0,10,0,10],[0,10,0,10]])
+        title = 'test #' + str(tn) + '  '
+        fig, cb = heatmap(x, y, z, title=title)
+
+    if tn == 30:
+
         from matplotlib import rc_context
 
         rcParams = {
@@ -302,11 +325,4 @@ for tn in tests:
             heatmap(x, y, z, title=title, zlabel="A")
             heatmap(x, y, z, title=title, zlabel="A\nB")
             heatmap(x, y, z, title=title, zlabel="A\nB\nC")
-
-    if tn == 30:
-        x = np.array([1,2,3,4]) # Columns
-        y = np.array([1,2,3,4]) # Rows
-        z = np.array([[0,1e9,0,10],[0,10,0,10],[0,10,0,10],[0,10,0,10]])
-        title = 'test #' + str(tn) + '  z=4x4 ints; col centers'
-        fig, cb = heatmap(x, y, z, title=title)
         
