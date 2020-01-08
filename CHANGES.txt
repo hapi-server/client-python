@@ -27,5 +27,9 @@ v0.0.9b1:
 		2018-05-15 -- SSL issue for urlopen.
 		2018-05-17 -- Fixes for heatmap and Matplotlib 3.1.
 v0.1.0: 2018-05-21 -- Tagged and pip-installable version
-v0.1.1b: 2018-06-06 -- Beta for next version
+v0.1.1b:
+		2018-06-06 -- Beta for next version
+		2018-06-07 -- Plot improvements
+		2019-01-07 -- Address issue #6 (parameter order)
+v0.1.1: 2019-01-08 -- Tagged and pip-installable version
 
