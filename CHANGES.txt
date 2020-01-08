@@ -32,4 +32,6 @@ v0.1.1b:
 		2018-06-07 -- Plot improvements
 		2019-01-07 -- Address issue #6 (parameter order)
 v0.1.1: 2019-01-08 -- Tagged and pip-installable version
+v0.1.2b:
+		2019-01-08 -- Beta for next version
 
