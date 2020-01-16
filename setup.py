@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import sys
 
 install_requires = ["numpy>=1.14.3",
-                    "pandas>=0.23.*,<=0.24.*",
+                    "pandas>=0.23.*",
                     "isodate>=0.6.0"]
 
 if sys.version_info > (3, 5):

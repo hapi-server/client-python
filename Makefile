@@ -37,9 +37,11 @@ SHELL:= /bin/bash
 #     Sometimes takes ~5 minutes even though web page is immediately
 #     updated.)
 # 4. After package is finalized, create new version number in CHANGES.txt ending
-#    with "b0" in setup.py and then run make version-update. This will update the
-#    version information in the repository to indicate it is now in a pre-release
-#    state.
+#    with "b0" in setup.py and then run
+#       make version-update
+# 	git commit -a -m "Update version for next release"
+#    This will update the version information in the repository to indicate it
+#    is now in a pre-release state.
 
 URL=https://upload.pypi.org/
 REP=pypi
@@ -168,7 +170,6 @@ test-clean:
 	pytest -v hapiclient/test/test_hapi.py
 
 clean:
-	- python setup.py --uninstall
 	- find . -name __pycache__ | xargs rm -rf {}
 	- find . -name *.pyc | xargs rm -rf {}
 	- find . -name *.DS_Store | xargs rm -rf {}
