@@ -6,7 +6,7 @@ PYTHON=python3.6
 PYTHONVERS=python2.7 python3.5 python3.6 python3.7
 
 # VERSION is updated in "make version-update" step. Do not edit.
-VERSION=0.1.2
+VERSION=0.1.3b
 SHELL:= /bin/bash
 
 # First-time use, need to create the following virtual environments for testing:

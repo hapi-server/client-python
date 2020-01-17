@@ -36,3 +36,5 @@ v0.1.2b:
 		2019-01-08 -- Beta for next version
 		2019-01-16 -- Address issues #5 and #7
 v0.1.2: 2019-01-16 -- Tagged and pip-installable version
+v0.1.3b:
+	2019-01-17 -- Correction for subset() when only time param requested

@@ -38,8 +38,8 @@ def subset(meta, params):
 
     params_reordered = [] # Re-ordered params
     # If time parameter explicity requested, put it first in params_reordered.
-    if meta['parameters'][0] in p:
-        params_reordered = [meta['parameters'][0]]
+    if meta['parameters'][0]['name'] in p:
+        params_reordered = [meta['parameters'][0]['name']]
 
     # Create subset of parameter metadata
     for i in range(1, len(pm)):
@@ -48,7 +48,10 @@ def subset(meta, params):
             params_reordered.append(pm[i])
     meta['parameters'] = pa
 
+    #import pdb;pdb.set_trace()
+
     params_reordered_str = ','.join(params_reordered)
+    
     if not params == params_reordered_str:
         msg = "\n\n" + "Order requested: " + params
         msg = msg + "\n\n" + "Order required: " + params_reordered_str
@@ -136,7 +139,7 @@ def hapi(*args, **kwargs):
     For additional documentation and demonstration, see
     <https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb>
 
-    Version: 0.1.2
+    Version: 0.1.3b
 
     Parameters
     ----------
