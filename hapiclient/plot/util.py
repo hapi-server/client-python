@@ -45,6 +45,5 @@ def setopts(opts, kwargs):
         else:
             warnings.warn('rc parameter "' + key + '" is not in a known rc parameter.', SyntaxWarning)
 
-
     opts['rcParams'] = rc
     return opts

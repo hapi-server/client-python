@@ -152,9 +152,9 @@ version-tag:
 	git tag -a v$(VERSION) -m "Version "$(VERSION)
 	git push --tags
 
-# Install package in local directory
+# Install package in local directory (symlinks made to local dir)
 install-local:
-	python setup.py .
+	python setup.py -e .
 
 install:
 	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple

@@ -145,7 +145,6 @@ def hapiplot(*args, **kwargs):
         >>> data, meta = hapi(server, dataset, params, start, stop, **opts)
         >>> hapiplot(data, meta, **opts)
 
-    Version: 0.1.0
     """
 
     if len(args) == 5:
@@ -207,10 +206,6 @@ def hapiplot(*args, **kwargs):
                 }
             }
 
-    # Will use given rc style parameters and style name to generate file name.
-    # Assumes rc parameters of style never change.
-    styleParams = opts['rcParams']
-
     # Override defaults
     opts = setopts(opts, kwargs)
 
@@ -244,6 +239,12 @@ def hapiplot(*args, **kwargs):
         # Return cached image (case where we are returning binary image data)
         # imagepath() options. Only need filename under these conditions.
         if opts['saveimage'] or (opts['returnimage'] and opts['useimagecache']):
+            # Will use given rc style parameters and style name to generate file name.
+            # Assumes rc parameters of style and hapiplot defaults never change.
+            styleParams = {}
+            if 'rcParams' in kwargs:
+                styleParams = kwargs['rcParams']
+
             fnameimg = imagepath(meta, i, opts['cachedir'], styleParams)
 
         if opts['useimagecache'] and opts['returnimage'] and os.path.isfile(fnameimg):
@@ -268,7 +269,7 @@ def hapiplot(*args, **kwargs):
 
             nplts = data[name].shape[1]
             if opts['returnimage']:
-                warning('Only returning first plot for parameter with size[1] > 1.')
+                warning('Only returning first image for parameter with size[1] > 1.')
                 nplts = 1
             
             for j in range(nplts):
@@ -299,6 +300,13 @@ def hapiplot(*args, **kwargs):
                 if 'bins' in metar["parameters"][1]:
                     metar["parameters"][1]['bins'] = []
                     metar["parameters"][1]['bins'].append(meta["parameters"][i]['bins'][j])
+                
+                # rcParams is modified by setopts to have all rcParams.
+                # reset to original passed rcParams so that imagepath
+                # computes file name based on rcParams passed to hapiplot.
+                if 'rcParams' in kwargs:
+                    opts['rcParams'] = kwargs['rcParams']
+
                 metar = hapiplot(datar, metar, **opts)
                 meta["parameters"][i]['hapiplot'] = metar["parameters"][i]['hapiplot']
             return meta
@@ -445,20 +453,27 @@ def hapiplot(*args, **kwargs):
             if 'units' in meta["parameters"][i] and meta["parameters"][i]['units']:
                 units = meta["parameters"][i]["units"]
 
-            nl = ""
-            if len(name) > 10 or len(units) > 10:
-                nl = "\n" # TODO: Automatically figure out when this is needed.
+            if type(units) == str:
+                nl = ""
+                if len(name) > 10 or len(units) > 10:
+                    nl = "\n" # TODO: Automatically figure out when this is needed.
 
-            if ptype == 'string':
+                if ptype == 'string':
+                    ylabel = name
+                else:
+                    ylabel = name + nl + " [" + units + "]"
+
+            if type(units) == list:
                 ylabel = name
-            else:
-                ylabel = name + nl + " [" + units + "]"
 
             if not 'legendlabels' in opts['tsopts']:
                 legendlabels = []
                 if 'size' in meta['parameters'][i]:
                     for l in range(0,meta['parameters'][i]['size'][0]):
-                        legendlabels.append('col %d' % l)
+                        if type(units) == list:
+                            legendlabels.append('col %d ' % l + '[' + units[l] + ']')
+                        else:
+                            legendlabels.append('col %d' % l)
                     opts['tsopts']['legendlabels'] = legendlabels
 
 

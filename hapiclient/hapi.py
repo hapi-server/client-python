@@ -9,7 +9,7 @@ import pandas
 
 from datetime import datetime
 
-from hapiclient.util import setopts, log, warning
+from hapiclient.util import setopts, log, warning, error
 from hapiclient.util import urlopen, urlretrieve, jsonparse
 
 
@@ -32,7 +32,8 @@ def subset(meta, params):
     # Check for parameters requested that are not in metadata
     for i in range(0, len(p)):
         if p[i] not in pm:
-            raise Exception('Parameter %s is not in meta' % p[i])
+            error('Parameter %s is not in meta' % p[i] + '\n')
+            return
     
     pa = [meta['parameters'][0]]  # First parameter is always the time parameter 
 
@@ -53,9 +54,9 @@ def subset(meta, params):
     params_reordered_str = ','.join(params_reordered)
     
     if not params == params_reordered_str:
-        msg = "\n\n" + "Order requested: " + params
-        msg = msg + "\n\n" + "Order required: " + params_reordered_str
-        raise ValueError('Order of requested parameters does not match order of parameters in server info metadata.' + msg)
+        msg = "\n  " + "Order requested: " + params
+        msg = msg + "\n  " + "Order required: " + params_reordered_str
+        error('Order of requested parameters does not match order of parameters in server info metadata.' + msg + '\n')
     
     return meta
 
@@ -217,9 +218,6 @@ def hapi(*args, **kwargs):
         DATASET = args[1]
     if nin > 2:
         PARAMETERS = args[2]
-        if re.search(r', ', PARAMETERS):
-            warning("hapi", "Removing spaces after commas in given parameter list of '" + PARAMETERS + "'")
-            PARAMETERS = re.sub(r',\s+', ',', PARAMETERS)
     if nin > 3:
         START = args[3]
     if nin > 4:
@@ -230,6 +228,10 @@ def hapi(*args, **kwargs):
     
     from hapiclient import __version__
     log('Running hapi.py version %s' % __version__, opts)
+
+    if re.search(r', ', PARAMETERS):
+        warning("Removing spaces after commas in given parameter list of '" + PARAMETERS + "'")
+        PARAMETERS = re.sub(r',\s+', ',', PARAMETERS)
 
     if nin == 0:  # hapi()
         log('Reading %s' % opts['server_list'], opts)
@@ -259,7 +261,7 @@ def hapi(*args, **kwargs):
         return meta
     
     if nin == 4:
-        raise ValueError('A stop time is required if a start time is given.')
+        error('A stop time is required if a start time is given.')
 
     if nin == 3 or nin == 5:
         # hapi(SERVER, DATASET, PARAMETERS) or
@@ -375,7 +377,7 @@ def hapi(*args, **kwargs):
         cformats = ['csv', 'binary']  # client formats
         if not opts['format'] in cformats:
             # Check if requested format is implemented by this client.
-            raise ValueError('This client does not handle transport '
+            error('This client does not handle transport '
                              'format "%s".  Available options: %s'
                              % (opts['format'], ', '.join(cformats)))
 
@@ -744,8 +746,13 @@ def hapitime2datetime(Time, **kwargs):
         Time = np.asarray([Time])
 
     if type(Time) != np.ndarray:
-        print("error")
+        error('Problem with time data.' + '\n')
+        return
     
+    if Time.size == 0:
+        error('Time array is empty.' + '\n')
+        return
+
     reshape = False
     if Time.shape[0] != Time.size:
         reshape = True
@@ -753,7 +760,11 @@ def hapitime2datetime(Time, **kwargs):
         Time = Time.flatten()
 
     if type(Time[0]) == np.bytes_:
-        Time = Time.astype('U')
+        try:
+            Time = Time.astype('U')
+        except:
+            error('Problem with time data. First value: ' + str(Time[0]) + '\n')
+            return
 
     tic = time.time()
 
@@ -823,7 +834,7 @@ def hapitime2datetime(Time, **kwargs):
     else:
         # TODO: Also check for invalid time string lengths.
         # Should use JSON schema regular expressions for allowed versions of ISO 8601.
-        raise ValueError('First time value %s is not a valid HAPI Time' % Time[0])
+        error('First time value %s is not a valid HAPI Time' % Time[0])
 
     fmto = fmt
     if h:
@@ -841,10 +852,13 @@ def hapitime2datetime(Time, **kwargs):
     if re.match(r".*Z$", Time[0]):
         fmt = fmt + "Z"
     
-    # TODO: Why not use pandas.to_datetime here with fmt
-    for i in range(0, len(Time)):
-        pythonDateTime[i] = datetime.strptime(Time[i], fmt)
-
+    # TODO: Why not use pandas.to_datetime here with fmt?
+    try:
+        for i in range(0, len(Time)):
+            pythonDateTime[i] = datetime.strptime(Time[i], fmt)
+    except:
+        error('Could not parse time value ' + Time[i] + ' using ' + fmt)
+    
     toc = time.time() - tic
     log("Manual processing time = %.4fs, Input = %s, fmto = %s, fmt = %s\n" % (toc, Time[0], fmto, fmt), opts)
 
