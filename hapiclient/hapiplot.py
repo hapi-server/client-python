@@ -316,8 +316,13 @@ def hapiplot(*args, **kwargs):
         as_heatmap = False
         if 'size' in meta['parameters'][i] and meta['parameters'][i]['size'][0] > 10:
             as_heatmap = True
+
+        if type(meta["parameters"][i]["units"]) == list:
+            as_heatmap = False
+            if 'bins' in meta['parameters'][i]:
+                warning("Not plotting %s as heatmap because components have different units." % meta["parameters"][i]["name"])
             
-        if as_heatmap or 'bins' in meta['parameters'][i]:
+        if as_heatmap and 'bins' in meta['parameters'][i]:
             # Plot as heatmap
 
             if meta["parameters"][i]["type"] == "string":
@@ -466,14 +471,35 @@ def hapiplot(*args, **kwargs):
             if type(units) == list:
                 ylabel = name
 
+            bin_name = ''
+            if 'bins' in meta['parameters'][i]:
+                bin_name = meta['parameters'][i]['bins'][0]['name']
+
             if not 'legendlabels' in opts['tsopts']:
                 legendlabels = []
                 if 'size' in meta['parameters'][i]:
                     for l in range(0,meta['parameters'][i]['size'][0]):
+                        bin_label = ''
+                        if bin_name is not '':
+                            sep = ''
+                            if 'centers' in meta['parameters'][i]['bins'][0] and 'ranges' in meta['parameters'][i]['bins'][0]:
+                                sep = ';'
+                            bin_label = ''
+                            if 'centers' in meta['parameters'][i]['bins'][0]:
+                                bin_label = ' center = ' + str(meta['parameters'][i]['bins'][0]['centers'][l])
+                            if 'ranges' in meta['parameters'][i]['bins'][0]:
+                                bin_label = bin_label + sep + ' range = [' + str(meta['parameters'][i]['bins'][0]['ranges'][l][0]) + ', ' + str(meta['parameters'][i]['bins'][0]['ranges'][l][1]) + ']'
+                            if 'units' in meta['parameters'][i]['bins'][0]:
+                                bin_units = meta['parameters'][i]['bins'][0]['units']
+                                if type(bin_units) == list:
+                                   bin_label = bin_label + ' [' + bin_units[l] + ']'
+                                else:
+                                   bin_label = bin_label + ' [' + bin_units + ']'
+
                         if type(units) == list:
-                            legendlabels.append('col %d ' % l + '[' + units[l] + ']')
+                            legendlabels.append('col %d ' % l + '[' + units[l] + '] ' + bin_name + bin_label)
                         else:
-                            legendlabels.append('col %d' % l)
+                            legendlabels.append('col %d' % l + bin_name + bin_label)
                     opts['tsopts']['legendlabels'] = legendlabels
 
 
