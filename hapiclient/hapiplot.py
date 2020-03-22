@@ -265,7 +265,7 @@ def hapiplot(*args, **kwargs):
 
         # If parameter has a size with two elements, e.g., [N1, N2]
         # create N2 plots.
-        if len(data[name].shape) == 3:  # (Time, N1, N2)
+        if len(data[name].shape) == 3:  # shape = (Time, N1, N2)
 
             nplts = data[name].shape[1]
             if opts['returnimage']:
@@ -274,7 +274,15 @@ def hapiplot(*args, **kwargs):
             
             for j in range(nplts):
                 timename = meta['parameters'][0]['name']
-                name_new = name + "[:," + str(j) + "]" # Give name to indicate what is plotted
+                if 'label' in meta["parameters"][i]:
+                    if type(meta["parameters"][i]['label']) == list:
+                        name_new = meta["parameters"][i]['label'][1][j]
+                    else:
+                        name_new = metar["parameters"][i]['label'] + "[:," + str(j) + "]"
+                else:
+                    # Give name to indicate what is plotted
+                    name_new = name + "[:," + str(j) + "]"
+
                 # Reduced data ND Array
                 datar = np.ndarray(shape=(data[name].shape[0]),
                                    dtype=[
@@ -294,9 +302,15 @@ def hapiplot(*args, **kwargs):
                 # Give new name to indicate it is a subset of full parameter
                 metar["parameters"][1]['name'] = name_new
                 # New size is N1
-                metar["parameters"][1]['size'] = [metar["parameters"][1]['size'][0]]
-                # Extract bins corresponding to jth column of data[name]
+                metar["parameters"][1]['size'] = [meta["parameters"][i]['size'][0]]
 
+                if 'units' in metar["parameters"][1]:
+                    metar["parameters"][1]["units"] = meta["parameters"][i]['units'][j]
+
+                if 'label' in metar["parameters"][1]:
+                    metar["parameters"][1]["label"] = meta["parameters"][i]['label'][j]
+
+                # Extract bins corresponding to jth column of data[name]
                 if 'bins' in metar["parameters"][1]:
                     metar["parameters"][1]['bins'] = []
                     metar["parameters"][1]['bins'].append(meta["parameters"][i]['bins'][j])
@@ -471,35 +485,71 @@ def hapiplot(*args, **kwargs):
             if type(units) == list:
                 ylabel = name
 
-            bin_name = ''
-            if 'bins' in meta['parameters'][i]:
-                bin_name = meta['parameters'][i]['bins'][0]['name']
 
             if not 'legendlabels' in opts['tsopts']:
                 legendlabels = []
                 if 'size' in meta['parameters'][i]:
                     for l in range(0,meta['parameters'][i]['size'][0]):
                         bin_label = ''
-                        if bin_name is not '':
+                        bin_name = ''
+                        col_name = ''
+                        if 'bins' in meta['parameters'][i]:
+                            bin_name = meta['parameters'][i]['bins'][0]['name']
+                            if 'label' in meta['parameters'][i]['bins'][0]:
+                                if type(meta['parameters'][i]['bins'][0]['label']) == str:
+                                    bin_name = meta['parameters'][i]['bins'][0]['label']
+                                else:
+                                    bin_name = meta['parameters'][i]['bins'][0]['label'][l]
                             sep = ''
                             if 'centers' in meta['parameters'][i]['bins'][0] and 'ranges' in meta['parameters'][i]['bins'][0]:
+                                bin_name = bin_name + ' bin with'
                                 sep = ';'
+
                             bin_label = ''
-                            if 'centers' in meta['parameters'][i]['bins'][0]:
-                                bin_label = ' center = ' + str(meta['parameters'][i]['bins'][0]['centers'][l])
-                            if 'ranges' in meta['parameters'][i]['bins'][0]:
-                                bin_label = bin_label + sep + ' range = [' + str(meta['parameters'][i]['bins'][0]['ranges'][l][0]) + ', ' + str(meta['parameters'][i]['bins'][0]['ranges'][l][1]) + ']'
+
                             if 'units' in meta['parameters'][i]['bins'][0]:
                                 bin_units = meta['parameters'][i]['bins'][0]['units']
                                 if type(bin_units) == list:
-                                   bin_label = bin_label + ' [' + bin_units[l] + ']'
+                                    if type(bin_units[l]) == str:
+                                        bin_units = ' [' + bin_units[l] + ']'
+                                    else:
+                                        bin_units = ' []'
                                 else:
-                                   bin_label = bin_label + ' [' + bin_units + ']'
+                                    if type(bin_units) == str:
+                                       bin_units = ' [' + bin_units + ']'
+                                    else:
+                                       bin_units = ' []'
+                            if 'centers' in meta['parameters'][i]['bins'][0]:
+                                if meta['parameters'][i]['bins'][0]['centers'][l] is not None:
+                                    bin_label = bin_label + ' center = ' + str(meta['parameters'][i]['bins'][0]['centers'][l]) + bin_units
+                                else:
+                                    bin_label = bin_label + ' center = None'
+
+                            if 'ranges' in meta['parameters'][i]['bins'][0]:
+                                if type(meta['parameters'][i]['bins'][0]['ranges'][l]) == list:
+                                    bin_label = bin_label + sep + ' range = [' + str(meta['parameters'][i]['bins'][0]['ranges'][l][0]) + ', ' + str(meta['parameters'][i]['bins'][0]['ranges'][l][1]) + ']' + bin_units
+                                else:      
+                                    bin_label = bin_label + sep + ' range = [None]'
+
+                            if bin_label != '':
+                                bin_label = 'bin:' + bin_label
+                                col_name = bin_name + '#%d' % l
+
+                        if col_name == '':
+                            col_name = 'col #%d' % l
+
+                        if 'label' in meta['parameters'][i]:
+                            if type(meta['parameters'][i]['label']) == list:
+                                col_name = meta['parameters'][i]['label'][l]
 
                         if type(units) == list:
-                            legendlabels.append('col %d ' % l + '[' + units[l] + '] ' + bin_name + bin_label)
+                            if type(units[l]) == str:
+                                legendlabels.append(col_name + ' [' + units[l] + '] ' + bin_label)
+                            else:
+                                legendlabels.append(col_name + ' [] ' + bin_label)
                         else:
-                            legendlabels.append('col %d' % l + bin_name + bin_label)
+                            # Units are on y label
+                            legendlabels.append(col_name + ' ' + bin_label)
                     opts['tsopts']['legendlabels'] = legendlabels
 
 
