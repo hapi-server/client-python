@@ -229,10 +229,6 @@ def hapi(*args, **kwargs):
     from hapiclient import __version__
     log('Running hapi.py version %s' % __version__, opts)
 
-    if re.search(r', ', PARAMETERS):
-        warning("Removing spaces after commas in given parameter list of '" + PARAMETERS + "'")
-        PARAMETERS = re.sub(r',\s+', ',', PARAMETERS)
-
     if nin == 0:  # hapi()
         log('Reading %s' % opts['server_list'], opts)
         # decode('utf8') in following needed to make Python 2 and 3 types match.
@@ -266,6 +262,10 @@ def hapi(*args, **kwargs):
     if nin == 3 or nin == 5:
         # hapi(SERVER, DATASET, PARAMETERS) or
         # hapi(SERVER, DATASET, PARAMETERS, START, STOP)
+
+        if re.search(r', ', PARAMETERS):
+            warning("Removing spaces after commas in given parameter list of '" + PARAMETERS + "'")
+            PARAMETERS = re.sub(r',\s+', ',', PARAMETERS)
 
         # urld = url subdirectory of cachedir to store files from SERVER
         urld = cachedir(opts["cachedir"], SERVER)
