@@ -154,7 +154,8 @@ version-tag:
 
 # Install package in local directory (symlinks made to local dir)
 install-local:
-	python setup.py -e .
+	#python setup.py -e .
+	pip install --editable .
 
 install:
 	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple
