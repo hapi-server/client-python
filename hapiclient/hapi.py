@@ -428,7 +428,8 @@ def hapi(*args, **kwargs):
                 psizes[i] = psizes[i][0]
 
             if type(psizes[i]) is list and len(psizes[i]) > 1:
-                psizes[i] = list(reversed(psizes[i]))
+                #psizes[i] = list(reversed(psizes[i]))
+                psizes[i] = list( psizes[i])
                 
             # First column of ith parameter.
             cols[i][0] = ss
@@ -582,7 +583,7 @@ def hapi(*args, **kwargs):
                     else:
                         # Table is not a 2-D numpy matrix.
                         # Extract each column (don't know how to do this with slicing
-                        # notation, e.g., data['varname'] = table[:][1:3]. Instead,
+                        # notation, e.g., data['varname'] = table[:][1:3]). Instead,
                         # loop over each parameter (pn) and aggregate columns.
                         # Then insert aggregated columns into N-D array 'data'.
                         for pn in range(0, len(cols)):
@@ -627,7 +628,7 @@ def hapi(*args, **kwargs):
                         dtype = dt[i]
                     dt2.append(dtype)
 
-                # Create new N-D array which won't have any parameters with
+                # Create new N-D array that won't have any parameters with
                 # type = 'O'.
                 data2 = np.ndarray(data.shape, dt2)
 

@@ -271,24 +271,18 @@ def hapiplot(*args, **kwargs):
             if opts['returnimage']:
                 warning('Only returning first image for parameter with size[1] > 1.')
                 nplts = 1
-            
             for j in range(nplts):
                 timename = meta['parameters'][0]['name']
-                if 'label' in meta["parameters"][i]:
-                    if type(meta["parameters"][i]['label']) == list:
-                        name_new = meta["parameters"][i]['label'][1][j]
-                    else:
-                        name_new = metar["parameters"][i]['label'] + "[:," + str(j) + "]"
-                else:
-                    # Give name to indicate what is plotted
-                    name_new = name + "[:," + str(j) + "]"
 
+                # Name to indicate what is plotted
+                name_new = name + "[:," + str(j) + "]"
                 # Reduced data ND Array
                 datar = np.ndarray(shape=(data[name].shape[0]),
                                    dtype=[
                                            (timename, data.dtype[timename]),
-                                           (name_new, data[name].dtype.str, data.dtype[name].shape[1])
-                                           ])
+                                           (name_new, data[name].dtype.str, 
+                                            data.dtype[name].shape[1])
+                                         ])
 
                 datar[timename] = data[timename]
                 datar[name_new] = data[name][:, j]
@@ -301,14 +295,23 @@ def hapiplot(*args, **kwargs):
                 metar["parameters"].append(meta["parameters"][i].copy())
                 # Give new name to indicate it is a subset of full parameter
                 metar["parameters"][1]['name'] = name_new
+                metar["parameters"][1]['name_orig'] = name
                 # New size is N1
-                metar["parameters"][1]['size'] = [meta["parameters"][i]['size'][0]]
+                metar["parameters"][1]['size'] = [meta["parameters"][i]['size'][1]]
 
                 if 'units' in metar["parameters"][1]:
-                    metar["parameters"][1]["units"] = meta["parameters"][i]['units'][j]
+                    if type(meta["parameters"][i]['units']) == str or meta["parameters"][i]['units'] == None:
+                        # Same units applies to all dimensions
+                        metar["parameters"][1]["units"] = meta["parameters"][i]['units']
+                    else:
+                        metar["parameters"][1]["units"] = meta["parameters"][i]['units'][j]
 
                 if 'label' in metar["parameters"][1]:
-                    metar["parameters"][1]["label"] = meta["parameters"][i]['label'][j]
+                    if type(meta["parameters"][i]['label']) == str:
+                        # Same label applies to all dimensions
+                        metar["parameters"][1]["label"] = meta["parameters"][i]['label']
+                    else:
+                        metar["parameters"][1]["label"] = meta["parameters"][i]['label'][j]
 
                 # Extract bins corresponding to jth column of data[name]
                 if 'bins' in metar["parameters"][1]:
@@ -325,19 +328,27 @@ def hapiplot(*args, **kwargs):
                 meta["parameters"][i]['hapiplot'] = metar["parameters"][i]['hapiplot']
             return meta
 
-        title = meta["x_server"] + "\n" + meta["x_dataset"] + " | " + name
+        if 'name_orig' in meta["parameters"][i]:
+            title = meta["x_server"] + "\n" + meta["x_dataset"] + " | " + meta["parameters"][i]['name_orig']
+        else:
+            title = meta["x_server"] + "\n" + meta["x_dataset"] + " | " + name
 
         as_heatmap = False
         if 'size' in meta['parameters'][i] and meta['parameters'][i]['size'][0] > 10:
             as_heatmap = True
 
-        if type(meta["parameters"][i]["units"]) == list:
+        if 'units' in meta["parameters"][i] and type(meta["parameters"][i]["units"]) == list:
             as_heatmap = False
             if 'bins' in meta['parameters'][i]:
                 warning("Not plotting %s as heatmap because components have different units." % meta["parameters"][i]["name"])
             
         if as_heatmap and 'bins' in meta['parameters'][i]:
             # Plot as heatmap
+
+            hmopts = {
+                        'returnimage': opts['returnimage'],
+                        'transparent': opts['rcParams']['savefig.transparent']
+                    }
 
             if meta["parameters"][i]["type"] == "string":
                 warning("Plots for only types double, integer, and isotime implemented. Not plotting %s." % meta["parameters"][i]["name"])
@@ -357,7 +368,7 @@ def hapiplot(*args, **kwargs):
 
             units = meta["parameters"][i]["units"]
             nl = ""
-            if len(name) > 10 or len(units) > 10:
+            if len(name) + len(units) > 30:
                 nl = "\n"
 
             zlabel = name + nl + " [" + units + "]"
@@ -403,43 +414,50 @@ def hapiplot(*args, **kwargs):
                     Time = np.append(Time, Time[-1] + dtu[0])
 
 
-            if opts['xlabel'] != '':
-                opts['hmopts']['xlabel'] = opts['xlabel']
+            if opts['xlabel'] != '' and 'xlabel' not in opts['hmopts']:
+                hmopts['xlabel'] = opts['xlabel']
 
             opts['hmopts']['ylabel'] = ylabel
-            if opts['ylabel'] != '':
-                opts['hmopts']['ylabel'] = opts['ylabel']
+            if opts['ylabel'] != '' and 'ylabel' not in opts['hmopts']:
+                hmopts['ylabel'] = opts['ylabel']
 
             opts['hmopts']['title'] = title
-            if opts['title'] != '':
-                opts['hmopts']['title'] = opts['title']
+            if opts['title'] != '' and 'title' not in opts['hmopts']:
+                hmopts['title'] = opts['title']
 
             opts['hmopts']['zlabel'] = zlabel
-            if opts['ztitle'] != '':
-                opts['hmopts']['xlabel'] = opts['xlabel']
+            if opts['zlabel'] != '' and 'zlabel' not in opts['hmopts']:
+                hmopts['zlabel'] = opts['zlabel']
+
+            if False:
+                opts['hmopts']['ztitle'] = ztitle
+                if opts['ztitle'] != '' and 'ztitle' not in opts['hmopts']:
+                    hmopts['ztitle'] = opts['ztitle']
 
             if opts['logx'] is not False:
-                opts['hmopts']['logx'] = True
+                hmopts['logx'] = True
             if opts['logy'] is not False:
-                opts['hmopts']['logy'] = True
+                hmopts['logy'] = True
             if opts['logz'] is not False:
-                opts['hmopts']['logz'] = True
+                hmopts['logz'] = True
 
-            hmopts = {
-                        'returnimage': opts['returnimage'],
-                        'transparent': opts['rcParams']['savefig.transparent']
-                    }
 
             for key, value in opts['hmopts'].items():
                 hmopts[key] = value
 
             with rc_context(rc=opts['rcParams']):
                 fig, cb = heatmap(Time, bins, np.transpose(z), **hmopts)
+
             meta["parameters"][i]['hapiplot']['figure'] = fig
             meta["parameters"][i]['hapiplot']['colorbar'] = cb
 
         else:
-            # Plot as time series.
+
+            tsopts = {
+                        'logging': opts['logging'],
+                        'returnimage': opts['returnimage'],
+                        'transparent': opts['rcParams']['savefig.transparent']
+                    }
 
             ptype = meta["parameters"][i]["type"]
             if ptype == "isotime":
@@ -468,27 +486,26 @@ def hapiplot(*args, **kwargs):
                 if ptype == 'integer' or ptype == 'double':
                     y = fill2nan(y, meta["parameters"][i]['fill'])
 
-            units = ''
+            units = None
             if 'units' in meta["parameters"][i] and meta["parameters"][i]['units']:
                 units = meta["parameters"][i]["units"]
 
+
+            nl = ""
             if type(units) == str:
-                nl = ""
-                if len(name) > 10 or len(units) > 10:
+                if len(name) + len(units) > 30:
                     nl = "\n" # TODO: Automatically figure out when this is needed.
 
-                if ptype == 'string':
-                    ylabel = name
-                else:
-                    ylabel = name + nl + " [" + units + "]"
+            ylabel = name
+            if units is not None and type(units) is not list:
+                ylabel = name + nl + " [" + units + "]"
 
             if type(units) == list:
                 ylabel = name
 
-
             if not 'legendlabels' in opts['tsopts']:
                 legendlabels = []
-                if 'size' in meta['parameters'][i]:
+                if 'size' in meta['parameters'][i]:   
                     for l in range(0,meta['parameters'][i]['size'][0]):
                         bin_label = ''
                         bin_name = ''
@@ -512,13 +529,15 @@ def hapiplot(*args, **kwargs):
                                 if type(bin_units) == list:
                                     if type(bin_units[l]) == str:
                                         bin_units = ' [' + bin_units[l] + ']'
-                                    else:
+                                    elif bin_units[l] == None:
                                         bin_units = ' []'
+                                    else:
+                                        bin_units = ''
                                 else:
                                     if type(bin_units) == str:
                                        bin_units = ' [' + bin_units + ']'
                                     else:
-                                       bin_units = ' []'
+                                       bin_units = ''
                             if 'centers' in meta['parameters'][i]['bins'][0]:
                                 if meta['parameters'][i]['bins'][0]['centers'][l] is not None:
                                     bin_label = bin_label + ' center = ' + str(meta['parameters'][i]['bins'][0]['centers'][l]) + bin_units
@@ -539,41 +558,39 @@ def hapiplot(*args, **kwargs):
                             col_name = 'col #%d' % l
 
                         if 'label' in meta['parameters'][i]:
+                            #print(meta)
+                            #print(meta['parameters'][i]['label'])
                             if type(meta['parameters'][i]['label']) == list:
                                 col_name = meta['parameters'][i]['label'][l]
 
                         if type(units) == list:
                             if type(units[l]) == str:
                                 legendlabels.append(col_name + ' [' + units[l] + '] ' + bin_label)
-                            else:
+                            elif units[l] == None:
                                 legendlabels.append(col_name + ' [] ' + bin_label)
+                            else:
+                                legendlabels.append(col_name + ' ' + bin_label)
                         else:
                             # Units are on y label
                             legendlabels.append(col_name + ' ' + bin_label)
-                    opts['tsopts']['legendlabels'] = legendlabels
+                    tsopts['legendlabels'] = legendlabels
 
+            # If xlabel in opts and opts['tsopts'], warn?
+            if opts['xlabel'] != '' and 'xlabel' not in opts['tsopts']:
+                tsopts['xlabel'] = opts['xlabel']
 
-            if opts['xlabel'] != '':
-                opts['tsopts']['xlabel'] = opts['xlabel']
+            tsopts['ylabel'] = ylabel
+            if opts['ylabel'] != '' and 'ylabel' not in opts['tsopts']:
+                tsopts['ylabel'] = opts['ylabel']
 
-            opts['tsopts']['ylabel'] = ylabel
-            if opts['ylabel'] != '':
-                opts['tsopts']['ylabel'] = opts['ylabel']
+            tsopts['title'] = title
+            if opts['title'] != '' and 'title' not in opts['tsopts']:
+                tsopts['title'] = opts['title']
 
-            opts['tsopts']['title'] = title
-            if opts['title'] != '':
-                opts['tsopts']['title'] = opts['title']
-
-            if opts['logx'] is not False:
-                opts['tsopts']['logx'] = True
-            if opts['logy'] is not False:
-                opts['tsopts']['logy'] = True
-
-            tsopts = {
-                        'logging': opts['logging'],
-                        'returnimage': opts['returnimage'],
-                        'transparent': opts['rcParams']['savefig.transparent']
-                    }
+            if opts['logx'] is not False and 'logx' not in opts['tsopts'] :
+                tsopts['logx'] = True
+            if opts['logy'] is not False and 'logy' not in opts['tsopts']:
+                tsopts['logy'] = True
 
             # Apply tsopts
             for key, value in opts['tsopts'].items():
@@ -581,6 +598,7 @@ def hapiplot(*args, **kwargs):
 
             with rc_context(rc=opts['rcParams']):
                 fig = timeseries(Time, y, **tsopts)
+
             meta["parameters"][i]['hapiplot']['figure'] = fig
 
 

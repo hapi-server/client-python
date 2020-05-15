@@ -38,3 +38,5 @@ v0.1.2b:
 v0.1.2: 2019-01-16 -- Tagged and pip-installable version
 v0.1.3b:
 	2019-01-17 -- Correction for subset() when only time param requested
+	2020-05-15 -- Correct interpretation of size
+	2020-05-15 -- Support HAPI 2.1 unit and label arrays

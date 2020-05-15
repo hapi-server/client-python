@@ -39,10 +39,19 @@ def heatmap(x, y, z, **kwargs):
 
     kwargs:
 
+        Axes
+        ----
+        * xlabel
+        * ylabel
+        * title
+        * logx
+        * logy
+        
         Colorbar
         ------
         * zlabel
         * ztitle
+        * logz
         * clim - Ignore if ...
         * cmap
         * cmap.name (ignored if cmap given)

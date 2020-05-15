@@ -1,6 +1,6 @@
 import numpy as np
 
-tests = [9]
+tests = [10]
 #tests = range(0,9)
 
 for tn in tests:
@@ -313,20 +313,30 @@ for tn in tests:
         from hapiclient import hapi
         from hapiclient import hapiplot
 
-        server     = 'http://hapi-server.org/servers/TestData/hapi'
+        #server     = 'http://hapi-server.org/servers/TestData/hapi'
+        server0     = 'http://localhost:9998/TestData/hapi'
+        server1     = 'http://localhost:9998/TestData2.1/hapi'
         dataset    = 'dataset1'
         start      = '1970-01-01Z'
         stop       = '1970-01-01T00:00:11Z'
         opts       = {'logging': True, 'usecache': False}
 
-        meta = hapi(server, dataset, **opts)
-        hapiplot(data, meta)
+        meta1 = hapi(server1, dataset, **opts)
+        for i in range(0,len(meta1['parameters'])):
+            parameter  = meta1['parameters'][i]['name']
+            data, meta = hapi(server1, dataset, parameter, start, stop, **opts)
+            if i > 0: # Time parameter alone when i = 0. No fill allowed for time parameter.
+                # Change fill value to be same as second element of parameter array.
+                meta["parameters"][1]['fill'] = data[parameter].take(1).astype('U')
+            hapiplot(data, meta, **opts)
 
-        if False:
-            for i in range(0,len(meta0['parameters'])):
-                parameter  = meta0['parameters'][i]['name']
-                data, meta = hapi(server, dataset, parameter, start, stop, **opts)
-                if i > 0: # Time parameter alone when i = 0. No fill allowed for time parameter.
-                    # Change fill value to be same as second element of parameter array.
-                    meta["parameters"][1]['fill'] = data[parameter].take(1).astype('U')
-                hapiplot(data, meta, **opts)
+        meta0 = hapi(server0, dataset, **opts)
+        for i in range(0,len(meta0['parameters'])):
+            parameter  = meta0['parameters'][i]['name']
+            data, meta = hapi(server0, dataset, parameter, start, stop, **opts)
+            if i > 0: # Time parameter alone when i = 0. No fill allowed for time parameter.
+                # Change fill value to be same as second element of parameter array.
+                meta["parameters"][1]['fill'] = data[parameter].take(1).astype('U')
+            hapiplot(data, meta, **opts)
+
+        
