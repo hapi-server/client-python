@@ -1,10 +1,10 @@
 import os
-import re
 import hashlib
 import json
 
 import numpy as np
 from matplotlib import rc_context
+from matplotlib import rcParams
 
 from hapiclient.hapi import hapitime2datetime
 from hapiclient.hapi import request2path
@@ -194,12 +194,14 @@ def hapiplot(*args, **kwargs):
                     {
                         'savefig.dpi': 144,
                         'savefig.format': 'png',
-                        'savefig.bbox': 'standard',
+                        'savefig.bbox': 'tight',
                         'savefig.transparent': True,
                         'figure.max_open_warning': 50,
                         'figure.figsize': (7, 3),
                         'figure.dpi': 144,
-                        'axes.titlesize': 10
+                        'axes.titlesize': 10,
+                        "font.family": "serif",
+                        "font.serif": ["Times New Roman"] + rcParams['font.serif']
                     },
                 '_rcParams': {
                         'figure.bbox': 'standard'
@@ -213,7 +215,8 @@ def hapiplot(*args, **kwargs):
     log('Running hapi.py version %s' % __version__, opts)
 
     # _rcParams are not actually rcParams:
-    #'figure.bbox': 'standard', # Set to 'tight' to have fig.tight_layout() called before figure shown.
+    #'figure.bbox': 'standard',
+    # Set to 'tight' to have fig.tight_layout() called before figure shown.
 
     if opts["saveimage"]:
         # Create cache directory
@@ -564,7 +567,9 @@ def hapiplot(*args, **kwargs):
                                 col_name = meta['parameters'][i]['label'][l]
 
                         if type(units) == list:
-                            if type(units[l]) == str:
+                            if len(units) == 1:
+                                legendlabels.append(col_name + ' [' + units[0] + '] ' + bin_label)                                
+                            elif type(units[l]) == str:
                                 legendlabels.append(col_name + ' [' + units[l] + '] ' + bin_label)
                             elif units[l] == None:
                                 legendlabels.append(col_name + ' [] ' + bin_label)
