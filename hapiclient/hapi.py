@@ -61,14 +61,6 @@ def subset(meta, params):
     return meta
 
 
-def server2dirname(server):
-    """Convert a server URL to a directory name."""
-    
-    urld = re.sub(r"https*://", "", server)
-    urld = re.sub(r'/', '_', urld)
-    return urld
-
-
 def cachedir(*args):
     """HAPI cache directory.
     
@@ -85,6 +77,12 @@ def cachedir(*args):
         # cachedir()
         return tempfile.gettempdir() + os.path.sep + 'hapi-data'
 
+def server2dirname(server):
+    """Convert a server URL to a directory name."""
+    
+    urld = re.sub(r"https*://", "", server)
+    urld = re.sub(r'/', '_', urld)
+    return urld
 
 def request2path(*args):
     # request2path(server, dataset, parameters, start, stop)
@@ -98,12 +96,12 @@ def request2path(*args):
 
     # url subdirectory
     urldirectory = server2dirname(args[0])
-    fname = '%s_%s_%s_%s' % (args[1], re.sub(',', '-', args[2]),
+    fname = '%s_%s_%s_%s' % (re.sub('/','_',args[1]), 
+                             re.sub(',', '-', args[2]),
                              re.sub(r'-|:|\.|Z', '', args[3]),
                              re.sub(r'-|:|\.|Z', '', args[4]))
 
     return os.path.join(cachedirectory, urldirectory, fname)
-
 
 def hapiopts():
     """Return allowed options for hapi().
@@ -278,8 +276,9 @@ def hapi(*args, **kwargs):
         # will be stored in a .pkl file. Metadata for all parameters is
         # requested and response is subsetted so only metadata for PARAMETERS
         # is returned.
-        fnamejson = urld + os.path.sep + DATASET + '.json'
-        fnamepkl  = urld + os.path.sep + DATASET + '.pkl'
+        fname_root = request2path(SERVER, DATASET, '', '', '', opts['cachedir'])
+        fnamejson = fname_root + '.json'
+        fnamepkl  = fname_root + '.pkl'
 
         if nin == 5:  # Data requested
             # URL to get CSV (will be used if binary response is not available)
@@ -291,17 +290,13 @@ def hapi(*args, **kwargs):
             # Raw CSV and HAPI Binary (no header) will be stored in .csv and 
             # .bin files. Parsed response of either CSV or HAPI Binary will
             # be stored in a .npy file.
-            fname = '%s_%s_%s_%s' % (DATASET, re.sub(',', '-', PARAMETERS),
-                                     re.sub(r'-|:|\.|Z', '', START),
-                                     re.sub(r'-|:|\.|Z', '', STOP))
-            fnamecsv = urld + os.path.sep + fname + '.csv'
-            fnamebin = urld + os.path.sep + fname + '.bin'
-            fnamenpy = urld + os.path.sep + fname + '.npy'
-            
             # fnamepklx will contain additional metadata about the request
             # including d/l time, parsing time, and the location of files.
-            fnamepklx = request2path(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])
-            fnamepklx = fnamepklx + ".pkl"
+            fname_root = request2path(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])
+            fnamecsv = fname_root + '.csv'
+            fnamebin = fname_root + '.bin'
+            fnamenpy = fname_root + '.npy'            
+            fnamepklx = fname_root + ".pkl"
 
         metaFromCache = False
         if opts["usecache"]:
