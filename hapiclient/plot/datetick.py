@@ -413,7 +413,6 @@ def datetick(dir, **kwargs):
         time = mpld.num2date(ticks)
 
     if debug:
-        print(labels)
         xl = axes.get_xlim()
         print(mpld.num2date(xl[0]))
         print(mpld.num2date(ticks[0]))        
