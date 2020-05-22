@@ -13,12 +13,20 @@ t = np.array([start + timedelta(seconds=i) for i in range(T)])
 y = np.arange(0, T)
 y = np.vstack((y, y)).T
 
-rcParams = {'font.size': 6.0, 'figure.facecolor': 'green'}
-opts = {'style': 'seaborn-dark', 'rcParams': rcParams}
-fig = timeseries(t, y, **opts)
-fig.show()
-fig.set_facecolor('gray')
-fig.axes[0].set_facecolor('yellow')
+from matplotlib import rc_context
+# Ubuntu - type1cm package needed. Otherwise text.usetex fails
+rcParams = {'text.usetex': False}
+with rc_context(rc=rcParams):
+    if rcParams['text.usetex']:
+        try:
+            fig = timeseries(t, y)
+        except RuntimeError as e:
+            print('------')
+    else:
+        fig = timeseries(t, y)        
+    #fig.show()
+    fig.set_facecolor('gray')
+    fig.axes[0].set_facecolor('yellow')
 fig.axes[0].set_ylabel('y label')
 
 # If any parts of the image are changed from the command line (i.e.,
