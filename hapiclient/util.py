@@ -345,6 +345,10 @@ def urlerror(err, url):
         else:
             error('Error message: "%s" when trying to read %s.' % (reason, url))
 
+    if hasattr(err,'reason') or hasattr(err, 'code'):
+        nonhapierror(err)
+        return
+
     try:
         jres = load(err)
         if 'status' in jres:
@@ -356,6 +360,8 @@ def urlerror(err, url):
     except decoder.JSONDecodeError as e:
         # TODO: Append a note to error message that HAPI Error JSON could not be parsed.
         pass
+    except Exception as e:
+        print(e)
 
     nonhapierror(err)
 
