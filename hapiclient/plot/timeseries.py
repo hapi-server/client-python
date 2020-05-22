@@ -84,7 +84,11 @@ def timeseries(t, y, **kwargs):
         ax = fig.add_subplot(111)
         ax.plot(t, y, **props)
         ax.set(ylabel=opts['ylabel'], xlabel=opts['xlabel'], title=opts['title'])
-        ax.set_position([0.1,0.125,0.870,0.75])
+        try:
+            ax.ticklabel_format(axis='y', style='sci', scilimits=(-3,3), useMathText=True)
+        except:
+            pass
+        ax.set_position([0.11,0.125,0.870,0.75])
         if opts['legendlabels'] != []:
             ax.legend(opts['legendlabels'])
     else:
@@ -98,7 +102,11 @@ def timeseries(t, y, **kwargs):
         if opts['legendlabels'] != []:
             plt.legend(opts['legendlabels'])
         ax = plt.gca()
-        ax.set_position([0.1,0.14,0.86,0.73])
+        ax.set_position([0.11,0.14,0.86,0.73])
+        try:
+            ax.ticklabel_format(axis='y', style='sci', scilimits=(-3,3), useMathText=True)
+        except:
+            pass
         fig = plt.gcf()
 
     if len(ylabels) > 0:
@@ -111,7 +119,17 @@ def timeseries(t, y, **kwargs):
         datetick('x', axes=ax)
     if isinstance(y[0], datetime.datetime):
         datetick('y', axes=ax)
-
+    
+    # See
+    # https://stackoverflow.com/questions/24581194/matplotlib-text-bounding-box-dimensions
+    # for determining text bounding box in figure coordinates
+    if False:
+        for item in ax.get_yticklabels():
+            ml = 0 # max length
+            for t in item.get_text().split('\n'):
+                l = len(t)
+                if l > ml: ml = l 
+    
     # savefig.transparent=True requires the following for the saved image
     # to have a transparent background. Seems as though figure.facealpha
     # and axes.facealpha should be rc parameters, but they are not. So
