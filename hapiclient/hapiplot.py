@@ -201,7 +201,8 @@ def hapiplot(*args, **kwargs):
                         'figure.dpi': 144,
                         'axes.titlesize': 10,
                         "font.family": "serif",
-                        "font.serif": ["Times New Roman"] + rcParams['font.serif']
+                        "font.serif": rcParams['font.serif'],
+                        "font.weight": "normal"
                     },
                 '_rcParams': {
                         'figure.bbox': 'standard'
