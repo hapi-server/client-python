@@ -333,8 +333,12 @@ def heatmap(x, y, z, **kwargs):
     if y.ndim == 1 and not (len(y) == Ny or len(y) == Ny+1):
         raise ValueError('Required: len(y) == z.shape[0] or len(y) == z.shape[0] + 1.')
 
+    categoricalx = iscategorical(x)
     if len(x.shape) == 1 and len(x) == Nx:
         # Centers given. Calculate edges.
+        if categoricalx:
+            xlabels = x
+            x = np.linspace(0, y.shape[0]-1, y.shape[0], dtype='int32')
         xedges = False
         xc = x
         x = calcEdges(x, 'x')
@@ -343,8 +347,12 @@ def heatmap(x, y, z, **kwargs):
         xc = np.array([])
         xedges = True
 
+    categoricaly = iscategorical(y)
     if len(y.shape) == 1 and len(y) == Ny:
         # Centers given. Calculate edges.
+        if categoricaly:
+            ylabels = y
+            y = np.linspace(0, y.shape[0]-1, y.shape[0], dtype='int32')
         yedges = False
         yc = y
         y = calcEdges(y, 'y')
@@ -481,9 +489,8 @@ def heatmap(x, y, z, **kwargs):
             ax.set_yticklabels(ycl)
 
     # Note: categoricalx and categoricaly are very similar.
-    categoricalx = iscategorical(x)
     if categoricalx:
-        xcategories, x = categoryinfo(x)
+        xcategories, x = categoryinfo(xlabels)
         # TODO: This will create too many ticks if # of categories is large
         ax.set_xticklabels(xcategories)
         ax.set_xticks(list(ax.get_xticks()) + [-0.5] + list(ax.get_xticks()+0.5))
@@ -494,9 +501,8 @@ def heatmap(x, y, z, **kwargs):
                 l.set_markeredgewidth(0)
             k = k+1
 
-    categoricaly = iscategorical(y)
     if categoricaly:
-        ycategories, y = categoryinfo(y)
+        ycategories, y = categoryinfo(ylabels)
         ax.set_yticklabels(ycategories)
         ax.set_yticks(list(ax.get_yticks()) + [-0.5] + list(ax.get_yticks()+0.5))
         k = 0
@@ -511,7 +517,7 @@ def heatmap(x, y, z, **kwargs):
     if categoricalz:
         zcategories, z = categoryinfo(z)
 
-    ax.set_ylim(y[0], y[-1])
+    #ax.set_ylim(y[0], y[-1])
     if opts['xlabel']:
         ax.set_xlabel(opts['xlabel'])
     if opts['logx']:

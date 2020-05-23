@@ -1,7 +1,8 @@
 import numpy as np
 
-tests = [10]
-#tests = range(0,9)
+#tests = [10]
+tests = range(0,11)
+#tests = [10]
 
 for tn in tests:
 
@@ -10,7 +11,7 @@ for tn in tests:
         from hapiclient import hapi
         from hapiclient import hapiplot
 
-        server     = 'http://hapi-server.org/servers/TestData/hapi'
+        server     = 'http://hapi-server.org/servers/TestData2.0/hapi'
         dataset    = 'dataset1'
         parameters = 'scalar,spectra'
         start      = '1970-01-01Z'
@@ -28,7 +29,7 @@ for tn in tests:
         from hapiclient import hapi
         from hapiclient import hapiplot
 
-        server     = 'http://hapi-server.org/servers/TestData/hapi'
+        server     = 'http://hapi-server.org/servers/TestData2.0/hapi'
         dataset    = 'dataset1'
         start      = '1970-01-01Z'
         stop       = '1970-01-01T00:00:11Z'
@@ -64,7 +65,7 @@ for tn in tests:
         from hapiclient import hapi
         from hapiclient import hapiplot
 
-        server     = 'http://hapi-server.org/servers/TestData/hapi'
+        server     = 'http://hapi-server.org/servers/TestData2.0/hapi'
         dataset    = 'dataset1'
         start      = '1970-01-01Z'
         stop       = '1970-01-01T00:00:11Z'
@@ -100,7 +101,7 @@ for tn in tests:
         from hapiclient import hapi
         from hapiclient import hapiplot
 
-        server     = 'http://hapi-server.org/servers/TestData/hapi'
+        server     = 'http://hapi-server.org/servers/TestData2.0/hapi'
         dataset    = 'dataset1'
         start      = '1970-01-01Z'
         stop       = '1970-01-01T00:00:11Z'
@@ -133,7 +134,7 @@ for tn in tests:
         from hapiclient import hapi
         from hapiclient import hapiplot
 
-        server     = 'http://hapi-server.org/servers/TestData/hapi'
+        server     = 'http://hapi-server.org/servers/TestData2.0/hapi'
         dataset    = 'dataset1'
         start      = '1970-01-01Z'
         stop       = '1970-01-01T00:00:11Z'
@@ -170,7 +171,7 @@ for tn in tests:
         from hapiclient import hapi
         from hapiclient import hapiplot
 
-        server     = 'http://hapi-server.org/servers/TestData/hapi'
+        server     = 'http://hapi-server.org/servers/TestData2.0/hapi'
         dataset    = 'dataset1'
         parameters = 'vector'
         start      = '1970-01-01Z'
@@ -232,7 +233,7 @@ for tn in tests:
         from hapiclient import hapiplot
 
         # Spectra w/ only bin centers and different timeStampLocations
-        server     = 'http://hapi-server.org/servers/TestData/hapi'
+        server     = 'http://hapi-server.org/servers/TestData2.0/hapi'
         dataset    = 'dataset1'
         start      = '1970-01-01Z'
         stop       = '1970-01-01T00:00:11Z'
@@ -276,67 +277,41 @@ for tn in tests:
         hapiplot(data, meta, **popts)
 
     if tn == 9:
-        # Spectra w/centers and ranges with gaps
-        from hapiclient.hapi import hapi
-        from hapiclient.hapiplot import hapiplot
-        import numpy as np
-        import datetime as datetime
-
-        T = 3
-        data = np.ndarray(shape=(T), dtype=[('Time', 'O'), ('heatmap', '<f8', (2,))])
-
-        start = datetime.datetime(1970, 1, 1)
-        data['Time'] = np.array([start + datetime.timedelta(seconds=i) for i in range(T)])
-        #data['heatmap'] = np.array([[1.0,2.0,3.0],[4.0,5.0,6.0],[7.0,8.0,9.0]])
-        data['heatmap'] = np.array([[1.0,2.0],[4.0,5.0],[7.0,8.0]])
-        #data['heatmap'] = np.array([[1.0,2.0],[4.0,5.0]])
-        #data['heatmap'] = np.array([[1.0,2.0]])
-
-        # Create ranges with gaps
-        r = []
-        c = []
-        for i in range(0,data['heatmap'].shape[1]):
-            c.append(i)
-            r.append([c[i]-0.5,c[i]+0.25])
-
-        meta['parameters'][1]['name'] = 'heatmap'
-        meta['parameters'][1]['bins'] = [{}]
-
-        meta['parameters'][1]['bins'][0]['name'] = 'bin name'
-        meta['parameters'][1]['bins'][0]['units'] = 'bin unit'
-        meta['parameters'][1]['bins'][0]['centers'] = c
-        meta['parameters'][1]['bins'][0]['ranges'] = r
-        hapiplot(data, meta)
-
-    if tn == 10:
-        # All TestData parameters
+        # All TestData2.0 parameters
         from hapiclient import hapi
         from hapiclient import hapiplot
 
-        #server     = 'http://hapi-server.org/servers/TestData/hapi'
-        server0     = 'http://localhost:9998/TestData/hapi'
-        server1     = 'http://localhost:9998/TestData2.1/hapi'
+        server     = 'http://localhost:9998/TestData2.0/hapi'
         dataset    = 'dataset1'
         start      = '1970-01-01Z'
         stop       = '1970-01-01T00:00:11Z'
         opts       = {'logging': True, 'usecache': False}
 
-        meta1 = hapi(server1, dataset, **opts)
-        for i in range(0,len(meta1['parameters'])):
-            parameter  = meta1['parameters'][i]['name']
-            data, meta = hapi(server1, dataset, parameter, start, stop, **opts)
+        meta = hapi(server, dataset, **opts)
+        for i in range(0,len(meta['parameters'])):
+            parameter  = meta['parameters'][i]['name']
+            data, metax = hapi(server, dataset, parameter, start, stop, **opts)
             if i > 0: # Time parameter alone when i = 0. No fill allowed for time parameter.
                 # Change fill value to be same as second element of parameter array.
-                meta["parameters"][1]['fill'] = data[parameter].take(1).astype('U')
-            hapiplot(data, meta, **opts)
+                metax["parameters"][1]['fill'] = data[parameter].take(1).astype('U')
+            hapiplot(data, metax, **opts)
 
-        meta0 = hapi(server0, dataset, **opts)
-        for i in range(0,len(meta0['parameters'])):
-            parameter  = meta0['parameters'][i]['name']
-            data, meta = hapi(server0, dataset, parameter, start, stop, **opts)
+    if tn == 10:
+        # All TestData2.1 parameters
+        from hapiclient import hapi
+        from hapiclient import hapiplot
+
+        server     = 'http://localhost:9998/TestData2.1/hapi'
+        dataset    = 'dataset1'
+        start      = '1970-01-01Z'
+        stop       = '1970-01-01T00:00:11Z'
+        opts       = {'logging': True, 'usecache': False}
+
+        meta = hapi(server1, dataset, **opts)
+        for i in range(0,len(meta['parameters'])):
+            parameter  = meta['parameters'][i]['name']
+            data, metax = hapi(server, dataset, parameter, start, stop, **opts)
             if i > 0: # Time parameter alone when i = 0. No fill allowed for time parameter.
                 # Change fill value to be same as second element of parameter array.
-                meta["parameters"][1]['fill'] = data[parameter].take(1).astype('U')
-            hapiplot(data, meta, **opts)
-
-        
+                metax["parameters"][1]['fill'] = data[parameter].take(1).astype('U')
+            hapiplot(data, metax, **opts)        
