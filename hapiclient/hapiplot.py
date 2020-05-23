@@ -15,7 +15,7 @@ from hapiclient.plot.heatmap import heatmap
 from hapiclient.plot.util import setopts
 
 
-def imagepath(meta, i, cachedir, opts):
+def imagepath(meta, i, cachedir, opts, fmt):
 
     optsmd5 = hashlib.md5(json.dumps(opts, sort_keys=True).encode('utf8')).hexdigest()
 
@@ -26,7 +26,7 @@ def imagepath(meta, i, cachedir, opts):
                          meta['x_time.max'],
                          cachedir)
 
-    return fname + "-" + optsmd5 + "." + opts['savefig.format']
+    return fname + "-" + optsmd5 + "." + fmt
 
 
 def fill2mask(y, fill):
@@ -245,10 +245,13 @@ def hapiplot(*args, **kwargs):
             # Will use given rc style parameters and style name to generate file name.
             # Assumes rc parameters of style and hapiplot defaults never change.
             styleParams = {}
+            fmt = opts['rcParams']['savefig.format']
             if 'rcParams' in kwargs:
                 styleParams = kwargs['rcParams']
+                if 'savefig.format' in kwargs['rcParams']:
+                    kwargs['rcParams']['savefig.format']
 
-            fnameimg = imagepath(meta, i, opts['cachedir'], styleParams)
+            fnameimg = imagepath(meta, i, opts['cachedir'], styleParams, fmt)
 
         if opts['useimagecache'] and opts['returnimage'] and os.path.isfile(fnameimg):
             log('Returning cached binary image data in ' + fnameimg, opts)
