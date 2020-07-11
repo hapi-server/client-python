@@ -33,7 +33,7 @@ def log(msg, opts):
             msg = msg.replace(opts['cachedir'], '')
 #        import pdb; pdb.set_trace()
         pre = sys._getframe(1).f_code.co_name + '(): '
-        print(pre + msg, flush=True)
+        print(pre + msg)
 
 
 def jsonparse(res, url):
