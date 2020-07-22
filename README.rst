@@ -4,16 +4,10 @@ HAPI client for Python 2/3
 Installation
 ------------
 
-Operating system command line:
-
 .. code:: bash
 
     pip install hapiclient --upgrade
-
-or
-
-.. code:: bash
-
+    # or
     pip install https://github.com/hapi-server/client-python --upgrade
 
 See the `Appendix <#Appendix>`__ for a fail-safe installation method.
