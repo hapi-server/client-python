@@ -5,15 +5,17 @@ PYTHON=python3.6
 # TODO: Use tox.
 PYTHONVERS=python2.7 python3.5 python3.6 python3.7
 
-# VERSION is updated in "make version-update" step. Do not edit.
+# VERSION is updated in "make version-update" step and derived
+# from CHANGES.txt. Do not edit.
 VERSION=0.1.3b
 SHELL:= /bin/bash
 
 # First-time use, need to create the following virtual environments for testing:
-# conda create -n python2.7 python=2.7; conda install jupyter; conda install spyder
-# conda create -n python3.5 python=3.5; conda install jupyter; conda install spyder
-# conda create -n python3.6 python=3.6; conda install jupyter; conda install spyder
-# conda create -n python3.7 python=3.7; conda install jupyter; conda install spyder
+# conda create -y -n python2.7 python=2.7;
+# conda create -y -n python3.5 python=3.5;
+# conda create -y -n python3.6 python=3.6;
+# conda create -y -n python3.7 python=3.7;
+# conda create -y -n python3.8 python=3.8;
 #
 # Development:
 # Test hapi() data read functions using repository code:
@@ -64,7 +66,7 @@ repository-test-plots-all:
 
 # 'python setup.py develop' creates symlinks in system package directory.
 repository-test-data:
-	make clean
+	@make clean
 	source activate $(PYTHON); $(PYTHON) setup.py develop
 	source activate $(PYTHON); $(PYTHON) -m pytest -v -m 'not long' hapiclient/test/test_hapi.py
 	source activate $(PYTHON); $(PYTHON) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
@@ -72,7 +74,7 @@ repository-test-data:
 
 # These require visual inspection.
 repository-test-plots:
-	make clean
+	@make clean
 	source activate $(PYTHON); $(PYTHON) setup.py develop
 	source activate $(PYTHON); $(PYTHON) hapi_demo.py
 
@@ -86,6 +88,7 @@ repository-test-plots-other:
 ##########################################################################
 
 ##########################################################################
+# Packaging
 package:
 	make clean
 	make version-update
@@ -162,7 +165,6 @@ install:
 	conda list | grep hapiclient
 	pip list | grep hapiclient
 
-
 # Run pytest twice because first run creates test files that
 # subsequent tests use for comparison.
 test-clean:
@@ -171,41 +173,15 @@ test-clean:
 	pytest -v hapiclient/test/test_hapi.py
 
 clean:
-	- find . -name __pycache__ | xargs rm -rf {}
-	- find . -name *.pyc | xargs rm -rf {}
-	- find . -name *.DS_Store | xargs rm -rf {}
-	- find . -type d -name __pycache__ | xargs rm -rf {}
-	- find . -name *.pyc | xargs rm -rf {}
-	- rm -f *~
-	- rm -f \#*\#
-	- rm -rf env
-	- rm -rf dist
-	- rm -f MANIFEST
-	- rm -rf .pytest_cache/
-	- rm -rf hapiclient.egg-info/
-
-##########################################################################
-# Not used
-requirements:
-	pip install pipreqs
-	pipreqs hapiclient/
-
-pngquant: bin/pngquant
-	git clone https://github.com/pornel/pngquant.git
-	make bin/pngquant
-
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-bin/pngquant:
-	echo $(UNAME_S)
-	echo "--- Attempting to compile pngquant."
-	echo "--- If this fails, you may need to install libpng12 headers."
-	cd pngquant; ./configure CFLAGS="-I../libpng12/" && make;
-endif
-
-ifeq ($(UNAME_S),Darwin)
-bin/pngquant:
-	echo "--- Attempting to compile pngquant."
-	brew install libpng
-	cd pngquant; ./configure && make
-endif
+	- @find . -name __pycache__ | xargs rm -rf {}
+	- @find . -name *.pyc | xargs rm -rf {}
+	- @find . -name *.DS_Store | xargs rm -rf {}
+	- @find . -type d -name __pycache__ | xargs rm -rf {}
+	- @find . -name *.pyc | xargs rm -rf {}
+	- @rm -f *~
+	- @rm -f \#*\#
+	- @rm -rf env
+	- @rm -rf dist
+	- @rm -f MANIFEST
+	- @rm -rf .pytest_cache/
+	- @rm -rf hapiclient.egg-info/
