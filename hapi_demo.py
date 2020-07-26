@@ -3,8 +3,11 @@
 # from command line.
 
 # Note:
-# In IPython, enter %matplotlib qt on command line to open plots in 
-# new window. Enter %matplotlib inline to revert.
+# In IPython, enter 
+#    %matplotlib qt
+# on command line to open plots in new window. Enter
+#    %matplotlib inline
+# to revert.
 
 # For a more extensive demo, see
 # https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb
@@ -36,8 +39,8 @@ def omniweb():
     
 def sscweb():
 
-    from hapiclient.hapi import hapi
-    from hapiclient.hapiplot import hapiplot
+    from hapiclient import hapi
+    from hapiclient import hapiplot
     
     # SSCWeb data
     server     = 'http://hapi-server.org/servers/SSCWeb/hapi'
@@ -51,8 +54,8 @@ def sscweb():
 
 def cdaweb():    
 
-    from hapiclient.hapi import hapi
-    from hapiclient.hapiplot import hapiplot
+    from hapiclient import hapi
+    from hapiclient import hapiplot
 
     # CDAWeb data - Magnitude and BGSEc from dataset AC_H0_MFI
     server     = 'https://cdaweb.gsfc.nasa.gov/hapi'
@@ -88,6 +91,7 @@ def cdaweb():
     print('')
     
 def cassini():
+
     from hapiclient import hapi
     from hapiclient import hapiplot
     
