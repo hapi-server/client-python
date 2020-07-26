@@ -312,12 +312,12 @@ p155
 sVsize
 p156
 (lp157
-I3
-aI2
+I2
+aI3
 asa(dp158
 Vdescription
 p159
-VTransformation matrix elements Txx, Txy, Txz, Tyx, Tyy, Tzz, Tzx, Tyy, Tzz.
+VTransformation matrix elements Txx=0, Txy=1, Txz=2, Tyx=3, Tyy=4, Tzz=5, Tzx=6, Tzy=7, Tzz=9.
 p160
 sVname
 p161
@@ -341,7 +341,7 @@ I9
 asa(dp170
 Vdescription
 p171
-V3-D transformation matrix
+V3-D transformation matrix. Txx=0, Txy=1, Txz=2, Tyx=3, Tyy=4, Tzz=5, Tzx=6, Tzy=7, Tzz=9
 p172
 sVname
 p173
@@ -645,8 +645,8 @@ aI19
 asasVsize
 p262
 (lp263
-I10
-aI2
+I2
+aI10
 asasVstopDate
 p264
 V2016-12-31Z
