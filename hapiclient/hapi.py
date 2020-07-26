@@ -424,8 +424,8 @@ def hapi(*args, **kwargs):
 
             if type(psizes[i]) is list and len(psizes[i]) > 1:
                 #psizes[i] = list(reversed(psizes[i]))
-                psizes[i] = list( psizes[i])
-                
+                psizes[i] = list(psizes[i])
+
             # First column of ith parameter.
             cols[i][0] = ss
             # Last column of ith parameter.
@@ -467,6 +467,10 @@ def hapi(*args, **kwargs):
                     missing_length = True
                     if ptype == 'string' or ptype == 'isotime':
                         dtype = (pnames[i], object, psizes[i])
+
+            # https://numpy.org/doc/stable/release/1.17.0-notes.html#shape-1-fields-in-dtypes-won-t-be-collapsed-to-scalars-in-a-future-version
+            if dtype[2] == 1:
+                dtype = dtype[0:2]
 
             dt.append(dtype)
         ##################################################################
@@ -589,6 +593,7 @@ def hapi(*args, **kwargs):
                                 else:  # Aggregate
                                     tmp = np.vstack((tmp, table[table.dtype.names[c]]))
                             tmp = np.squeeze(np.reshape(np.transpose(tmp), shape))
+
                             data[pnames[pn]] = tmp
 
                 if opts['method'] == 'pandas' or opts['method'] == 'pandasnolength':
@@ -599,8 +604,6 @@ def hapi(*args, **kwargs):
 
                     # Allocate output N-D array (It is not possible to pass dtype=dt
                     # as computed to pandas.read_csv, so need to create new ND array.)
-                    # print(dt)
-                    # import pdb; pdb.set_trace()
                     data = np.ndarray(shape=(len(df)), dtype=dt)
 
                     # Insert data from dataframe into N-D array
@@ -621,6 +624,10 @@ def hapi(*args, **kwargs):
                         dtype = (pnames[i], str(data[pnames[i]].astype('<S').dtype), psizes[i])
                     else:
                         dtype = dt[i]
+
+                    # https://numpy.org/doc/stable/release/1.17.0-notes.html#shape-1-fields-in-dtypes-won-t-be-collapsed-to-scalars-in-a-future-version
+                    if len(dtype) > 2 and dtype[2] == 1:
+                        dtype = dtype[0:2]
                     dt2.append(dtype)
 
                 # Create new N-D array that won't have any parameters with
