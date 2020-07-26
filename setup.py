@@ -1,14 +1,25 @@
 from setuptools import setup, find_packages
 import sys
 
-install_requires = ["numpy>=1.14.3",
-                    "pandas>=0.23.*",
-                    "isodate>=0.6.0"]
+install_requires = ["isodate>=0.6.0"]
 
-if sys.version_info > (3, 5):
-    install_requires.append('matplotlib>=2.2.2')
+# Python 3.6 and Matplotlib 3.3 on OS-X 10.15.4 give error when using
+# rc = matplotlib.style: 
+# AttributeError: module 'matplotlib' has no attribute 'style'
+if sys.version_info >= (3, 6):
+    install_requires.append('matplotlib>=2.2.2,<3.3')
+    install_requires.append('pandas>=0.23')
+    install_requires.append('numpy>=1.14.3')
+elif sys.version_info < (3, 6):
+    # Beginning with Matplotlib 3.1, Python 3.6 or above is required.
+    install_requires.append('matplotlib>=2.2.2,<3.0')
+    install_requires.append("pandas<1.0")
+    install_requires.append("numpy<1.17")
+    install_requires.append("kiwisolver<1.2")
 else:
     install_requires.append('matplotlib==2.*')
+    install_requires.append("pandas>=0.23,<1.0")
+    install_requires.append("numpy<1.17")
 
 if sys.argv[1] == 'develop':
     install_requires.append("deepdiff<3.3.0")
@@ -27,6 +38,3 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=install_requires
 )
-
-
-
