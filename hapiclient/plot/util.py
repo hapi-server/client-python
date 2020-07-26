@@ -4,7 +4,7 @@ import matplotlib
 def setopts(opts, kwargs):
 
     for key, value in kwargs.items():
-        if 'rcParams' in kwargs and key is 'rcParams':
+        if 'rcParams' in kwargs and key == 'rcParams':
             continue
         if key in opts:
             opts[key] = value
@@ -16,7 +16,7 @@ def setopts(opts, kwargs):
         for key, value in kwargs['rcParams'].items():
             opts['rcParams'][key] = kwargs['rcParams'][key]
 
-    if opts['backend'] is not 'default':
+    if opts['backend'] != 'default':
         try:
             matplotlib.use(opts['backend'], warn=False, force=True)
         except:
