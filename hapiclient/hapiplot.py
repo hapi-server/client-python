@@ -195,7 +195,7 @@ def hapiplot(*args, **kwargs):
                         'savefig.dpi': 144,
                         'savefig.format': 'png',
                         'savefig.bbox': 'tight',
-                        'savefig.transparent': True,
+                        'savefig.transparent': False,
                         'figure.max_open_warning': 50,
                         'figure.figsize': (7, 3),
                         'figure.dpi': 144,
@@ -633,7 +633,7 @@ def hapiplot(*args, **kwargs):
 
             # Two calls to fig.tight_layout() may be needed b/c of bug in PyQt:
             # https://github.com/matplotlib/matplotlib/issues/10361
-            if opts['_rcParams']['figure.bbox'] is 'tight':
+            if opts['_rcParams']['figure.bbox'] == 'tight':
                 fig.tight_layout()
 
     return meta
