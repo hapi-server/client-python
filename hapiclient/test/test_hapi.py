@@ -8,7 +8,7 @@ from hapiclient.hapi import hapi
 from hapiclient.test.readcompare import readcompare, clearcache
 
 serverbad = 'http://hapi-server.org/servers/TestData/xhapi'
-server = 'http://hapi-server.org/servers/TestData/hapi'
+server = 'http://hapi-server.org/servers/TestData2.0/hapi'
 
 # To use in program, use, e.g.,
 # from hapiclient.test.test_hapi import test_reader_short
@@ -19,7 +19,7 @@ def writepickle(fname, var):
     print("Writing " + fname)
     print("!!!!!!!!!!!!!!")
     with open(fname, 'wb') as pickle_file:
-        pickle.dump(var, pickle_file)
+        pickle.dump(var, pickle_file, protocol=2)
     pickle_file.close()
 
 def readpickle(fname):
@@ -47,7 +47,7 @@ def test_dataset():
     pklFile = 'test_dataset.pkl'
     pklFile = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data',pklFile)
     if not os.path.isfile(pklFile):
-        writepickle(pklFile,meta)
+        writepickle(pklFile, meta)
         assert True
         return
     else:
