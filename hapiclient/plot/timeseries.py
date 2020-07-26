@@ -6,6 +6,13 @@ import matplotlib
 
 from hapiclient.plot.datetick import datetick
 
+# https://github.com/pandas-dev/pandas/issues/18301
+# Suppresses depreciation warning.
+# TODO: determine what version of pandas this is needed for.
+# Observed in Matplotlib 3.0, pandas 0.25.3, Python 3.5.
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
+    
 def timeseries(t, y, **kwargs):
     '''Plot a time series
 
@@ -140,6 +147,6 @@ def timeseries(t, y, **kwargs):
         ax.patch.set_alpha(0)
 
     if not opts['returnimage']:
-        plt.show()
+        plt.show(block=True)
 
     return fig
