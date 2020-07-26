@@ -41,7 +41,9 @@ Basic Example
 Documentation
 -------------
 
-All of the features are extensively demonstrated in the `hapi_demo.ipynb <https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb>`__ Jupyter Notebook. The notebook shows example usage of the functions in this package that can be copied into a script or onto a Python command line.
+Basic usage examples for various HAPI servers are given in `hapi_demo.py <https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.py>`__
+
+All of the features are extensively demonstrated in the `hapi_demo.ipynb <https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb>`__ Jupyter Notebook.
 
 Development
 -----------
@@ -65,8 +67,8 @@ To run an individual unit test in a Python session, use, e.g.,
 
 .. code:: python
 
-    from hapiclient.test.test_hapi import test_reader
-    test_reader()
+    from hapiclient.test.test_hapi import test_reader_short
+    test_reader_short()
 
 Contact
 -------
