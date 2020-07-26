@@ -8,7 +8,7 @@ import matplotlib
 gui_env = ['Qt5Agg','QT4Agg','GTKAgg','TKAgg','WXAgg']
 for gui in gui_env:
     try:
-        matplotlib.use(gui,warn=False, force=True)
+        matplotlib.use(gui, force=True)
         import matplotlib.pyplot as plt
         break
     except:
