@@ -4,6 +4,11 @@ import numpy as np
 import warnings
 
 import matplotlib
+if matplotlib.get_backend() == 'MacOSX':
+    # draw() does not update the ticks
+    # See warning at
+    # https://matplotlib.org/3.3.0/tutorials/advanced/blitting.html#sphx-glr-tutorials-advanced-blitting-py
+    matplotlib.use('Qt5Agg', force=True)
 import matplotlib.pyplot as plt
 
 def datetick(dir, **kwargs):
@@ -68,15 +73,12 @@ def datetick(dir, **kwargs):
     else:
         axes = plt.gca()
         fig = plt.gcf()
-
-    #import pdb
-    #pdb.set_trace()
     
     debug = DOPTS['debug']
 
     def on_xlims_change(ax): datetick('x', axes=ax, set_cb=False)
     def on_ylims_change(ax): datetick('y', axes=ax, set_cb=False)
-    def draw(fig): fig.canvas.draw() # Render new ticks and tick labels
+    def draw(fig): fig.canvas.draw()
 
     bbox = axes.dataLim
 
@@ -385,8 +387,6 @@ def datetick(dir, **kwargs):
         for i in range(0,len(xt)):
             print("Tick: %s" % mpld.num2date(xt[i]))
 
-    draw(fig) # Needed?
-    
     if dir == 'x':
         axes.xaxis.set_major_locator(Mtick)
         axes.xaxis.set_minor_locator(mtick)

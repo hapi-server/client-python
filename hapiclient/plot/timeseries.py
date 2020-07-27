@@ -115,7 +115,8 @@ def timeseries(t, y, **kwargs):
             ax.ticklabel_format(axis='y', style='sci', scilimits=(-3,3), useMathText=True)
         except:
             pass
-        fig = plt.gcf()
+
+    ax.grid()
 
     if len(ylabels) > 0:
         ax.set_yticks(np.unique(y))
@@ -126,7 +127,6 @@ def timeseries(t, y, **kwargs):
     if isinstance(y[0], datetime.datetime):
         datetick('y', axes=ax)
     
-    ax.grid()
     # See
     # https://stackoverflow.com/questions/24581194/matplotlib-text-bounding-box-dimensions
     # for determining text bounding box in figure coordinates
