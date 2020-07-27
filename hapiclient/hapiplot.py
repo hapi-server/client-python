@@ -363,7 +363,7 @@ def hapiplot(*args, **kwargs):
 
             z = np.asarray(data[name])
 
-            if 'fill' in meta["parameters"][i]:
+            if 'fill' in meta["parameters"][i] and meta["parameters"][i]['fill']:
                 if meta["parameters"][i]["type"] == 'integer':
                     z = z.astype('<f8', copy=False)
                 z = fill2nan(z, meta["parameters"][i]['fill'])
@@ -459,7 +459,7 @@ def hapiplot(*args, **kwargs):
             meta["parameters"][i]['hapiplot']['colorbar'] = cb
 
         else:
-
+  
             tsopts = {
                         'logging': opts['logging'],
                         'returnimage': opts['returnimage'],
@@ -604,6 +604,7 @@ def hapiplot(*args, **kwargs):
             # Apply tsopts
             for key, value in opts['tsopts'].items():
                 tsopts[key] = value
+
 
             with rc_context(rc=opts['rcParams']):
                 fig = timeseries(Time, y, **tsopts)
