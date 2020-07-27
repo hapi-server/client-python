@@ -3,16 +3,8 @@ from datetime import datetime
 import numpy as np
 import warnings
 
-# To allow to run from command line, find a back-end that works
 import matplotlib
-gui_env = ['Qt5Agg','QT4Agg','GTKAgg','TKAgg','WXAgg']
-for gui in gui_env:
-    try:
-        matplotlib.use(gui, force=True)
-        import matplotlib.pyplot as plt
-        break
-    except:
-        continue
+import matplotlib.pyplot as plt
 
 def datetick(dir, **kwargs):
     '''

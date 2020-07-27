@@ -72,11 +72,21 @@ repository-test-data:
 	source activate $(PYTHON); $(PYTHON) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
 	source activate $(PYTHON); $(PYTHON) -m pytest -v hapiclient/test/test_hapitime2datetime.py
 
+# For plotting from the command line, we want to use pythonw instead of python
+# On OS-X, this prevents "need to install python as a framework" error.
+# The following finds the path to the binary of $(PYTHON) and replaces it with pythonw, e.g.,
+# /opt/anaconda3/envs/python3.6/bin/python3.6 -> /opt/anaconda3/envs/python3.6/bin/pythonw
+a=$(shell source activate $(PYTHON); which $(PYTHON))
+pythonw=$(subst bin/$(PYTHON),bin/pythonw,$(a))
+
 # These require visual inspection.
 repository-test-plots:
 	@make clean
 	source activate $(PYTHON); $(PYTHON) setup.py develop
-	source activate $(PYTHON); $(PYTHON) hapi_demo.py
+	# Run using pythonw instead of python only so plot windows always work
+	# for programs called from command line. This is needed for 
+	# OS-X, Python 3.5, and matplotlib instaled from pip.
+	source activate $(PYTHON); $(pythonw) hapi_demo.py
 
 repository-test-plots-other:
 	source activate $(PYTHON); $(PYTHON) hapiclient/hapiplot_test.py
