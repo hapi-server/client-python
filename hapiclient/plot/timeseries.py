@@ -79,7 +79,6 @@ def timeseries(t, y, **kwargs):
         ylabels = yu
         y = yi
 
-
     # Can't use matplotlib.style.use(style) because not thread safe.
     # Set context using 'with'.
     # Setting stylesheet method: https://stackoverflow.com/a/22794651/1491619
@@ -95,10 +94,11 @@ def timeseries(t, y, **kwargs):
             ax.ticklabel_format(axis='y', style='sci', scilimits=(-3,3), useMathText=True)
         except:
             pass
-        ax.set_position([0.11,0.125,0.870,0.75])
+        ax.set_position([0.12,0.125,0.850,0.75])
         if opts['legendlabels'] != []:
             ax.legend(opts['legendlabels'])
     else:
+
         plt.figure()
         plt.clf()
         plt.plot(t, y, **props)
@@ -106,10 +106,11 @@ def timeseries(t, y, **kwargs):
         plt.ylabel(opts['ylabel'])
         plt.xlabel(opts['xlabel'])
         plt.title(opts['title'])
+
         if opts['legendlabels'] != []:
             plt.legend(opts['legendlabels'])
         ax = plt.gca()
-        ax.set_position([0.11,0.14,0.86,0.73])
+        ax.set_position([0.12,0.125,0.850,0.75])
         try:
             ax.ticklabel_format(axis='y', style='sci', scilimits=(-3,3), useMathText=True)
         except:
@@ -120,13 +121,12 @@ def timeseries(t, y, **kwargs):
         ax.set_yticks(np.unique(y))
         ax.set_yticklabels(ylabels)
 
-    ax.grid()
-
     if isinstance(t[0], datetime.datetime):
         datetick('x', axes=ax)
     if isinstance(y[0], datetime.datetime):
         datetick('y', axes=ax)
     
+    ax.grid()
     # See
     # https://stackoverflow.com/questions/24581194/matplotlib-text-bounding-box-dimensions
     # for determining text bounding box in figure coordinates
@@ -147,6 +147,6 @@ def timeseries(t, y, **kwargs):
         ax.patch.set_alpha(0)
 
     if not opts['returnimage']:
-        plt.show(block=True)
+        plt.show()
 
     return fig

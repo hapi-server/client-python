@@ -620,6 +620,6 @@ def heatmap(x, y, z, **kwargs):
         ax.patch.set_alpha(0)
 
     if not opts['returnimage']:
-        plt.show(block=True)
+        plt.show()
 
     return fig, cb
