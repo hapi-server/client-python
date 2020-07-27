@@ -24,6 +24,7 @@ def setopts(opts, kwargs):
             warnings.warn('Warning: matplotlib(' + opts['backend'] + ') call failed. Using default backend of ' + matplotlib.get_backend(), SyntaxWarning)
 
     style = opts['style']
+    import matplotlib.style
     rclib =  matplotlib.style.library
     if style in matplotlib.style.available:
         rcstyle = dict(rclib[style]) # rc parameters for style that differ from default
