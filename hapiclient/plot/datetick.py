@@ -1,15 +1,18 @@
-import matplotlib.dates as mpld
+import warnings
 from datetime import datetime
 import numpy as np
-import warnings
 
+import matplotlib.dates as mpld
 import matplotlib
-#print(matplotlib.get_backend())
 if matplotlib.get_backend() == 'MacOSX':
-    # draw() does not update the ticks
+    # With MacOSX backend, draw() does not update the ticks 
     # See warning at
     # https://matplotlib.org/3.3.0/tutorials/advanced/blitting.html#sphx-glr-tutorials-advanced-blitting-py
-    warnings.filterwarnings("ignore", '.*backend.*', category=UserWarning)
+    import sys
+    if sys.version_info[0:2] < (3, 6):
+        #warnings.filterwarnings("ignore", '.*backend.*', category=UserWarning)
+        #the above should work and is better because more specific.
+        warnings.simplefilter("ignore", category=UserWarning)
     gui_env = ['Qt5Agg','QT4Agg','GTKAgg','TKAgg','WXAgg']
     for gui in gui_env:
         try:
@@ -25,7 +28,7 @@ else:
     try:
         import matplotlib.pyplot as plt
     except:
-        print('Failed: import matplotlib.pyplot as plt')
+        #print('Failed: import matplotlib.pyplot as plt')
         gui_env = ['Qt5Agg','QT4Agg','GTKAgg','TKAgg','WXAgg']
         for gui in gui_env:
             try:

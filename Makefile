@@ -11,8 +11,9 @@ PYTHONVERS=python2.7 python3.5 python3.6 python3.7 python3.8
 VERSION=0.1.4b0
 SHELL:= /bin/bash
 
-#CONDA=./anaconda3 # Select this to have anaconda installed for you.
-CONDA=/opt/anaconda3
+# Select this to have anaconda installed for you.
+CONDA=./anaconda3
+#CONDA=/opt/anaconda3
 #CONDA=~/anaconda3
 CONDA_ACTIVATE=source $(CONDA)/etc/profile.d/conda.sh; conda activate
 
@@ -51,7 +52,6 @@ test:
 	make repository-test-data-all
 	make repository-test-plots-all
 
-
 ##########################################################################
 # Test contents in repository using different python versions
 repository-test-data-all:
@@ -77,7 +77,7 @@ $(CONDA):
 	bash /tmp/$(CONDA_PKG) -b -p $(CONDA)
 
 condaenv: $(CONDA)
-	make $(CONDA)/envs/$(PYTHON)
+	make $(CONDA)/envs/$(PYTHON) PYTHON=$(PYTHON)
 
 $(CONDA)/envs/$(PYTHON): $(CONDA)
 	$(CONDA_ACTIVATE); \
@@ -95,7 +95,7 @@ endif
 # 'python setup.py develop' creates symlinks in system package directory.
 repository-test-data:
 	@make clean
-	make condaenv
+	make condaenv PYTHON=$(PYTHON)
 	$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'not long' hapiclient/test/test_hapi.py
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
@@ -104,8 +104,8 @@ repository-test-data:
 # These require visual inspection.
 repository-test-plots:
 	@make clean
-	make conda
-	$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop;# | grep "Best"
+	make condaenv PYTHON=$(PYTHON)
+	$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
 # Run using pythonw instead of python only so plot windows always work
 # for programs called from command line. This is needed for 
 # OS-X, Python 3.5, and matplotlib instaled from pip.
@@ -132,19 +132,24 @@ package-test-all:
 		make repository-test-plots PYTHON=$$version ; \
 	done
 
+env-$(PYTHON):
+	$(CONDA_ACTIVATE) $(PYTHON); \
+		conda install -y virtualenv; \
+		$(PYTHON) -m virtualenv env-$(PYTHON)
+
 package-test:
-	rm -rf env
-	$(CONDA_ACTIVATE) $(PYTHON); conda install -y virtualenv; python --version; $(PYTHON) -m virtualenv env
+	make package
+	make env-$(PYTHON)
 	cp hapi_demo.py /tmp
-	source env/bin/activate && \
+	source env-$(PYTHON)/bin/activate && \
 		pip install pytest && \
 		pip install deepdiff && \
+		pip uninstall -y hapiclient && \
 		pip install dist/hapiclient-$(VERSION).tar.gz \
 			--index-url $(URL)/simple  \
 			--extra-index-url https://pypi.org/simple && \
-		env/bin/pytest -v hapiclient/test/test_hapi.py && \
-		env/bin/pytest -v hapiclient/test/test_hapitime2datetime.py && \
-		env/bin/python /tmp/hapi_demo.py
+		env-$(PYTHON)/bin/python /tmp/hapi_demo.py #&& \
+		#env/bin/pytest -v hapiclient/test/test_hapi.py
 ##########################################################################
 
 ##########################################################################
