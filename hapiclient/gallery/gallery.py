@@ -1,6 +1,10 @@
 def gallery(*args, **kwargs):
     """Create a web-browsable gallery of plots (aka "PNG Walk").
 
+
+    Experimental code. Requires hapiplotserver. Use
+    pip install 'git+https://github.com/hapi-server/plotserver-python'
+    
     For additional documentation and demonstration, see hapi_demo.ipynb
     at <https://github.com/hapi-server/client-python-notebooks/>
 
@@ -42,7 +46,7 @@ def gallery(*args, **kwargs):
     from multiprocessing import Process
     from hapiclient.hapi import cachedir
     from hapiclient.util import error, warning, setopts, prompt
-    from hapiplotserver.main import hapiplotserver
+    from hapiplotserver import hapiplotserver
 
     if len(args) != 2 and len(args) !=3:
         error('Number of arguments must be 2 or 3. See help(gallery).')

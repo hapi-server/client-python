@@ -1,5 +1,6 @@
 # Default Python version to use for tests
 PYTHON=python3.6
+PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
 # TODO: Use tox.
@@ -10,13 +11,9 @@ PYTHONVERS=python2.7 python3.5 python3.6 python3.7
 VERSION=0.1.3b
 SHELL:= /bin/bash
 
-# First-time use, need to create the following virtual environments for testing:
-# conda create -y -n python2.7 python=2.7;
-# conda create -y -n python3.5 python=3.5;
-# conda create -y -n python3.6 python=3.6;
-# conda create -y -n python3.7 python=3.7;
-# conda create -y -n python3.8 python=3.8;
-#
+CONDA=~/anaconda3
+CONDA_ACTIVATE=source $(CONDA)/etc/profile.d/conda.sh; conda activate
+
 # Development:
 # Test hapi() data read functions using repository code:
 #   make repository-test-data     # Test using $(PYTHON)
@@ -64,28 +61,41 @@ repository-test-plots-all:
 		make repository-test-plots PYTHON=$$version ; \
 	done
 
-# Use pythonw instead of python. On OS-X, this prevents "need to install python as a framework" error.
-# The following finds the path to the binary of $(PYTHON) and replaces it with pythonw, e.g.,
-# /opt/anaconda3/envs/python3.6/bin/python3.6 -> /opt/anaconda3/envs/python3.6/bin/pythonw
-a=$(shell source activate $(PYTHON); which $(PYTHON))
-pythonw=$(subst bin/$(PYTHON),bin/pythonw,$(a))
+conda:
+	echo $(PYTHON)
+	make $(CONDA)/envs/$(PYTHON)
+
+$(CONDA)/envs/$(PYTHON):
+	$(CONDA_ACTIVATE); \
+		$(CONDA)/bin/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
+
+pythonw=$(PYTHON)
+ifeq ($(UNAME_S),Darwin)
+#	Use pythonw instead of python. On OS-X, this prevents "need to install python as a framework" error.
+#	The following finds the path to the binary of $(PYTHON) and replaces it with pythonw, e.g.,
+#	/opt/anaconda3/envs/python3.6/bin/python3.6 -> /opt/anaconda3/envs/python3.6/bin/pythonw
+	a=$(shell source activate $(PYTHON); which $(PYTHON))
+	pythonw=$(subst bin/$(PYTHON),bin/pythonw,$(a))
+endif
 
 # 'python setup.py develop' creates symlinks in system package directory.
 repository-test-data:
 	@make clean
-	source activate $(PYTHON) && $(PYTHON) setup.py develop | grep "Best"
-	source activate $(PYTHON); pythonw -m pytest -v -m 'not long' hapiclient/test/test_hapi.py
-	source activate $(PYTHON); pythonw -m pytest -v -m 'long' hapiclient/test/test_hapi.py
-	source activate $(PYTHON); pythonw -m pytest -v hapiclient/test/test_hapitime2datetime.py
+	make conda
+	$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'not long' hapiclient/test/test_hapi.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime2datetime.py
 
 # These require visual inspection.
 repository-test-plots:
 	@make clean
-	source activate $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
-	# Run using pythonw instead of python only so plot windows always work
-	# for programs called from command line. This is needed for 
-	# OS-X, Python 3.5, and matplotlib instaled from pip.
-	source activate $(PYTHON); $(pythonw) hapi_demo.py
+	make conda
+	$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop;# | grep "Best"
+# Run using pythonw instead of python only so plot windows always work
+# for programs called from command line. This is needed for 
+# OS-X, Python 3.5, and matplotlib instaled from pip.
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) hapi_demo.py
 
 repository-test-plots-other:
 	source activate $(PYTHON); $(PYTHON) hapiclient/hapiplot_test.py
@@ -166,8 +176,8 @@ version-tag:
 
 # Install package in local directory (symlinks made to local dir)
 install-local:
-	#python setup.py -e .
-	source ~/.bashrc; conda activate $(PYTHON); pip install --editable .
+#	python setup.py -e .
+	source ~/.bashrc; $(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
 
 install:
 	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple
