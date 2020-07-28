@@ -14,10 +14,11 @@
 
 def main():
 
-    omniweb()
+    #omniweb()
     sscweb()
     cdaweb()
     cassini()
+    lisird()
 
 def omniweb():
     
@@ -106,6 +107,20 @@ def cassini():
     
     popts = {'logging': False, 'logy': True, 'logz': True}
     hapiplot(data, meta, **popts)
+
+def lisird():
+
+    from hapiclient import hapi, hapiplot
+
+    server     = 'http://lasp.colorado.edu/lisird/hapi';
+    dataset    = 'sme_ssi';
+    parameters = 'irradiance'; 
+    start      = '1981-10-09T00:00:00.000Z';
+    stop       = '1981-10-11T00:00:00.000Z';
+
+    data, meta = hapi(server, dataset, parameters, start, stop)
+
+    hapiplot(data, meta)    
 
 if __name__ == '__main__':
     main()

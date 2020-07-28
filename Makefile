@@ -11,7 +11,9 @@ PYTHONVERS=python2.7 python3.5 python3.6 python3.7
 VERSION=0.1.3b
 SHELL:= /bin/bash
 
-CONDA=~/anaconda3
+#CONDA=./anaconda3 # Select this to have anaconda installed for you.
+CONDA=/opt/anaconda3
+#CONDA=~/anaconda3
 CONDA_ACTIVATE=source $(CONDA)/etc/profile.d/conda.sh; conda activate
 
 # Development:
@@ -49,6 +51,7 @@ test:
 	make repository-test-data-all
 	make repository-test-plots-all
 
+
 ##########################################################################
 # Test contents in repository using different python versions
 repository-test-data-all:
@@ -62,10 +65,21 @@ repository-test-plots-all:
 	done
 
 conda:
-	echo $(PYTHON)
+	make $(CONDA)
+
+CONDA_PKG=Miniconda3-latest-Linux-x86_64.sh
+ifeq ($(shell uname -s),Darwin)
+	CONDA_PKG=Miniconda3-latest-MacOSX-x86_64.sh
+endif
+
+$(CONDA):
+	curl https://repo.anaconda.com/miniconda/$(CONDA_PKG) > /tmp/$(CONDA_PKG) 
+	bash /tmp/$(CONDA_PKG) -b -p $(CONDA)
+
+condaenv: $(CONDA)
 	make $(CONDA)/envs/$(PYTHON)
 
-$(CONDA)/envs/$(PYTHON):
+$(CONDA)/envs/$(PYTHON): $(CONDA)
 	$(CONDA_ACTIVATE); \
 		$(CONDA)/bin/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
 
@@ -81,7 +95,7 @@ endif
 # 'python setup.py develop' creates symlinks in system package directory.
 repository-test-data:
 	@make clean
-	make conda
+	make condaenv
 	$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'not long' hapiclient/test/test_hapi.py
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
