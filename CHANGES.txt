@@ -42,4 +42,6 @@ v0.1.3b:
 	2020-05-15 -- Support HAPI 2.1 unit and label arrays
 	2020-07-27 -- Many minor plot fixes
 v0.1.3: 2020-07-27 -- Tagged and pip-installable version
+v0.1.4b0:
+	2020-07-27 -- datetick.py/OS-X fixes
 

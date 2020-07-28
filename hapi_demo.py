@@ -16,9 +16,9 @@ def main():
 
     #omniweb()
     sscweb()
-    cdaweb()
-    cassini()
-    lisird()
+    #cdaweb()
+    #cassini()
+    #lisird()
 
 def omniweb():
     

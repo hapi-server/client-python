@@ -4,13 +4,37 @@ import numpy as np
 import warnings
 
 import matplotlib
+#print(matplotlib.get_backend())
 if matplotlib.get_backend() == 'MacOSX':
     # draw() does not update the ticks
     # See warning at
     # https://matplotlib.org/3.3.0/tutorials/advanced/blitting.html#sphx-glr-tutorials-advanced-blitting-py
-    matplotlib.use('Qt5Agg', force=True)
-import matplotlib.pyplot as plt
-
+    warnings.filterwarnings("ignore", '.*backend.*', category=UserWarning)
+    gui_env = ['Qt5Agg','QT4Agg','GTKAgg','TKAgg','WXAgg']
+    for gui in gui_env:
+        try:
+            #print('Trying ' + gui)
+            matplotlib.use(gui, force=True)
+            import matplotlib.pyplot as plt
+            #print('Success with ' + gui)
+            break
+        except:
+            #print('Failure with ' + gui)
+            continue
+else:
+    try:
+        import matplotlib.pyplot as plt
+    except:
+        print('Failed: import matplotlib.pyplot as plt')
+        gui_env = ['Qt5Agg','QT4Agg','GTKAgg','TKAgg','WXAgg']
+        for gui in gui_env:
+            try:
+                matplotlib.use(gui, force=True)
+                import matplotlib.pyplot as plt
+                break
+            except:
+                continue
+                
 def datetick(dir, **kwargs):
     '''
     datetick('x') or datetick('y') formats the major and minor tick labels

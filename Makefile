@@ -4,11 +4,11 @@ PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
 # TODO: Use tox.
-PYTHONVERS=python2.7 python3.5 python3.6 python3.7
+PYTHONVERS=python2.7 python3.5 python3.6 python3.7 python3.8
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.1.3
+VERSION=0.1.4b0
 SHELL:= /bin/bash
 
 #CONDA=./anaconda3 # Select this to have anaconda installed for you.
@@ -112,11 +112,11 @@ repository-test-plots:
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) hapi_demo.py
 
 repository-test-plots-other:
-	source activate $(PYTHON); $(PYTHON) hapiclient/hapiplot_test.py
-	source activate $(PYTHON); $(PYTHON) hapiclient/plot/timeseries_test.py
-	source activate $(PYTHON); $(PYTHON) hapiclient/plot/heatmap_test.py
-	source activate $(PYTHON); $(PYTHON) hapiclient/gallery/gallery_test.py
-	source activate $(PYTHON); $(PYTHON) hapiclient/autoplot/autoplot_test.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) hapiclient/hapiplot_test.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) hapiclient/plot/timeseries_test.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) hapiclient/plot/heatmap_test.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) hapiclient/gallery/gallery_test.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) hapiclient/autoplot/autoplot_test.py
 	jupyter-notebook ../client-python-notebooks/hapi_demo.ipynb
 ##########################################################################
 
@@ -134,7 +134,7 @@ package-test-all:
 
 package-test:
 	rm -rf env
-	source activate $(PYTHON); pip install virtualenv; $(PYTHON) -m virtualenv env
+	$(CONDA_ACTIVATE) $(PYTHON); conda install -y virtualenv; python --version; $(PYTHON) -m virtualenv env
 	cp hapi_demo.py /tmp
 	source env/bin/activate && \
 		pip install pytest && \
@@ -154,6 +154,7 @@ release:
 	make release-upload
 
 release-upload:
+	pip install twine
 	echo "rweigel, t1p"
 	twine upload \
 		-r $(REP) dist/hapiclient-$(VERSION).tar.gz \

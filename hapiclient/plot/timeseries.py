@@ -36,7 +36,7 @@ def timeseries(t, y, **kwargs):
             opts[key] = value
         else:
             warnings.warn('Warning: Ignoring invalid keyword option "%s".' % key, SyntaxWarning)
-
+    
     if opts['returnimage']:
         # When returnimage=True, the Matplotlib OO API is used b/c it is thread safe.
         # Otherwise, the pyplot API is used. Ideally would always use the OO API,
@@ -91,7 +91,7 @@ def timeseries(t, y, **kwargs):
         ax.plot(t, y, **props)
         ax.set(ylabel=opts['ylabel'], xlabel=opts['xlabel'], title=opts['title'])
         try:
-            ax.ticklabel_format(axis='y', style='sci', scilimits=(-3,3), useMathText=True)
+            ax.ticklabel_format(axis='y', style='sci', scilimits=(-3,3))
         except:
             pass
         ax.set_position([0.12,0.125,0.850,0.75])
@@ -99,8 +99,8 @@ def timeseries(t, y, **kwargs):
             ax.legend(opts['legendlabels'])
     else:
 
-        #plt.figure()
-        #plt.clf()
+        # Needed with Qt5 back-end. With Tk back-end, causes an extra empty window.
+        plt.figure() 
         plt.plot(t, y, **props)
         plt.gcf().canvas.set_window_title(opts['title'])
         plt.ylabel(opts['ylabel'])
@@ -112,9 +112,10 @@ def timeseries(t, y, **kwargs):
         ax = plt.gca()
         ax.set_position([0.12,0.125,0.850,0.75])
         try:
-            ax.ticklabel_format(axis='y', style='sci', scilimits=(-3,3), useMathText=True)
+            ax.ticklabel_format(axis='y', style='sci', scilimits=(-3,3))
         except:
             pass
+        fig = plt.gcf()
 
     ax.grid()
 
@@ -148,6 +149,5 @@ def timeseries(t, y, **kwargs):
 
     if not opts['returnimage']:
         plt.show()
-        fig = plt.gcf()
 
     return fig
