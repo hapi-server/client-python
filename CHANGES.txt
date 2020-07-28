@@ -44,4 +44,5 @@ v0.1.3b:
 v0.1.3: 2020-07-27 -- Tagged and pip-installable version
 v0.1.4b0:
 	2020-07-27 -- datetick.py/OS-X fixes
+	2020-07-27 -- Python 2.7
 
