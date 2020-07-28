@@ -99,8 +99,8 @@ def timeseries(t, y, **kwargs):
             ax.legend(opts['legendlabels'])
     else:
 
-        plt.figure()
-        plt.clf()
+        #plt.figure()
+        #plt.clf()
         plt.plot(t, y, **props)
         plt.gcf().canvas.set_window_title(opts['title'])
         plt.ylabel(opts['ylabel'])
@@ -148,5 +148,6 @@ def timeseries(t, y, **kwargs):
 
     if not opts['returnimage']:
         plt.show()
+        fig = plt.gcf()
 
     return fig

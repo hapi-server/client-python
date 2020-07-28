@@ -295,7 +295,7 @@ def heatmap(x, y, z, **kwargs):
         FigureCanvas(fig) # Not used directly, but calling attaches canvas to fig which is used later.
         ax = fig.add_subplot(111)
     else:
-        plt.figure()
+        #plt.figure()
         fig = plt.gcf()
         ax = plt.gca()
 
