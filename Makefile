@@ -8,7 +8,7 @@ PYTHONVERS=python2.7 python3.5 python3.6 python3.7
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.1.3b
+VERSION=0.1.3
 SHELL:= /bin/bash
 
 #CONDA=./anaconda3 # Select this to have anaconda installed for you.
