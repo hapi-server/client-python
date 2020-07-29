@@ -79,6 +79,16 @@ def timeseries(t, y, **kwargs):
         ylabels = yu
         y = yi
 
+    all_nan = False
+    if np.all(np.isnan(y)):
+        all_nan = True
+        if len(y) > 1:
+            legendlabels = ['All %d values are NaN' % len(y)]
+        if len(y) == 1:
+            legendlabels = ['One NaN value in time interval']
+    else:
+        legendlabels = opts['legendlabels']
+ 
     # Can't use matplotlib.style.use(style) because not thread safe.
     # Set context using 'with'.
     # Setting stylesheet method: https://stackoverflow.com/a/22794651/1491619
@@ -88,20 +98,29 @@ def timeseries(t, y, **kwargs):
         fig = Figure()
         FigureCanvas(fig) # Not used directly, but calling attaches canvas to fig which is needed by datetick and hapiplot.
         ax = fig.add_subplot(111)
-        ax.plot(t, y, **props)
+        if all_nan:
+            ax.plot([t[0], t[-1]], [0, 0], linestyle='None')
+            ax.set_yticklabels([])
+        else:
+            ax.plot(t, y, **props)
         ax.set(ylabel=opts['ylabel'], xlabel=opts['xlabel'], title=opts['title'])
         try:
             ax.ticklabel_format(axis='y', style='sci', scilimits=(-3,3))
         except:
             pass
         ax.set_position([0.12,0.125,0.850,0.75])
-        if opts['legendlabels'] != []:
-            ax.legend(opts['legendlabels'])
+        if legendlabels != []:
+            ax.legend(legendlabels)
     else:
 
         # Needed with Qt5 back-end. With Tk back-end, causes an extra empty window.
-        plt.figure() 
-        plt.plot(t, y, **props)
+        plt.figure()
+        if all_nan:
+            plt.plot([t[0], t[-1]], [0, 0], linestyle='None')
+            plt.gca().set_yticklabels([])
+        else:
+            plt.plot(t, y, **props)
+
         plt.gcf().canvas.set_window_title(opts['title'])
         plt.ylabel(opts['ylabel'])
         plt.xlabel(opts['xlabel'])
@@ -109,6 +128,7 @@ def timeseries(t, y, **kwargs):
 
         if opts['legendlabels'] != []:
             plt.legend(opts['legendlabels'])
+
         ax = plt.gca()
         ax.set_position([0.12,0.125,0.850,0.75])
         try:
@@ -119,7 +139,7 @@ def timeseries(t, y, **kwargs):
 
     ax.grid()
 
-    if len(ylabels) > 0:
+    if not all_nan and len(ylabels) > 0:
         ax.set_yticks(np.unique(y))
         ax.set_yticklabels(ylabels)
 

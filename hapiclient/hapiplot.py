@@ -479,7 +479,6 @@ def hapiplot(*args, **kwargs):
                     Igood = y != meta["parameters"][i]['fill']
                     # Note that json reader returns fill to U not b.
                     Nremoved = data[name].size - Igood.size
-                    #import pdb;pdb.set_trace()
                     if Nremoved > 0:
                         # TODO: Implement masking so connected line plots will
                         # show gaps as they do for NaN values.
