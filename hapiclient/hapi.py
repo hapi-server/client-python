@@ -138,7 +138,7 @@ def hapi(*args, **kwargs):
     For additional documentation and demonstration, see
     <https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb>
 
-    Version: 0.1.4
+    Version: 0.1.5b0
 
     Parameters
     ----------
