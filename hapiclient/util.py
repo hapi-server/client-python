@@ -31,7 +31,6 @@ def log(msg, opts):
             # Don't show full path information.
             msg = msg.replace(opts['cachedir'] + '/', '')
             msg = msg.replace(opts['cachedir'], '')
-#        import pdb; pdb.set_trace()
         pre = sys._getframe(1).f_code.co_name + '(): '
         print(pre + msg)
 
@@ -45,11 +44,6 @@ def jsonparse(res, url):
     except:
         error('Could not parse JSON from %s' % url)
 
-def printf(format, *args):
-    """Emulation of more common printf() print function."""
-
-    from sys import stdout
-    stdout.write(format % args)
 
 def system(cmd):
     """Execute system command and return exit code, stderr, and stdout.
@@ -72,6 +66,7 @@ def system(cmd):
     except OSError as err:
         msg = "Execution failed: " + cmd + "\n" + err[1]
         raise OSError(msg)
+
 
 def pythonshell():
     """Determine python shell
@@ -100,6 +95,7 @@ def pythonshell():
 
     return shell
 
+
 def warning_test():
     """For testing warning function."""
 
@@ -116,6 +112,7 @@ def warning_test():
 
     warn('Normal warning 3')
     warn('Normal warning 4')
+
 
 def warning(*args):
     """Display a short warning message.
@@ -167,20 +164,21 @@ def warning(*args):
     # Raise warning
     warnings.warn(message, HAPIWarning)
 
-def error(msg):
+
+def error(msg, debug=False):
     """Display a short error message.
 
     error(message) raises an error of type HAPIError and displays
     "Error: " + message. Use for errors when a full stack trace is not needed.
-    """
 
-    # TODO: Pass debug as a keyword or set in __init__.py?
-    debug = False # If True, full stack trace is shown.
+    If debug=True, full stack trace is shown.
+    """
 
     import sys
     from inspect import stack
     from os import path
 
+    debug = True
     try:
         from IPython.core.interactiveshell import InteractiveShell
     except:
@@ -198,7 +196,7 @@ def error(msg):
         #import traceback
         exception = sys.exc_info()
         if not debug and exception[0].__name__ == "HAPIError":
-            sys.stderr.write("\x1b[31mError: \x1b[0m" + str(exception[1]))
+            sys.stderr.write("\033[0;31mError:\033[0m " + str(exception[1]))
         else:
             # Use default
             showtraceback_default(self, exc_tuple=None,
@@ -213,7 +211,7 @@ def error(msg):
 
     def exception_handler(exception_type, exception, traceback):
         if not debug and exception_type.__name__ == "HAPIError":
-            print("%s: %s" % (exception_type.__name__, exception))
+            print("\033[0;31mError:\033[0m %s" % exception)
         else:
             # Use default.
             sys.__excepthook__(exception_type, exception, traceback)
@@ -239,9 +237,161 @@ def error(msg):
 
     raise HAPIError(msg)
 
+
+def head(url):
+    '''Python 2/3 compatable HTTP HEAD request on URL.
+
+    If Python 3, returns
+    urllib.request.urlopen(url).info()
+
+    If Python 2, returns
+    urllib2.urlopen(url).info()
+    '''
+
+    import urllib3
+    http = urllib3.PoolManager()
+    try:
+        res = http.request('HEAD', url, retries=2)
+        if res.status != 200:
+            raise Exception('Head request failed on ' + url)
+        else:
+            return res.headers
+    except Exception as e:
+        raise e
+
+    return res.headers
+
+
+def urlopen(url):
+    """Python 2/3 urlopen compatibility function.
+
+    If Python 3, returns
+    urllib.request.urlopen(url, fname)
+
+    If Python 2, returns
+    urllib.urlopen(url, fname)
+    """
+
+    import sys
+    from json import load
+
+    # https://stackoverflow.com/a/2020083
+    def get_full_class_name(obj):
+        module = obj.__class__.__module__
+        if module is None or module == str.__class__.__module__:
+            return obj.__class__.__name__
+        return module + '.' + obj.__class__.__name__
+
+    import urllib3
+    c = " If problem persists, a contact email for the server may be listed at http://hapi-server.org/servers/"
+    try:
+        http = urllib3.PoolManager()
+        res = http.request('GET', url, preload_content=False, retries=2)
+        if res.status != 200:
+            try:
+                jres = load(res)
+                if 'status' in jres:
+                    if 'message' in jres['status']:
+                        error('\n%s\n  %s\n' % (url, jres['status']['message']))
+                error("Problem with " + url + ". Server responded with non-200 HTTP status (" + str(res.status) + ") and invalid HAPI JSON error message in response body." + c)
+            except:
+                error("Problem with " + url + ". Server responded with non-200 HTTP status (" + str(res.status) + ") and no HAPI JSON error message in response body." + c)
+    except urllib3.exceptions.NewConnectionError:
+        error('Connection error for : ' + url + c)
+    except urllib3.exceptions.ConnectTimeoutError:
+        error('Connection timeout for: ' + url + c)
+    except urllib3.exceptions.ReadTimeoutError:
+        error('Read timeout for: ' + url + c)
+    except urllib3.exceptions.LocationValueError:
+        error('Invalid URL: ' + url)
+    except urllib3.exceptions.LocationParseError:
+        error('Could not parse URL: ' + url)
+    except urllib3.exceptions.HTTPError as e:
+        error('Exception ' + get_full_class_name(e) + " for: " + url)
+    except Exception as e:
+        error(type(sys.exc_info()[1]).__name__ + ': ' + str(e) + ' for URL: ' + url)
+
+    return res
+
+
+def urlretrieve(url, fname, check_last_modified=False, **kwargs):
+    """Python 2/3 urlretrieve compatability function.
+
+    If Python 3, returns
+    urllib.request.urlretrieve(url, fname)
+
+    If Python 2, returns
+    urllib.urlretrieve(url, fname)
+    """
+
+    import shutil
+    from os import path, utime, makedirs
+    from time import mktime, strptime
+
+    if check_last_modified:
+        if modified(url, fname, **kwargs):
+            log('Downloading ' + url + ' to ' + fname, kwargs)
+            res = urlretrieve(url, fname, check_last_modified=False)
+            if "Last-Modified" in res.headers:
+                # Change access and modfied time to match that on server.
+                # TODO: Won't need if using file.head in modified().
+                urlLastModified = mktime(strptime(res.headers["Last-Modified"],
+                                                  "%a, %d %b %Y %H:%M:%S GMT"))
+                utime(fname, (urlLastModified, urlLastModified))
+        else:
+            log('Local version of ' + fname + ' is up-to-date; using it.', kwargs)
+
+    dir = path.dirname(fname)
+    if not path.exists(dir):
+        makedirs(dir)
+
+    with open(fname, 'wb') as out:
+        res = urlopen(url)
+        shutil.copyfileobj(res, out)
+        return res
+
+
+def modified(url, fname, **kwargs):
+    """Check if timestamp on file is older than Last-Modifed in HEAD request"""
+
+    from os import stat, path
+    from time import mktime, strptime
+
+    debug = False
+
+    if not path.exists(fname):
+        return True
+
+    # HEAD request on url
+    log('Making head request on ' + url, kwargs)
+    headers = head(url)
+
+    # TODO: Write headers to file.head
+    if debug: 
+        print("Header:\n--\n")
+        print(headers)
+        print("--")
+
+    # TODO: Get this from file.head if found
+    fileLastModified = stat(fname).st_mtime
+    if "Last-Modified" in headers:
+        urlLastModified = mktime(strptime(headers["Last-Modified"],
+                                          "%a, %d %b %Y %H:%M:%S GMT"))
+        if urlLastModified > fileLastModified:
+            return True
+
+        if debug:
+            print("File Last Modified = %s" % fileLastModified)
+            print("URL Last Modified = %s" % urlLastModified)
+    else:
+        if debug:
+            print("No Last-Modified header. Will re-download")
+        # TODO: Read file.head and compare etag
+        return True
+
+
 ##############################################################################
 # Start compatability code
-# TODO: Use https://pythonhosted.org/six/ for URL functions.
 def prompt(msg):
     '''Python 2/3 imput compatability function. Pauses for user input.
 
@@ -256,151 +406,6 @@ def prompt(msg):
         input(msg)
     else:
         raw_input(msg)
-
-def download(file, url, **kwargs):
-    """Download a file if local version is older than server version."""
-
-    # TODO: Make Python 2 compatable.
-
-    from os import stat, utime, path, makedirs
-    from time import mktime, strptime
-
-    opts = kwargs
-    debug = False
-
-    dir = path.dirname(file)
-    if not path.exists(dir):
-        makedirs(dir)
-
-    # If download is needed
-    download = False
-
-    # HEAD request on url
-    log('Making head request on ' + url, opts)
-    headers = head(url)
-    # TODO: Write headers to file.head
-    if debug: print("Header:\n--\n")
-    if debug: print(headers)
-    if debug: print("--")
-
-    if path.exists(file):
-        # TODO: Get this from file.head
-        fileLastModified = stat(file).st_mtime
-        if "Last-Modified" in headers:
-            urlLastModified = mktime(strptime(headers["Last-Modified"],
-                                              "%a, %d %b %Y %H:%M:%S GMT"))
-            if urlLastModified > fileLastModified:
-                download = True
-            if debug: print("File Last Modified = %s" % fileLastModified)
-            if debug: print("URL Last Modified = %s" % urlLastModified)
-        else:
-            if debug: print("No Last-Modified header. Will re-download")
-            # TODO: Read file.head and compare etag
-            download = True
-    else:
-        download = True
-
-    if download:
-        log('Downloading ' + url + ' to ' + file, opts)
-        # TODO: try/catch
-        req = urlretrieve(url, file)
-        headers = req[1]
-        if "Last-Modified" in headers:
-            # Change access and modfied time to match that on server.
-            # TODO: Won't need if using file.head.
-            urlLastModified = mktime(strptime(headers["Last-Modified"],
-                                              "%a, %d %b %Y %H:%M:%S GMT"))
-            utime(file, (urlLastModified, urlLastModified))
-    else:
-        log('Local version of ' + file + ' is up-to-date; using it.', kwargs)
-
-def urlerror(err, url):
-    """Handle a download error.
-
-    urlerror(err, url) determines if e is a HAPI or URL library error, extracts
-    the error message, and calls error().
-    """
-
-    from json import load, decoder
-
-    def nonhapierror(err):
-
-        body = ""
-        try:
-            body = err.read().decode('utf8')
-        except:
-            pass
-
-        reason = ""
-        if hasattr(err, 'reason'):
-            reason = err.reason
-        code = ""
-        if hasattr(err, 'code'):
-            code = err.code
-
-        if len(body) > 0:
-            error('"HTTP %d - %s" returned by %s. Response body:\n%s' % (code, reason, url, body))
-        elif code != "":
-            error('"HTTP %d - %s" returned by %s.' % (code, reason, url))
-        else:
-            error('Error message: "%s" when trying to read %s.' % (reason, url))
-
-    if hasattr(err,'reason') or hasattr(err, 'code'):
-        nonhapierror(err)
-        return
-
-    try:
-        jres = load(err)
-        if 'status' in jres:
-            if 'message' in jres['status']:
-                error('\n%s\n  %s\n' % (url, jres['status']['message']))
-                return
-        nonhapierror(err)
-        return
-    except decoder.JSONDecodeError as e:
-        # TODO: Append a note to error message that HAPI Error JSON could not be parsed.
-        pass
-    except Exception as e:
-        print(e)
-
-    nonhapierror(err)
-
-def head(url):
-    '''Python 2/3 compatable HTTP HEAD request on URL.
-
-    If Python 3, returns
-    urllib.request.urlopen(url).info()
-
-    If Python 2, returns
-    urllib2.urlopen(url).info()
-    '''
-
-    import sys
-
-    if sys.version_info[0] > 2:
-        import urllib.request, urllib.error
-        try:
-            headers = urllib.request.urlopen(url).info()
-            return headers
-        except urllib.error.URLError as e:
-            urlerror(e, url)
-        except ValueError:
-            error("'" + url + "' is not a valid URL")
-        except Exception as e:
-            print(e)
-                
-    else:
-        import urllib
-        import urllib2
-        try:
-            headers = urllib2.urlopen(url).info()
-            return headers
-        except urllib2.URLError as e:
-            urlerror(e, url)
-        except ValueError:
-            error("'" + url + "' is not a valid URL")
-        except Exception as e:
-            print(e)
 
 
 def urlquote(url):
@@ -421,83 +426,5 @@ def urlquote(url):
         from urllib import quote
         return quote(url)
 
-
-def urlopen(url):
-    """Python 2/3 urlopen compatibility function.
-
-    If Python 3, returns
-    urllib.request.urlopen(url, fname)
-
-    If Python 2, returns
-    urllib.urlopen(url, fname)
-    """
-
-    import sys
-
-    if sys.version_info[0] > 2:
-        import urllib.request, urllib.error
-        try:
-            res = urllib.request.urlopen(url)
-            return res
-        except urllib.error.URLError as e:
-            urlerror(e, url)
-        except ValueError:
-            error("'" + url + "' is not a valid URL")
-        except Exception as e:
-            print(e)
-
-    else:
-        import urllib
-        import urllib2
-        import ssl
-
-        # PEP 0476 fixed bug in urllib2 which causes error to be thrown
-        # when request is for HTTPS resource, but this fix breaks previously
-        # working code [https: //www.python.org/dev/peps/pep-0476/].
-        # This reverts to previous behavior.
-        # TODO: Switch to using requests package which handles this and
-        # supports Python 2/3 without needing a version test as used here.
-        context = ssl._create_unverified_context()
-        try:
-            res = urllib2.urlopen(url, context=context)
-            return res
-        except urllib2.URLError as e:
-            urlerror(e, url)
-        except ValueError:
-            error("'" + url + "' is not a valid URL")
-
-def urlretrieve(url, fname):
-    """Python 2/3 urlretrieve compatability function.
-
-    If Python 3, returns
-    urllib.request.urlretrieve(url, fname)
-
-    If Python 2, returns
-    urllib.urlretrieve(url, fname)
-    """
-
-    import sys
-
-    if sys.version_info[0] > 2:
-        import urllib.request, urllib.error
-        try:
-            res = urllib.request.urlretrieve(url, fname)
-            return res
-        except urllib.error.URLError as e:
-            urlerror(e, url)
-        except ValueError as e:
-            error("'" + url + "' is not a valid URL")
-    else:
-        import urllib
-        import ssl
-        import urllib2
-        try:
-            context = ssl._create_unverified_context()
-            res = urllib.urlretrieve(url, fname, context=context)
-            return res
-        except urllib2.URLError as e:
-            urlerror(e, url)
-        except ValueError:
-            error("'" + url + "' is not a valid URL")
 # End compatability code
 ##############################################################################
