@@ -14,11 +14,21 @@
 
 def main():
 
-    #omniweb()
-    sscweb()
-    #cdaweb()
-    #cassini()
-    #lisird()
+    if True:
+        demos = [omniweb, sscweb, cdaweb, cassini, lisird]
+
+        for demo in demos:
+            try:
+                demo()
+            except Exception as e:
+                print("\033[0;31mError:\033[0m " + str(e))
+
+    if False:
+        omniweb()
+        sscweb()
+        cdaweb()
+        cassini()
+        lisird()
 
 def omniweb():
     
@@ -101,7 +111,7 @@ def cassini():
     parameters = 'HPlus_BEST_T1';
     start      = '2004-07-01T04:00:00Z';
     stop       = '2004-07-01T06:00:00Z';
-    opts       = {'usecache': True}
+    opts       = {'usecache': True, 'logging': True}
     
     data, meta = hapi(server, dataset, parameters, start, stop, **opts)
     

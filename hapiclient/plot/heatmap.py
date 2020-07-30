@@ -295,9 +295,9 @@ def heatmap(x, y, z, **kwargs):
         FigureCanvas(fig) # Not used directly, but calling attaches canvas to fig which is used later.
         ax = fig.add_subplot(111)
     else:
-        #plt.figure()
-        fig = plt.gcf()
-        ax = plt.gca()
+        fig, ax = plt.subplots()
+        if opts['logging']:
+            print("timeseries(): Using Matplotlib back-end " + matplotlib.get_backend())
 
     if type(x) == list:
         x = np.array(x)

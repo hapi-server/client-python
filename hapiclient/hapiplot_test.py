@@ -1,8 +1,10 @@
 import numpy as np
 
 #tests = [10]
-tests = range(0,11)
+tests = range(0,9)
 #tests = [10]
+tests = range(1,2)
+#tests = [8]
 
 for tn in tests:
 
@@ -34,8 +36,8 @@ for tn in tests:
         start      = '1970-01-01Z'
         stop       = '1970-01-01T00:00:11Z'
         parameters = 'scalar'
-        opts       = {'logging': False, 'usecache': True}
-        popts      = {'usecache': False, 'logging': True, 'returnimage':True}
+        opts       = {'logging': False, 'usecache': False}
+        popts      = {'useimagecache': False, 'logging': True, 'returnimage':True}
 
         if tn == 1:
             # returnimage=True for scalar parameter - compare with GUI plot
@@ -239,7 +241,7 @@ for tn in tests:
         stop       = '1970-01-01T00:00:11Z'
         parameters = 'spectra'
         opts       = {'logging': True, 'usecache': True}
-        data,meta = hapi(server, dataset, parameters, start, stop, **opts)
+        data, meta = hapi(server, dataset, parameters, start, stop, **opts)
 
         popts = {'logging': True}
 

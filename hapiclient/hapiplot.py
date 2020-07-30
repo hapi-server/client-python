@@ -344,12 +344,15 @@ def hapiplot(*args, **kwargs):
         if 'size' in meta['parameters'][i] and meta['parameters'][i]['size'][0] > 10:
             as_heatmap = True
 
+        if 'bins' in meta['parameters'][i]:
+            as_heatmap = True
+
         if 'units' in meta["parameters"][i] and type(meta["parameters"][i]["units"]) == list:
-            as_heatmap = False
-            if 'bins' in meta['parameters'][i]:
+            if as_heatmap:
                 warning("Not plotting %s as heatmap because components have different units." % meta["parameters"][i]["name"])
-            
-        if as_heatmap and 'bins' in meta['parameters'][i]:
+            as_heatmap = False
+
+        if as_heatmap:
             # Plot as heatmap
 
             hmopts = {

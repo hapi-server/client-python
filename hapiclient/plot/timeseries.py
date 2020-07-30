@@ -50,7 +50,8 @@ def timeseries(t, y, **kwargs):
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
     else:
         from matplotlib import pyplot as plt
-        if opts['logging']: print("timeseries(): Using Matplotlib back-end " + matplotlib.get_backend())
+        if opts['logging']:
+            print("timeseries(): Using Matplotlib back-end " + matplotlib.get_backend())
 
     if y.shape[0] < 11:
         props = {'linestyle': 'none', 'marker': '.', 'markersize': 16}
@@ -99,23 +100,19 @@ def timeseries(t, y, **kwargs):
             ax.legend(opts['legendlabels'])
     else:
 
-        # Needed with Qt5 back-end. With Tk back-end, causes an extra empty window.
-        plt.figure() 
-        plt.plot(t, y, **props)
-        plt.gcf().canvas.set_window_title(opts['title'])
-        plt.ylabel(opts['ylabel'])
-        plt.xlabel(opts['xlabel'])
-        plt.title(opts['title'])
-
-        if opts['legendlabels'] != []:
-            plt.legend(opts['legendlabels'])
-        ax = plt.gca()
-        ax.set_position([0.12,0.125,0.850,0.75])
+        fig, ax = plt.subplots()
+        ax.plot(t, y, **props)
+        fig.canvas.set_window_title(opts['title'])
+        ax.set_ylabel(opts['ylabel'])
+        ax.set_xlabel(opts['xlabel'])
+        ax.set_title(opts['title'])
         try:
             ax.ticklabel_format(axis='y', style='sci', scilimits=(-3,3))
         except:
             pass
-        fig = plt.gcf()
+        if opts['legendlabels'] != []:
+            fig.legend(opts['legendlabels'])
+        ax.set_position([0.12,0.125,0.850,0.75])
 
     ax.grid()
 
