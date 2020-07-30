@@ -47,3 +47,5 @@ v0.1.4:
 	2020-07-27 -- Python 2.7
 v0.1.5b0:
 	2020-07-30 -- Use urllib3
+v0.1.5b1:
+	2020-07-30 -- Use threadsafe plots
