@@ -33,7 +33,7 @@ def autoplot(server, dataset, parameters, start, stop, **kwargs):
     import platform
     import subprocess
     
-    from hapiclient.util import setopts, log, urlopen, download, urlquote
+    from hapiclient.util import setopts, log, urlopen, urlretrieve, urlquote
     from hapiclient.hapi import cachedir
         
     opts = {
@@ -66,8 +66,7 @@ def autoplot(server, dataset, parameters, start, stop, **kwargs):
         else:
             log('Server responding but with wrong response to test.', opts)
         f.close()
-    except Exception as e:
-        #print(e)
+    except:
         log('Server not running. Will start server.', opts)
         
     print(url)
@@ -110,7 +109,8 @@ def autoplot(server, dataset, parameters, start, stop, **kwargs):
        version = re.sub(r'.*"(.*)".*',r'\1', result.decode().split('\n')[0])
        log("Java version: " + version, opts)
     except:
-        log("Java is required. See https://www.java.com/en/download/", opts)
+        # TODO: Automatically download and extract from https://jdk.java.net/14/?
+        log("Java is required. See https://www.java.com/en/download/ or https://jdk.java.net/14/", opts)
         return
 
     jydir = os.path.dirname(os.path.realpath(__file__))
@@ -119,7 +119,8 @@ def autoplot(server, dataset, parameters, start, stop, **kwargs):
 
     # Download jar file if needed.
     log('Checking if autoplot.jar needs to be downloaded or updated.', opts)
-    download(jarpath, jarurl, **opts)
+    urlretrieve(jarurl, jarpath, check_last_modified=True, **opts)
+    #download(jarpath, jarurl, **opts)
 
     com = "java"
     
