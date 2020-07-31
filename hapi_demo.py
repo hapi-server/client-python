@@ -14,21 +14,13 @@
 
 def main():
 
-    if True:
-        demos = [omniweb, sscweb, cdaweb, cassini, lisird]
+    demos = [omniweb, sscweb, cdaweb, cassini, lisird]
 
-        for demo in demos:
-            try:
-                demo()
-            except Exception as e:
-                print("\033[0;31mError:\033[0m " + str(e))
-
-    if False:
-        omniweb()
-        sscweb()
-        cdaweb()
-        cassini()
-        lisird()
+    for demo in demos:
+        try:
+            demo()
+        except Exception as e:
+            print("\033[0;31mError:\033[0m " + str(e))
 
 def omniweb():
     
@@ -126,10 +118,10 @@ def lisird():
     dataset    = 'sme_ssi';
     parameters = 'irradiance'; 
     start      = '1981-10-09T00:00:00.000Z';
-    stop       = '1981-10-11T00:00:00.000Z';
+    stop       = '1981-10-14T00:00:00.000Z';
 
-    data, meta = hapi(server, dataset, parameters, start, stop)
-
+    opts       = {'usecache': True, 'logging': True}
+    data, meta = hapi(server, dataset, parameters, start, stop, **opts)
     hapiplot(data, meta)    
 
 if __name__ == '__main__':
