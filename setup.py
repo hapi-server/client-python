@@ -38,11 +38,7 @@ if sys.argv[1] == 'develop':
 # version is modified by misc/version.py (executed from Makefile). Do not edit.
 setup(
     name='hapiclient',
-<<<<<<< HEAD
-    version='0.1.5b2',
-=======
     version='0.1.5b3',
->>>>>>> d85b79fc9c7081129bce6d246ec96176f8ae67ce
     author='Bob Weigel',
     author_email='rweigel@gmu.edu',
     packages=find_packages(),
