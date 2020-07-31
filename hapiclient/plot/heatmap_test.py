@@ -329,7 +329,7 @@ for tn in tests:
             heatmap(x, y, z, title=title, zlabel="A")
             heatmap(x, y, z, title=title, zlabel="A\nB")
             heatmap(x, y, z, title=title, zlabel="A\nB\nC")
-        
+
     if tn == 31:
         start = datetime(1970, 1, 1)
         tb0 = [start,start+timedelta(seconds=2.5)]
