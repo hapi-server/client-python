@@ -14,7 +14,9 @@
 
 def main():
 
-    if True:
+    cassini()
+
+    if False:
         demos = [omniweb, sscweb, cdaweb, cassini, lisird]
 
         for demo in demos:

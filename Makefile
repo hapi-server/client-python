@@ -8,7 +8,7 @@ PYTHONVERS=python2.7 python3.5 python3.6 python3.7 python3.8
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.1.5b1
+VERSION=0.1.5b2
 SHELL:= /bin/bash
 
 # Select this to have anaconda installed for you.
@@ -96,7 +96,9 @@ endif
 repository-test-data:
 	@make clean
 	make condaenv PYTHON=$(PYTHON)
-	$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
+	#https://stackoverflow.com/questions/30306099/pip-install-editable-vs-python-setup-py-develop
+	$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
+	#$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'not long' hapiclient/test/test_hapi.py
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime2datetime.py

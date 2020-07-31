@@ -363,8 +363,11 @@ def heatmap(x, y, z, **kwargs):
 
     inan = np.where(np.isnan(z))
     havenans = False
+    allnan = False
     if np.any(inan) > 0:
         havenans = True
+    if np.all(np.isnan(z)):
+        allnan = True
 
     xgaps = np.array([], dtype=np.int32)
     ygaps = np.array([], dtype=np.int32)
@@ -399,74 +402,26 @@ def heatmap(x, y, z, **kwargs):
                                      edgecolor=opts['edgecolor'], label='No data'))
 
     if havenans:
+        edgecolor = opts['edgecolor']
+        if allnan and edgecolor is None:
+            edgecolor = 'k'
         cmapn = colors.LinearSegmentedColormap.from_list('nan',[opts['nan.color'],opts['nan.color']],2)        
         zn = np.nan*np.copy(z)
         if havegaps:
             inan = np.where(np.logical_and(np.isnan(z),zg != 1))
         zn[inan] = 1
+
         if opts['nan.hatch'] == '':
-            ax.pcolormesh(x, y, zn, cmap=cmapn)
+            ax.pcolormesh(x, y, zn, edgecolor=edgecolor, cmap=cmapn)
         else:
             # Must set hatch.color through rc params and context manager.
             with rc_context(rc={'hatch.color': opts['nan.hatch.color']}):
-                ax.pcolor(x, y, zn, cmap=cmapn, hatch=opts['nan.hatch'])
+                ax.pcolor(x, y, zn, cmap=cmapn, edgecolor=edgecolor, hatch=opts['nan.hatch'])
         if opts['nan.legend']:
             with rc_context(rc={'hatch.color': opts['nan.hatch.color']}):
                 legendh.append(Patch(facecolor=opts['nan.color'],
                                      hatch=opts['nan.hatch']+opts['nan.hatch'],
-                                     edgecolor=opts['edgecolor'], label='NaN'))
-
-    
-    zc = np.array([])   
-    allintz = allint(z)
-    if not 'cmap' in kwargs and allintz:
-        Ig = ~np.isnan(z)
-        zc = np.unique(z[Ig])
-        nc = zc[-1]-zc[0] + 1
-        nc = np.min([1024, nc])
-        if 'cmap.numcolors' in kwargs:
-            if opts['cmap.numcolors'] != nc:
-                warning('Overriding requested number of colors. Using number of colors = ' + str(nc))
-        cmap_name = opts['cmap.name']
-        if len(Ig) == 2 and not 'cmap.name' in kwargs:
-            # Binary. Plot black and white.
-            cmap_name = 'gray'
-        opts['cmap'] = matplotlib.pyplot.get_cmap(cmap_name, nc)
-
-    zmin = np.nanmin(z)
-    zmax = np.nanmax(z)
-    if zmin < 0 and zmax > 0:
-        warning('Colorbar cannot have log scale when all values do not have the same sign.')
-
-    havelogz0 = False
-    if opts['logz']:
-        # Log scale emits warning if data have NaNs.
-        warnings.filterwarnings(action='ignore',
-                            message='invalid value encountered in less_equal')
-        flipsign = False
-        if zmin < 0 and zmax <= 0 and opts['logz']:
-            z = -z;
-            flipsign = True
-        if zmin == 0:
-            #warning('Log scale for z requested but min(z) = 0.')
-            havelogz0 = True
-            logz0idx = np.where(z==0)
-            z[z == 0] = np.nan
-            havelogz0 = True
-            zmin = np.nanmin(z)
-        norm = LogNorm(vmin=zmin, vmax=zmax)
-        im = ax.pcolormesh(x, y, z, cmap=opts['cmap'], norm=norm,
-                           edgecolor=opts['edgecolor'])
-        if havelogz0:
-            cmapz = colors.LinearSegmentedColormap.from_list('logz0',[opts['logz0.color'],opts['logz0.color']],2)
-            z = np.nan*z
-            z[logz0idx] = 1
-            ax.pcolormesh(x, y, z, cmap=cmapz)
-            if opts['logz0.legend']:
-                legendh.append(Patch(facecolor=opts['logz0.color'],
-                                     edgecolor='k', label='0.0'))
-    else:
-        im = ax.pcolormesh(x, y, z, cmap=opts['cmap'], edgecolor=opts['edgecolor'])
+                                     edgecolor=edgecolor, label='NaN'))
 
     # TODO: Handle case where > 10.
     # Label every Nth, etc. as needed
@@ -531,8 +486,6 @@ def heatmap(x, y, z, **kwargs):
     if opts['title']:
         ax.set_title(opts['title'], fontsize=10)
 
-    cb = fig.colorbar(im, ax=ax, pad=0.01)
-
     if False and allint(x):
         xa = ax.get_yaxis()
         xa.set_major_locator(MaxNLocator(integer=True, steps=[1, 2, 4, 5, 10]))
@@ -540,6 +493,109 @@ def heatmap(x, y, z, **kwargs):
     if False and allint(y):
         ya = ax.get_yaxis()
         ya.set_major_locator(MaxNLocator(integer=True, steps=[1, 2, 4, 5, 10]))
+
+    if isinstance(x[0], datetime.datetime):
+        datetick('x', axes=ax)
+    if isinstance(y[0], datetime.datetime):
+        datetick('y', axes=ax)
+
+    # The following two conditions will be replaced by more general
+    # code that calculates ax and cb position and dimensions based on
+    # computed text box sizes. Note that plt.tight_subplot() and
+    # bbox_inches='tight' have many issues that indicate they probably will 
+    # require significant work-arounds to be developed:
+    # https://github.com/matplotlib/matplotlib/issues/12355/
+    # https://stackoverflow.com/questions/48128546/why-is-the-legend-not-present-in-the-generated-image-if-i-use-tight-for-bbox-i
+    # https://stackoverflow.com/questions/10101700/moving-matplotlib-legend-outside-of-the-axis-makes-it-cutoff-by-the-figure-box
+    ax_w = 0.8
+    if opts['zlabel'].count('\n') > 0:
+        ax_w = 0.75
+        
+    ax_h = 0.73
+    if opts['title'].count('\n') > 0:
+        ax_h = 0.73
+
+    # Set positions of axes and colorbar
+    ax_x = 0.1   # Offset from left
+    ax_y = 0.14  # Offset from bottom
+    ax_h = ax_h  # Height
+    cb_x = ax_x+ax_w+0.005 # Offset from left
+    cb_y = ax_y  # Offset from bottom
+    cb_w = 0.1   # Width
+    cb_h = ax_h  # Height
+
+    # NaN, logz0, and gap legend
+    if len(legendh) > 0:
+        fig.legend(frameon=False, borderaxespad=0.25, borderpad=0.15,
+                   handles=legendh, loc='upper right',
+                   fontsize='x-small', ncol=len(legendh))
+
+    if opts['transparent']:
+        fig.patch.set_alpha(0)
+        ax.patch.set_alpha(0)
+
+    if allnan:
+        if opts['returnimage']:
+            return fig, None
+        plt.show()
+        return
+
+    # Colorbar
+    zc = np.array([])   
+    allintz = allint(z)
+    if not 'cmap' in kwargs and allintz:
+        Ig = ~np.isnan(z)
+        zc = np.unique(z[Ig])
+        if len(zc) == 1:
+            nc = len(zc)
+        else:
+            nc = np.int(zc[-1]-zc[0] + 1)
+        nc = np.min([1024, nc])
+        if 'cmap.numcolors' in kwargs:
+            if opts['cmap.numcolors'] != nc:
+                warning('Overriding requested number of colors. Using number of colors = ' + str(nc))
+        cmap_name = opts['cmap.name']
+        if len(Ig) == 2 and not 'cmap.name' in kwargs:
+            # Binary. Plot black and white.
+            cmap_name = 'gray'
+        opts['cmap'] = matplotlib.pyplot.get_cmap(cmap_name, nc)
+
+    zmin = np.nanmin(z)
+    zmax = np.nanmax(z)
+    if zmin < 0 and zmax > 0:
+        warning('Colorbar cannot have log scale when all values do not have the same sign.')
+
+    havelogz0 = False
+    if opts['logz']:
+        # Log scale emits warning if data have NaNs.
+        warnings.filterwarnings(action='ignore',
+                            message='invalid value encountered in less_equal')
+        flipsign = False
+        if zmin < 0 and zmax <= 0 and opts['logz']:
+            z = -z;
+            flipsign = True
+        if zmin == 0:
+            #warning('Log scale for z requested but min(z) = 0.')
+            havelogz0 = True
+            logz0idx = np.where(z==0)
+            z[z == 0] = np.nan
+            havelogz0 = True
+            zmin = np.nanmin(z)
+        norm = LogNorm(vmin=zmin, vmax=zmax)
+        im = ax.pcolormesh(x, y, z, cmap=opts['cmap'], norm=norm,
+                           edgecolor=opts['edgecolor'])
+        if havelogz0:
+            cmapz = colors.LinearSegmentedColormap.from_list('logz0',[opts['logz0.color'],opts['logz0.color']],2)
+            z = np.nan*z
+            z[logz0idx] = 1
+            ax.pcolormesh(x, y, z, cmap=cmapz)
+            if opts['logz0.legend']:
+                legendh.append(Patch(facecolor=opts['logz0.color'],
+                                     edgecolor='k', label='0.0'))
+    else:
+        im = ax.pcolormesh(x, y, z, cmap=opts['cmap'], edgecolor=opts['edgecolor'])
+
+    cb = fig.colorbar(im, ax=ax, pad=0.01)
         
     if allintz:
         # Put tick label at center of color patch.
@@ -576,48 +632,8 @@ def heatmap(x, y, z, **kwargs):
                 zlabels[i].set_text('-'+text)
         cb.ax.set_yticklabels(zlabels)
 
-    if isinstance(x[0], datetime.datetime):
-        datetick('x', axes=ax)
-    if isinstance(y[0], datetime.datetime):
-        datetick('y', axes=ax)
-
-    # The following two conditions will be replaced by more general
-    # code that calculates ax and cb position and dimensions based on
-    # computed text box sizes. Note that plt.tight_subplot() and
-    # bbox_inches='tight' have many issues that indicate they probably will 
-    # require significant work-arounds to be developed:
-    # https://github.com/matplotlib/matplotlib/issues/12355/
-    # https://stackoverflow.com/questions/48128546/why-is-the-legend-not-present-in-the-generated-image-if-i-use-tight-for-bbox-i
-    # https://stackoverflow.com/questions/10101700/moving-matplotlib-legend-outside-of-the-axis-makes-it-cutoff-by-the-figure-box
-    ax_w = 0.8
-    if opts['zlabel'].count('\n') > 0:
-        ax_w = 0.75
-        
-    ax_h = 0.73
-    if opts['title'].count('\n') > 0:
-        ax_h = 0.73
-
-    # Set positions of axes and colorbar
-    ax_x = 0.1   # Offset from left
-    ax_y = 0.14  # Offset from bottom
-    ax_h = ax_h  # Height
-    cb_x = ax_x+ax_w+0.005 # Offset from left
-    cb_y = ax_y  # Offset from bottom
-    cb_w = 0.1   # Width
-    cb_h = ax_h  # Height
-    
     ax.set_position([ax_x,ax_y,ax_w,ax_h])
     cb.ax.set_position([cb_x,cb_y,cb_w,cb_h])
-
-    # NaN, logz0, and gap legend
-    if len(legendh) > 0:
-        fig.legend(frameon=False, borderaxespad=0.25, borderpad=0.15,
-                   handles=legendh, loc='upper right',
-                   fontsize='x-small', ncol=len(legendh))
-
-    if opts['transparent']:
-        fig.patch.set_alpha(0)
-        ax.patch.set_alpha(0)
 
     if not opts['returnimage']:
         plt.show()

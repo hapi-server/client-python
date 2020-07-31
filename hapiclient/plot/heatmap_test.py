@@ -7,11 +7,14 @@ from hapiclient.plot.heatmap import heatmap
 from datetime import datetime, timedelta
 import numpy as np
 
-#tests = range(0,31)
+tests = range(0,31)
 tests = range(27,31)
 #tests = range(23,24)
 tests = range(0,31)
-#tests = [27]
+tests = [31]
+
+import matplotlib as plt
+plt.rcParams.update({'figure.max_open_warning': 0})
 
 for tn in tests:
 
@@ -327,3 +330,23 @@ for tn in tests:
             heatmap(x, y, z, title=title, zlabel="A\nB")
             heatmap(x, y, z, title=title, zlabel="A\nB\nC")
         
+    if tn == 31:
+        start = datetime(1970, 1, 1)
+        tb0 = [start,start+timedelta(seconds=2.5)]
+        tb1 = [start+timedelta(seconds=3),start+timedelta(seconds=4)]
+        tb2 = [start+timedelta(seconds=7),start+timedelta(seconds=8)]
+
+        y = np.array([1,2,3]) # Rows
+        z = np.nan*np.array([[1,2,3],[4,5,6],[7,8,9]])
+
+        x = np.array([1,2,3]) # Columns
+        title = 'test #' + str(tn) + ' All NaN z, uniform bins'
+        heatmap(x, y, z, title=title)
+
+        x = [tb0, tb1, tb2]
+        title = 'test #' + str(tn) + ' All NaNs z, non-uniform x'
+        heatmap(x, y, z, title=title)
+
+        y = np.array([[1,2.5],[3,4],[7,8]]) # Rows
+        title = 'test #' + str(tn) + ' All NaN z, non-uniform x and y'
+        heatmap(x, y, z, title=title)

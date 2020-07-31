@@ -49,3 +49,5 @@ v0.1.5b0:
 	2020-07-30 -- Use urllib3
 v0.1.5b1:
 	2020-07-30 -- Use threadsafe plots
+v0.1.5b2:
+	2020-07-31 -- Handle all NaN timeseries

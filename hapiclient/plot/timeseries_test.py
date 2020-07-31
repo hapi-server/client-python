@@ -11,24 +11,29 @@ tb2 = [start+timedelta(seconds=7),start+timedelta(seconds=8)]
 T = 20
 t = np.array([start + timedelta(seconds=i) for i in range(T)])
 y = np.arange(0, T)
-y = np.vstack((y, y)).T
 
-from matplotlib import rc_context
-# Ubuntu - type1cm package needed. Otherwise text.usetex fails
-rcParams = {'text.usetex': False}
-with rc_context(rc=rcParams):
-    if rcParams['text.usetex']:
+tn = 1
+
+if tn == 1:
+    title = 'test #' + str(tn) + ' All NaN values'
+    timeseries(t, np.nan*y, title=title)
+
+if tn == 2:
+    from matplotlib import rc_context
+    # Ubuntu - type1cm package needed. Otherwise text.usetex fails
+    rcParams = {'text.usetex': True}
+    with rc_context(rc=rcParams):
         try:
-            fig = timeseries(t, y)
-        except RuntimeError as e:
-            print('------')
-    else:
-        fig = timeseries(t, y)        
-    #fig.show()
-    fig.set_facecolor('gray')
-    fig.axes[0].set_facecolor('yellow')
-fig.axes[0].set_ylabel('y label')
+            title = 'test #' + str(tn) + ' text.usetex=True w/o RuntimeError'
+            fig = timeseries(t, y, title=title)
+        except RuntimeError:
+            failed = True
+            pass
 
-# If any parts of the image are changed from the command line (i.e.,
-# after it has been rendered), you must enter "fig" on the command line
-# to re-render the image.
+    rcParams = {'text.usetex': False}
+    if failed:
+        with rc_context(rc=rcParams):
+            title = 'test #' + str(tn) + ' text.usetex=True gave RuntimeError'
+            fig = timeseries(t, y, title=title)
+
+#y = np.vstack((y, y)).T
