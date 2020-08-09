@@ -14,16 +14,18 @@ if sys.version_info >= (3, 6):
     install_requires.append('numpy>=1.14.3')
 elif sys.version_info < (3, 6) and sys.version_info > (3, ):
     # Beginning with Matplotlib 3.1, Python 3.6 or above is required.
+    # Only have tested Python 3.5.
     install_requires.append('matplotlib>=2.2.2,<3.0')
     install_requires.append("pandas<1.0")
     install_requires.append("numpy<1.17")
-    install_requires.append("kiwisolver<1.2")
+    install_requires.append("kiwisolver<=1.2")
 else:
     install_requires.append('matplotlib==2.*')
     install_requires.append("pandas>=0.23,<0.25")
     install_requires.append("numpy<1.17")
     install_requires.append("pyparsing<3")
     install_requires.append("zipp<3")
+    install_requires.append("kiwisolver<=1.1")
 
 if sys.argv[1] == 'develop':
     install_requires.append("deepdiff<3.3.0")

@@ -1,7 +1,6 @@
 def gallery(*args, **kwargs):
     """Create a web-browsable gallery of plots (aka "PNG Walk").
 
-
     Experimental code. Requires hapiplotserver. Use
     pip install 'git+https://github.com/hapi-server/plotserver-python'
     

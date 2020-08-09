@@ -8,7 +8,7 @@ PYTHONVERS=python2.7 python3.5 python3.6 python3.7 python3.8
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.1.5b3
+VERSION=0.1.5b4
 SHELL:= /bin/bash
 
 # Select this to have anaconda installed for you.
@@ -64,24 +64,21 @@ repository-test-plots-all:
 		make repository-test-plots PYTHON=$$version ; \
 	done
 
-conda:
-	make $(CONDA)
-
-CONDA_PKG=Miniconda3-latest-Linux-x86_64.sh
+CONDA_PKG=/tmp/Miniconda3-latest-Linux-x86_64.sh
 ifeq ($(shell uname -s),Darwin)
-	CONDA_PKG=Miniconda3-latest-MacOSX-x86_64.sh
+	CONDA_PKG=/tmp/Miniconda3-latest-MacOSX-x86_64.sh
 endif
 
-$(CONDA):
-	curl https://repo.anaconda.com/miniconda/$(CONDA_PKG) > /tmp/$(CONDA_PKG) 
-	bash /tmp/$(CONDA_PKG) -b -p $(CONDA)
-
-condaenv: $(CONDA)
+condaenv: 
 	make $(CONDA)/envs/$(PYTHON) PYTHON=$(PYTHON)
 
-$(CONDA)/envs/$(PYTHON): $(CONDA)
+$(CONDA)/envs/$(PYTHON): /tmp/$(CONDA_PKG)
 	$(CONDA_ACTIVATE); \
 		$(CONDA)/bin/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
+
+/tmp/$(CONDA_PKG):
+	curl https://repo.anaconda.com/miniconda/$(CONDA_PKG) > /tmp/$(CONDA_PKG) 
+	bash /tmp/$(CONDA_PKG) -b -p $(CONDA)
 
 pythonw=$(PYTHON)
 ifeq ($(UNAME_S),Darwin)
