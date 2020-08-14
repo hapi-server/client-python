@@ -779,7 +779,7 @@ def hapitime2datetime(Time, **kwargs):
     tic = time.time()
 
     try:
-        # Will fail if no pandas, if YYY-DOY format and other valid ISO 8601
+        # Will fail if no pandas, if YYYY-DOY format and other valid ISO 8601
         # dates such as 2001-01-01T00:00:03.Z
         # When infer_datetime_format is used, TimeStamp object returned.
         # When format=... is used, datetime object is used.
