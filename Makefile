@@ -12,8 +12,8 @@ VERSION=0.1.5b4
 SHELL:= /bin/bash
 
 # Select this to have anaconda installed for you.
-CONDA=./anaconda3
-#CONDA=/opt/anaconda3
+#CONDA=./anaconda3
+CONDA=/opt/anaconda3
 #CONDA=~/anaconda3
 CONDA_ACTIVATE=source $(CONDA)/etc/profile.d/conda.sh; conda activate
 
@@ -64,9 +64,9 @@ repository-test-plots-all:
 		make repository-test-plots PYTHON=$$version ; \
 	done
 
-CONDA_PKG=/tmp/Miniconda3-latest-Linux-x86_64.sh
+CONDA_PKG=Miniconda3-latest-Linux-x86_64.sh
 ifeq ($(shell uname -s),Darwin)
-	CONDA_PKG=/tmp/Miniconda3-latest-MacOSX-x86_64.sh
+	CONDA_PKG=Miniconda3-latest-MacOSX-x86_64.sh
 endif
 
 condaenv: 
@@ -94,7 +94,7 @@ repository-test-data:
 	@make clean
 	make condaenv PYTHON=$(PYTHON)
 	#https://stackoverflow.com/questions/30306099/pip-install-editable-vs-python-setup-py-develop
-	$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
+	$(CONDA_ACTIVATE) $(PYTHON); pip install pytest deepdiff; pip install --editable .
 	#$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'not long' hapiclient/test/test_hapi.py
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
