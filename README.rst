@@ -8,7 +8,7 @@ Installation
 
     pip install hapiclient --upgrade
     # or
-    pip install https://github.com/hapi-server/client-python --upgrade
+    pip install 'git+https://github.com/hapi-server/client-python' --upgrade
 
 See the `Appendix <#Appendix>`__ for a fail-safe installation method.
 
