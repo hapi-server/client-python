@@ -7,8 +7,6 @@ import pickle
 import numpy as np
 import pandas
 
-from datetime import datetime
-
 from hapiclient.util import setopts, log, warning, error
 from hapiclient.util import urlopen, urlretrieve, jsonparse
 
@@ -739,6 +737,15 @@ def hapitime2datetime(Time, **kwargs):
 
     """
 
+    from datetime import datetime
+
+    try:
+        # Python 2
+        import pytz
+        tzinfo = pytz.UTC
+    except:
+        tzinfo = datetime.timezone.utc
+
     opts = {'logging': False}
 
     opts = setopts(opts, kwargs)
@@ -772,7 +779,7 @@ def hapitime2datetime(Time, **kwargs):
     tic = time.time()
 
     try:
-        # Will fail if no pandas, if YYY-DOY format and other valid ISO 8601
+        # Will fail if no pandas, if YYYY-DOY format and other valid ISO 8601
         # dates such as 2001-01-01T00:00:03.Z
         # When infer_datetime_format is used, TimeStamp object returned.
         # When format=... is used, datetime object is used.
@@ -858,7 +865,7 @@ def hapitime2datetime(Time, **kwargs):
     # TODO: Why not use pandas.to_datetime here with fmt?
     try:
         for i in range(0, len(Time)):
-            pythonDateTime[i] = datetime.strptime(Time[i], fmt)
+            pythonDateTime[i] = datetime.strptime(Time[i], fmt).replace(tzinfo=tzinfo)
     except:
         error('Could not parse time value ' + Time[i] + ' using ' + fmt)
     
