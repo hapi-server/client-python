@@ -77,12 +77,14 @@ def cachedir(*args):
         # cachedir()
         return tempfile.gettempdir() + os.path.sep + 'hapi-data'
 
+
 def server2dirname(server):
     """Convert a server URL to a directory name."""
     
     urld = re.sub(r"https*://", "", server)
     urld = re.sub(r'/', '_', urld)
     return urld
+
 
 def request2path(*args):
     # request2path(server, dataset, parameters, start, stop)
@@ -136,7 +138,7 @@ def hapi(*args, **kwargs):
     """Request data from a HAPI server.
 
     For additional documentation and demonstration, see
-    <https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb>
+    https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb
 
     Version: 0.1.5b3
 
@@ -146,66 +148,70 @@ def hapi(*args, **kwargs):
         A string with the URL to a HAPI compliant server. (A HAPI URL
         always ends with "/hapi").
     dataset : str
-        A string specifying a dataset from a server
+        A string specifying a dataset from a `server`
     parameters: str
-        A Comma-separated list of parameters in dataset
+        A Comma-separated list of parameters in `dataset`
     start: str
         The start time of the requested data
     stop: str
         The end time of the requested data; end times are exclusive - the
         last data record returned by a HAPI server should have a timestamp
-        before end_time.
+        before `start`.
     options : dict
-        The following options are available.
-            logging (False) - Log to console
-            cache (True) - Save responses and processed responses in cachedir
-            cachedir (./hapi-data)
-            usecache (True) - Use files in cachedir if found
-            serverlist (https://github.com/hapi-server/servers/raw/master/all.txt)
+        
+            `logging` (False) - Log to console
+
+            `cache` (True) - Save responses and processed responses in cachedir
+
+            `cachedir` (./hapi-data)
+
+            `usecache` (True) - Use files in `cachedir` if found
+
+            `serverlist` (https://github.com/hapi-server/servers/raw/master/all.txt)
 
     Returns
     -------
     result : various
-        Results depend on the input parameters.
+        `result` depend on the input parameters.
 
-        Servers = hapi() returns a list of available HAPI server URLs from
-        <https://github.com/hapi-server/data-specification/blob/master/all.txt>
+        servers = hapi() returns a list of available HAPI server URLs from
+        https://github.com/hapi-server/data-specification/blob/master/all.txt
 
-        Dataset = hapi(Server) returns a dict of datasets available from a
-        URL given by the string Server.  The dictionary structure follows the
+        dataset = hapi(server) returns a dict of datasets available from a
+        URL given by the string `server`.  The dictionary structure follows the
         HAPI JSON structure.
 
-        Parameters = hapi(Server, Dataset) returns a dictionary of parameters
-        in the string Dataset.  The dictionary structure follows the HAPI JSON
+        parameters = hapi(server, dataset) returns a dictionary of parameters
+        in the string `dataset`. The dictionary structure follows the HAPI JSON
         structure.
 
-        Metadata = hapi(Server, Dataset, Parameters) returns metadata
-        associated each parameter in the comma-separated string Parameters. The
+        metadata = hapi(server, dataset, parameters) returns metadata
+        associated each parameter in the comma-separated string `parameters`. The
         dictionary structure follows the HAPI JSON structure.
 
-        Data = hapi(Server, Dataset, Parameters, Start, Stop) returns a
-        dictionary with elements corresponding to Parameters, e.g., if
-        Parameters = 'scalar,vector' and the number of records in the time
-        range Start <= t < Stop returned is N, then
+        data = hapi(server, dataset, parameters, start, stop) returns a
+        dictionary with elements corresponding to `parameters`, e.g., if
+        `parameters` = 'scalar,vector' and the number of records in the time
+        range `start` <= t < `stop` returned is N, then
 
-          Data['scalar'] is a NumPy array of shape (N)
-          Data['vector'] is a NumPy array of shape (N,3)
-          Data['Time'] is a NumPy array of byte literals with shape (N).
+          data['scalar'] is a NumPy array of shape (N)
+          data['vector'] is a NumPy array of shape (N,3)
+          data['Time'] is a NumPy array of byte literals with shape (N).
           
           Byte literal times can be converted to Python datetimes using 
           
-          dtarray = hapitime2datetime(Data['Time'])
+          dtarray = hapitime2datetime(data['Time'])
         
-        Data, Meta = hapi(Server, Dataset, Parameters, Start, Stop) returns
-        the metadata for parameters in Meta.
+        data, meta = hapi(server, dataset, parameters, start, stop) returns
+        the metadata for parameters in `meta`.
 
     References
     ----------
-        * `HAPI Server Definition <https://github.com/hapi-server/data-specification>`
+        * `HAPI Server Definition <https://github.com/hapi-server/data-specification>`_
 
     Examples
     ----------
-       See <https://github.com/hapi-server/client-python-notebooks>
+       See https://github.com/hapi-server/client-python-notebooks
     """
 
     nin = len(args)
@@ -532,17 +538,18 @@ def hapi(*args, **kwargs):
                 if opts['method'] == 'pandas':
                     # Read file into Pandas DataFrame
                     df = pandas.read_csv(fnamecsv, sep=',', header=None)
-
+                    
                     # Allocate output N-D array (It is not possible to pass dtype=dt
                     # as computed to pandas.read_csv; pandas dtype is different
                     # from numpy's dtype.)
                     data = np.ndarray(shape=(len(df)), dtype=dt)
-
+                    print(df)
                     # Insert data from dataframe 'df' columns into N-D array 'data'
                     for i in range(0, len(pnames)):
                         shape = np.append(len(data), psizes[i])
                         # In numpy 1.8.2 and Python 2.7, this throws an error
                         # for no apparent reason. Works as expected in numpy 1.10.4
+                        print(cols)
                         data[pnames[i]] = np.squeeze(np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1]+1)], shape))
 
                     toc = time.time() - tic

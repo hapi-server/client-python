@@ -178,12 +178,14 @@ def error(msg, debug=False):
     from inspect import stack
     from os import path
 
-    debug = True
+    debug = False
     try:
         from IPython.core.interactiveshell import InteractiveShell
     except:
         pass
 
+    sys.stdout.flush()
+    
     fname = stack()[1][1]
     fname = path.basename(fname)
     #line = stack()[1][2]
@@ -239,14 +241,7 @@ def error(msg, debug=False):
 
 
 def head(url):
-    '''Python 2/3 compatable HTTP HEAD request on URL.
-
-    If Python 3, returns
-    urllib.request.urlopen(url).info()
-
-    If Python 2, returns
-    urllib2.urlopen(url).info()
-    '''
+    '''HTTP HEAD request on URL.'''
 
     import urllib3
     http = urllib3.PoolManager()
@@ -300,6 +295,8 @@ def urlopen(url):
         error('Connection error for : ' + url + c)
     except urllib3.exceptions.ConnectTimeoutError:
         error('Connection timeout for: ' + url + c)
+    except urllib3.exceptions.MaxRetryError:
+        error('Failed to connect to: ' + url + c)
     except urllib3.exceptions.ReadTimeoutError:
         error('Read timeout for: ' + url + c)
     except urllib3.exceptions.LocationValueError:
