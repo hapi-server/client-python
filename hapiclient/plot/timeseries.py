@@ -25,7 +25,6 @@ def timeseries(t, y, **kwargs):
                 'ylabel': '',
                 'logx': '',
                 'logy': '',
-                'backend': 'default',
                 'returnimage': False,
                 'transparent': False,
                 'legendlabels': []
@@ -36,7 +35,7 @@ def timeseries(t, y, **kwargs):
             opts[key] = value
         else:
             warnings.warn('Warning: Ignoring invalid keyword option "%s".' % key, SyntaxWarning)
-    
+
     if opts['returnimage']:
         # When returnimage=True, the Matplotlib OO API is used b/c it is thread safe.
         # Otherwise, the pyplot API is used. Ideally would always use the OO API,
@@ -97,7 +96,8 @@ def timeseries(t, y, **kwargs):
         # See note above about OO API for explanation for why this is
         # done differently if returnimage=True
         fig = Figure()
-        FigureCanvas(fig) # Not used directly, but calling attaches canvas to fig which is needed by datetick and hapiplot.
+        # Attach canvas to fig, which is needed by datetick and hapiplot.
+        FigureCanvas(fig) 
         ax = fig.add_subplot(111)
     else:
         fig, ax = plt.subplots()
@@ -128,17 +128,7 @@ def timeseries(t, y, **kwargs):
         datetick('x', axes=ax)
     if isinstance(y[0], datetime.datetime):
         datetick('y', axes=ax)
-    
-    # See
-    # https://stackoverflow.com/questions/24581194/matplotlib-text-bounding-box-dimensions
-    # for determining text bounding box in figure coordinates
-    if False:
-        for item in ax.get_yticklabels():
-            ml = 0 # max length
-            for t in item.get_text().split('\n'):
-                l = len(t)
-                if l > ml: ml = l 
-    
+        
     # savefig.transparent=True requires the following for the saved image
     # to have a transparent background. Seems as though figure.facealpha
     # and axes.facealpha should be rc parameters, but they are not. So
@@ -152,3 +142,13 @@ def timeseries(t, y, **kwargs):
         plt.show()
 
     return fig
+
+def adjust_labels(ax):
+    # Not used. See
+    # https://stackoverflow.com/questions/24581194/matplotlib-text-bounding-box-dimensions
+    # for determining text bounding box in figure coordinates
+    for item in ax.get_yticklabels():
+        ml = 0 # max length
+        for t in item.get_text().split('\n'):
+            l = len(t)
+            if l > ml: ml = l 

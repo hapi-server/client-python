@@ -2,23 +2,59 @@ from hapiclient.plot.timeseries import timeseries
 from datetime import datetime, timedelta
 import numpy as np
 
-# Time axes
-start = datetime(1970, 1, 1)
-tb0 = [start,start+timedelta(seconds=2.5)]
-tb1 = [start+timedelta(seconds=3),start+timedelta(seconds=4)]
-tb2 = [start+timedelta(seconds=7),start+timedelta(seconds=8)]
+tn = 1
 
 T = 20
 t = np.array([start + timedelta(seconds=i) for i in range(T)])
 y = np.arange(0, T)
-
-tn = 1
 
 if tn == 1:
     title = 'test #' + str(tn) + ' All NaN values'
     timeseries(t, np.nan*y, title=title)
 
 if tn == 2:
+    rcParams = {
+                    'savefig.dpi': 144,
+                    'savefig.format': 'png',
+                    'savefig.bbox': 'standard',
+                    'savefig.transparent': True,
+                    'figure.max_open_warning': 50,
+                    'figure.figsize': (8, 4.5),
+                    'figure.dpi': 144,
+                    'axes.titlesize': 12,
+                    'font.family': 'serif',
+                    'mathtext.fontset': 'dejavuserif'
+                }
+
+
+        title = 'test #' + str(tn) + ' Using rc_context'
+        from matplotlib import rc_context
+        with rc_context(rc=rcParams):
+            fig = timeseries(t, y, title=title)
+
+if tn == 3:
+    title = 'test #' + str(tn) + ' Modify after render'
+    fig = timeseries(t, y)
+    fig.set_facecolor('gray')
+    fig.axes[0].set_facecolor('yellow')
+    fig.axes[0].set_ylabel('y label')
+    
+    # If any parts of the image are changed from the command line (i.e.,
+    # after it has been rendered), you must enter "fig" on the command line
+    # to re-render the image.
+
+if tn == 4:
+    title = 'test #' + str(tn) + 'Stack plot'
+    from matplotlib import rc_context
+    T = 20
+    t = np.array([start + timedelta(seconds=i) for i in range(T)])
+    y = np.arange(0, T)
+    y = np.vstack((y, y)).T
+    rcParams['figure.figsize'] = (8.5, 11)
+    with rc_context(rc=rcParams):
+        fig = timeseries(t, y)
+    
+if tn == 5:
     from matplotlib import rc_context
     # Ubuntu - type1cm package needed. Otherwise text.usetex fails
     rcParams = {'text.usetex': True}
