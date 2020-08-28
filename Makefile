@@ -93,12 +93,12 @@ endif
 repository-test-data:
 	@make clean
 
-	NAME_SS := $(shell uname -s)
-    ifeq ($(NAME_SS),Linux)
-        echo "LINUX";
-    endif
-    ifeq ($(NAME_SS),Darwin)
-        echo "OSX";
+    ifeq ($(shell uname -s),Linux)
+        echo "LINUX"
+    else ifeq ($(shell uname -s),Darwin)
+        echo "OSX"
+	else
+		echo "Windows"
     endif
 
 	make condaenv PYTHON=$(PYTHON)
