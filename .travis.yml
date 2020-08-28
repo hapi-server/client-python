@@ -2,7 +2,7 @@ language: bash
 
 os:
   - linux
-  # - osx
+  - osx
   - windows
 
 script:
