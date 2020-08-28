@@ -92,7 +92,13 @@ endif
 # 'python setup.py develop' creates symlinks in system package directory.
 repository-test-data:
 	@make clean
+
+	echo $(UNAME);
+	echo $(UNAME_S);
+
 	make condaenv PYTHON=$(PYTHON)
+
+
 	#https://stackoverflow.com/questions/30306099/pip-install-editable-vs-python-setup-py-develop
 	$(CONDA_ACTIVATE) $(PYTHON); pip install pytest deepdiff; pip install --editable .
 	#$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
