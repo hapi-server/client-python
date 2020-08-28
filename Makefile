@@ -93,8 +93,8 @@ endif
 repository-test-data:
 	@make clean
 
-	echo $(UNAME);
-	echo $(UNAME_S);
+	echo $(uname);
+	echo $(uname -s);
 
 	make condaenv PYTHON=$(PYTHON)
 
