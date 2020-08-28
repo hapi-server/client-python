@@ -12,9 +12,7 @@ VERSION=0.1.5b4
 SHELL:= /bin/bash
 
 # Select this to have anaconda installed for you.
-#CONDA=./anaconda3
-CONDA=/opt/anaconda3
-#CONDA=~/anaconda3
+CONDA=./anaconda3
 CONDA_ACTIVATE=source $(CONDA)/etc/profile.d/conda.sh; conda activate
 
 # Development:
