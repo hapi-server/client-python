@@ -7,4 +7,5 @@ os:
 
 script:
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install make; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install anaconda3; fi
   - make repository-test-data
