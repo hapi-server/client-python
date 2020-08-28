@@ -6,4 +6,5 @@ os:
   - windows
 
 script:
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install make; fi
   - make repository-test-data
