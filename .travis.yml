@@ -3,10 +3,10 @@ language: bash
 os:
   - linux
   - osx
-  - windows
+  # - windows
 
 script:
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install make; fi
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install -y miniconda3; fi
+  # - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install make; fi
+  # - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install -y miniconda3; fi
   # - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install -y anaconda3; fi
-  - make repository-test-data
+  - make repository-test-data-all
