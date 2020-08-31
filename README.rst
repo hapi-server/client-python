@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/hapi-server/client-python.png?branch=master)](https://travis-ci.org/hapi-server/client-python)
+.. image:: https://travis-ci.org/hapi-server/client-python.svg?branch=master
+    :target: https://travis-ci.org/hapi-server/client-python
 
 HAPI client for Python 2/3
 ==============================
