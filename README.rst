@@ -44,7 +44,7 @@ Basic Example
 Documentation
 -------------
 
-Basic usage examples for various HAPI servers are given in `hapi_demo.py <https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.py>`__
+Basic usage examples for various HAPI servers are given in `hapi_demo.py <https://github.com/hapi-server/client-python/blob/master/hapi_demo.py>`__
 
 All of the features are extensively demonstrated in the `hapi_demo.ipynb <https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb>`__ Jupyter Notebook.
 
