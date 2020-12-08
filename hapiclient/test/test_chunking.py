@@ -4,6 +4,8 @@ from hapiclient import hapi, hapitime2datetime
 from hapiclient.hapi import hapitime_reformat
 from hapiclient.test.readcompare import equal
 
+# See comments in test_hapitime2datetime.py for execution options.
+
 compare_logging = True
 hapi_logging = False
 

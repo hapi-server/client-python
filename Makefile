@@ -118,28 +118,31 @@ ifeq ($(UNAME_S),Darwin)
 	pythonw=$(subst bin/$(PYTHON),bin/pythonw,$(a))
 endif
 
-# 'python setup.py develop' creates symlinks in system package directory.
 repository-test-data:
 	@make clean
 
 	make condaenv PYTHON=$(PYTHON)
 
-	#https://stackoverflow.com/questions/30306099/pip-install-editable-vs-python-setup-py-develop
+	# https://stackoverflow.com/questions/30306099/pip-install-editable-vs-python-setup-py-develop
 	$(CONDA_ACTIVATE) $(PYTHON); pip install pytest deepdiff; pip install --editable .
-	#$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
+	# 'python setup.py develop' creates symlinks in system package directory.
+	# $(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
 
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'not long' hapiclient/test/test_hapi.py
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime2datetime.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime2datetime.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime_reformat.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_chunking.py
 
 # These require visual inspection.
 repository-test-plots:
 	@make clean
 	make condaenv PYTHON=$(PYTHON)
 	$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
-# Run using pythonw instead of python only so plot windows always work
-# for programs called from command line. This is needed for 
-# OS-X, Python 3.5, and matplotlib instaled from pip.
+	# Run using pythonw instead of python only so plot windows always work
+	# for programs called from command line. This is needed for 
+	# OS-X, Python 3.5, and matplotlib instaled from pip.
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) hapi_demo.py
 
 repository-test-plots-other:
