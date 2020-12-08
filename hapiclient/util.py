@@ -165,6 +165,9 @@ def warning(*args):
     warnings.warn(message, HAPIWarning)
 
 
+class HAPIError(Exception):
+    pass
+
 def error(msg, debug=False):
     """Display a short error message.
 
@@ -222,8 +225,6 @@ def error(msg, debug=False):
 
         # Reset back to default
         sys.excepthook = sys.__excepthook__
-
-    class HAPIError(Exception): pass
 
     try:
         # Copy default function

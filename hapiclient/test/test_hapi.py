@@ -14,6 +14,9 @@ server = 'http://hapi-server.org/servers/TestData2.0/hapi'
 # from hapiclient.test.test_hapi import test_reader_short
 # test_reader_short()
 
+# To test a single function on the command line, use, e.g.,
+# python -c 'from hapiclient.test.test_hapi import test_split;test_split(logging=True)'
+
 def writepickle(fname, var):
     print("!!!!!!!!!!!!!!")
     print("Writing " + fname)
@@ -188,6 +191,7 @@ def test_subset_short():
     ok = np.array_equal(data['Time'], data2['Time'])
     ok = ok and np.array_equal(data['vectorint'], data2['vectorint'])
     assert ok
+
 
 @pytest.mark.long
 def test_reader_long():
