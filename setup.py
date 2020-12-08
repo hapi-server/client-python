@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys
 
-install_requires = ["isodate>=0.6.0","urllib3"]
+install_requires = ["isodate>=0.6.0","urllib3","joblib==0.16.*"]
 
 print(sys.version_info)
 if sys.version_info >= (3, 6):
