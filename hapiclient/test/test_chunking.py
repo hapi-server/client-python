@@ -37,6 +37,7 @@ def cat(d1, d2):
     d12.update(d2)
     return d12
 
+
 opts0 = {'logging': hapi_logging, 'usecache': False, 'cache': False}
 
 # Test dict.

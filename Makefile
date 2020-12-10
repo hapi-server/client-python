@@ -4,14 +4,14 @@ PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
 # TODO: Use tox.
-PYTHONVERS=python2.7 python3.5 python3.6 python3.7 python3.8
+PYTHONVERS=python3.8 python3.7 python3.6 python3.5 python2.7    
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
 VERSION=0.1.5b4
 SHELL:= /bin/bash
 
-LONG_TESTS=false
+LONG_TESTS=true
 
 # Select this to have anaconda installed for you.
 CONDA=./anaconda3
@@ -132,16 +132,15 @@ repository-test-data:
 	# 'python setup.py develop' creates symlinks in system package directory.
 	# $(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
 
-	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'short' hapiclient/test/test_hapi.py
-	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime2datetime.py
-	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime2datetime.py
-	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime_reformat.py
-	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_chunking.py
 ifeq (LONG_TESTS,true)
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
-	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'verylong' hapiclient/test/test_hapi.py
+else
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'short' hapiclient/test/test_hapi.py	
 endif
 
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_chunking.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime2datetime.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime_reformat.py
 # These require visual inspection.
 repository-test-plots:
 	@make clean
@@ -238,7 +237,7 @@ version-tag:
 # Install package in local directory (symlinks made to local dir)
 install-local:
 #	python setup.py -e .
-	pre = sys._getframe(1).f_code.co_name + '(): '$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
+	$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
 
 install:
 	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple
