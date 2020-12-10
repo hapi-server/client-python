@@ -1,21 +1,25 @@
-import pytest
 import os
+import pytest
 import pickle
+import shutil
+
 import numpy as np
 
 from deepdiff import DeepDiff
 from hapiclient.hapi import hapi
-from hapiclient.test.readcompare import readcompare, clearcache
+from hapiclient.test.readcompare import readcompare
 
 serverbad = 'http://hapi-server.org/servers/TestData/xhapi'
 server = 'http://hapi-server.org/servers/TestData2.0/hapi'
 
-# To use in program, use, e.g.,
-# from hapiclient.test.test_hapi import test_reader_short
-# test_reader_short()
+# To run the long benchmark, execute
+#    python test_hapi.py
 
-# To test a single function on the command line, use, e.g.,
-# python -c 'from hapiclient.test.test_hapi import test_split;test_split(logging=True)'
+# See comments in test_hapitime2datetime.py for other execution options.
+
+def clearcache(opts):
+    shutil.rmtree(opts['cachedir'], ignore_errors=True)
+
 
 def writepickle(fname, var):
     print("!!!!!!!!!!!!!!")
@@ -25,25 +29,34 @@ def writepickle(fname, var):
         pickle.dump(var, pickle_file, protocol=2)
     pickle_file.close()
 
+
 def readpickle(fname):
     with open(fname, 'rb') as pickle_file:
         var = pickle.load(pickle_file)
     pickle_file.close()
     return var
 
+
+@pytest.mark.short
 def test_hapi():
     """Test that a call with no parameters returns something."""
     assert hapi() is not None
 
+
+@pytest.mark.short
 def test_server_list():
     """Test that specifying a server returns something."""
     assert hapi(server) is not None
 
+
+@pytest.mark.short
 def test_catalog():
     """Request for catalog returns correct status and first dataset"""
     meta = hapi(server)
     assert meta['status'] == {'code': 1200, 'message': 'OK'} and meta['catalog'][0]['id'] == 'dataset1'
 
+
+@pytest.mark.short
 def test_dataset():
     """Request for dataset returns correct dataset metadata"""
     meta = hapi(server,'dataset1')
@@ -57,6 +70,8 @@ def test_dataset():
         metatest = readpickle(pklFile)
     assert DeepDiff(meta,metatest) == {}
 
+
+@pytest.mark.short
 def test_parameter():
     """Request for dataset returns correct parameter metadata"""
     meta = hapi(server,'dataset1')
@@ -70,27 +85,37 @@ def test_parameter():
         metatest = readpickle(pklFile)
     assert DeepDiff(meta,metatest) == {}
  
+
+@pytest.mark.short
 def test_bad_server_url():
     """Correct error when given bad URL"""
     with pytest.raises(Exception):
         hapi(serverbad, {'logging': True})
 
+
+@pytest.mark.short
 def test_bad_dataset_name():
     """Correct error when given nonexistent dataset name"""
     with pytest.raises(Exception):
         hapi(server,'dataset1x')
 
+
+@pytest.mark.short
 def test_bad_parameter():
     """Correct error when given nonexistent parameter name"""
     with pytest.raises(Exception):
         hapi(server,'dataset1','scalarx')
 
+
+@pytest.mark.short
 def test_reader_short():
         
     dataset = 'dataset1'
     run = 'short'
     
+    #
     # Cache = False (will read data into buffer)    
+    #
     opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'usecache': False}
 
     opts['cache'] = False
@@ -107,7 +132,9 @@ def test_reader_short():
     clearcache(opts)
     assert readcompare(server, dataset, '', run, opts)
 
+    #
     # Cache = True (will write files then read)
+    #
     opts['cache'] = True
 
     # Read one parameter
@@ -122,8 +149,11 @@ def test_reader_short():
     # Read all parameters
     clearcache(opts)
     assert readcompare(server, dataset, '', run, opts)
-    
+
+
+@pytest.mark.short
 def test_cache_short():
+
     # Compare read with empty cache with read with hot cache and usecache=True
     dataset = 'dataset1'
     start = '1970-01-01'
@@ -140,6 +170,8 @@ def test_cache_short():
 
     assert np.array_equal(data, data2)
 
+
+@pytest.mark.short
 def test_subset_short():
     
     dataset = 'dataset1'
@@ -171,9 +203,11 @@ def test_subset_short():
     ok = ok and np.array_equal(data['vectorint'], data2['vectorint'])
     assert ok
 
+
     opts['usecache'] = True
     
-    # Request two subsets with hot cache. Common parts should be same.
+    # Request two subsets, with the second request using the cache. Common
+    # parts should be same.
     data, meta  = hapi(server, dataset, 'scalarint', start, stop, **opts)
     data2, meta2  = hapi(server, dataset, 'scalarint,vectorint', start, stop, **opts)
 
@@ -181,11 +215,10 @@ def test_subset_short():
     ok = ok and np.array_equal(data['scalarint'], data2['scalarint'])
     assert ok
 
-    # Request all parameters and single parameter with hot cache. Common parameter should be same.
+    # Request all parameters and single parameter, with the single parameter
+    # request using the cache with hot cache. Common parameter should be same.
     clearcache(opts)
     data, meta  = hapi(server, dataset, '', start, stop, **opts)
-
-    clearcache(opts)
     data2, meta2  = hapi(server, dataset, 'vectorint', start, stop, **opts)
         
     ok = np.array_equal(data['Time'], data2['Time'])
@@ -196,12 +229,32 @@ def test_subset_short():
 @pytest.mark.long
 def test_reader_long():
     
-    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'cache': False, 'usecache': False}
     dataset = 'dataset1'
-    
     run = 'long'
     
     # Read two parameters
-    clearcache(opts)
+    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'cache': False, 'usecache': False}
     assert readcompare(server, dataset, 'scalar,vector', run, opts)
-        
+
+    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'cache': True, 'usecache': False}
+    assert readcompare(server, dataset, 'scalar,vector', run, opts)
+
+    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'cache': False, 'usecache': True}
+    assert readcompare(server, dataset, 'scalar,vector', run, opts)
+
+
+@pytest.mark.verylong
+def test_reader_very_long():
+    
+    dataset = 'dataset1'
+    run = 'verylong'
+    
+    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'cache': True, 'usecache': False}
+    assert readcompare(server, dataset, '', run, opts)
+
+    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'cache': False, 'usecache': True}
+    assert readcompare(server, dataset, '', run, opts)
+
+
+if __name__ == '__main__':
+    test_reader_short()        

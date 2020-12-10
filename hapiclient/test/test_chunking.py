@@ -1,4 +1,5 @@
 import isodate
+
 from datetime import datetime
 from hapiclient import hapi, hapitime2datetime
 from hapiclient.hapi import hapitime_reformat
@@ -9,13 +10,23 @@ from hapiclient.test.readcompare import equal
 compare_logging = True
 hapi_logging = False
 
+# Create empty file
+with open("test_chunking.log", "w") as f: pass
+
+def xprint(msg):
+    print(msg)
+    f = open("test_hapitime_reformat.log", "a")
+    f.write(msg + "\n")
+    f.close()
+
+
 def compare(data1, data2, meta1, meta2, opts1, opts2):
     if compare_logging:
-        print('_'*80)
-        print('options 1: %s' % opts1)
-        print('options 2: %s' % opts2)
-        print('x_totalTime1 = %6.4f s' % (meta1['x_totalTime']))
-        print('x_totalTime2 = %6.4f s' % (meta2['x_totalTime']))
+        xprint('_'*80)
+        xprint('options 1: %s' % opts1)
+        xprint('options 2: %s' % opts2)
+        xprint('x_totalTime1 = %6.4f s' % (meta1['x_totalTime']))
+        xprint('x_totalTime2 = %6.4f s' % (meta2['x_totalTime']))
     assert equal(data1, data2)
 
 
@@ -25,7 +36,6 @@ def cat(d1, d2):
     d12 = d1.copy()
     d12.update(d2)
     return d12
-
 
 opts0 = {'logging': hapi_logging, 'usecache': False, 'cache': False}
 

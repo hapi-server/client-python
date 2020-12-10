@@ -11,7 +11,10 @@
 from hapiclient.hapi import hapitime2datetime
 import numpy as np
 
-logging = False
+# Create empty file
+with open("test_hapitime2datetime.log", "w") as f: pass
+logging = open("test_hapitime2datetime.log", "a")
+
 expected = '1970-01-01T00:00:00.000000Z'
 
 def test_parse_string_input():

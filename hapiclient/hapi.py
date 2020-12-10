@@ -482,10 +482,8 @@ def hapi(*args, **kwargs):
             opts['dt_chunk'] = None
 
             backend = 'sequential'
-
             if opts['parallel']:
                 backend = 'threading'
-
                 # multiprocessing was not tested. It may work, but will
                 # need a speed comparison with threading.
                 # backend = 'multiprocessing'
@@ -529,13 +527,21 @@ def hapi(*args, **kwargs):
 
             resD = list(resD)
 
+            import sys
             from hapiclient.hapi import hapitime_reformat
 
-            START = hapitime_reformat(resD[0]['Time'][0].decode('UTF-8'), START)
-            resD[0] = resD[0][resD[0]['Time'] >= bytes(START, 'UTF-8')]
+            if sys.version_info < (3, ):
+                START = hapitime_reformat(str(resD[0]['Time'][0]), START)
+                resD[0] = resD[0][resD[0]['Time'] >= START]
 
-            STOP = hapitime_reformat(resD[-1]['Time'][0].decode('UTF-8'), STOP)
-            resD[-1] = resD[-1][resD[-1]['Time'] < bytes(STOP, 'UTF-8')]
+                STOP = hapitime_reformat(str(resD[-1]['Time'][0]), STOP)
+                resD[-1] = resD[-1][resD[-1]['Time'] < STOP]
+            else:
+                START = hapitime_reformat(resD[0]['Time'][0].decode('UTF-8'), START)
+                resD[0] = resD[0][resD[0]['Time'] >= bytes(START, 'UTF-8')]
+
+                STOP = hapitime_reformat(resD[-1]['Time'][0].decode('UTF-8'), STOP)
+                resD[-1] = resD[-1][resD[-1]['Time'] < bytes(STOP, 'UTF-8')]
 
             data = np.concatenate(resD)
 
@@ -716,7 +722,6 @@ def hapi(*args, **kwargs):
                 log('Reading %s' % fnamebin.replace(urld + '/', ''), opts)
                 tic = time.time()
                 data = np.fromfile(fnamebin, dtype=dt)
-                toc = time.time() - tic
             else:
                 from io import BytesIO
                 log('Creating buffer: %s' % urlbin, opts)
@@ -726,7 +731,6 @@ def hapi(*args, **kwargs):
                 log('Parsing buffer.', opts)
                 tic = time.time()
                 data = np.frombuffer(buff.read(), dtype=dt)
-                toc = time.time() - tic
         else:
             # HAPI CSV
             if opts["cache"]:
@@ -748,7 +752,6 @@ def hapi(*args, **kwargs):
                 tic = time.time()
                 if opts['method'] == 'numpy':
                     data = np.genfromtxt(fnamecsv, dtype=dt, delimiter=',')
-                    toc = time.time() - tic
                 if opts['method'] == 'pandas':
                     # Read file into Pandas DataFrame
                     df = pandas.read_csv(fnamecsv, sep=',', header=None)
@@ -757,17 +760,13 @@ def hapi(*args, **kwargs):
                     # as computed to pandas.read_csv; pandas dtype is different
                     # from numpy's dtype.)
                     data = np.ndarray(shape=(len(df)), dtype=dt)
-                    print(df)
                     # Insert data from dataframe 'df' columns into N-D array 'data'
                     for i in range(0, len(pnames)):
                         shape = np.append(len(data), psizes[i])
                         # In numpy 1.8.2 and Python 2.7, this throws an error
                         # for no apparent reason. Works as expected in numpy 1.10.4
-                        print(cols)
                         data[pnames[i]] = np.squeeze(
                             np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1] + 1)], shape))
-
-                    toc = time.time() - tic
             else:
                 # At least one requested string or isotime parameter does not
                 # have a length in metadata. More work to do to read. 
@@ -866,7 +865,7 @@ def hapi(*args, **kwargs):
                         # Save memory by not copying (does this help?)
                         # data2[pnames[i]] = np.array(data[pnames[i]],copy=False)
 
-            toc = time.time() - tic
+        toc = time.time() - tic
 
         # Extra metadata associated with request will be saved in
         # a pkl file with same base name as npy data file.
@@ -919,10 +918,12 @@ def hapi(*args, **kwargs):
         else:
             return data, meta
 
-def hapitime_reformat(form_to_match, given_form):
+
+def hapitime_reformat(form_to_match, given_form, logging=False):
     """Reformat a given HAPI ISO 8601 time to match format of another HAPI ISO 8601 time."""
 
-    print('ref:       {}\ngiven:     {}'.format(form_to_match, given_form))
+    log('ref:       {}'.format(form_to_match), {'logging': logging})
+    log('given:     {}'.format(given_form), {'logging': logging})
 
     if 'T' in given_form:
         dt_given = isodate.parse_datetime(given_form)
@@ -962,9 +963,13 @@ def hapitime_reformat(form_to_match, given_form):
     
     if len(converted) > len(form_to_match):
         converted = converted[0:len(form_to_match)-1] + "Z"
-    print('converted: {}\nref fmt:   {}'.format(converted, format_ref))
-    print('----')
+
+    log('converted: {}'.format(converted), {'logging': logging})
+    log('ref fmt:   {}'.format(format_ref), {'logging': logging})
+    log('----', {'logging': logging})
+
     return converted
+
 
 def hapitime_format_str(Time):
     """Determine the time format string for a HAPI ISO 8601 time"""
@@ -1093,9 +1098,7 @@ def hapitime2datetime(Time, **kwargs):
     except:
         tzinfo = datetime.timezone.utc
 
-    opts = {'logging': False}
-
-    opts = setopts(opts, kwargs)
+    opts = kwargs.copy()
 
     if type(Time) == list:
         Time = np.asarray(Time)
@@ -1138,13 +1141,16 @@ def hapitime2datetime(Time, **kwargs):
         # have trailing Z, in some cases, infer_datetime_format will not return
         # a timezone-aware Timestamp.
         # TODO: Use hapitime_format_str() and pass this as format=...
-        Time = pandas.to_datetime(Time, infer_datetime_format=True).tz_localize(tzinfo).to_pydatetime()
+        #import pdb;pdb.set_trace()
+        Timeo = Time[0]
+        Time = pandas.to_datetime(Time, infer_datetime_format=True).tz_convert(tzinfo).to_pydatetime()
         if reshape:
             Time = np.reshape(Time, shape)
         toc = time.time() - tic
-        log("Pandas processing time = %.4fs, Input = %s\n" % (toc, Time[0]), opts)
+        log("Pandas processing time = %.4fs, first time = %s" % (toc, Timeo), opts)
         return Time
     except:
+        log("Pandas processing failed, first time = %s" % Time[0], opts)
         pass
 
     # Convert from Python byte literals to unicode strings
@@ -1174,7 +1180,7 @@ def hapitime2datetime(Time, **kwargs):
             error("HAPI Times must have trailing Z. Time[" + str(i) + "] = " + Time[i] + " does not have trailing Z.")
 
     toc = time.time() - tic
-    log("Manual processing time = %.4fs, Input = %s, fmt = %s\n" % (toc, Time[0], fmt), opts)
+    log("Manual processing time = %.4fs, Input = %s, fmt = %s" % (toc, Time[0], fmt), opts)
 
     if reshape:
         pythonDateTime = np.reshape(pythonDateTime, shape)

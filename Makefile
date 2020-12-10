@@ -1,5 +1,5 @@
 # Default Python version to use for tests
-PYTHON=python3.6
+PYTHON=python3.8
 PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
@@ -10,6 +10,8 @@ PYTHONVERS=python2.7 python3.5 python3.6 python3.7 python3.8
 # from CHANGES.txt. Do not edit.
 VERSION=0.1.5b4
 SHELL:= /bin/bash
+
+LONG_TESTS=false
 
 # Select this to have anaconda installed for you.
 CONDA=./anaconda3
@@ -95,13 +97,15 @@ else
 	make $(CONDA)/envs/$(PYTHON) PYTHON=$(PYTHON)
 endif
 
-$(CONDA)/envs/$(PYTHON): /tmp/$(CONDA_PKG)
+$(CONDA)/envs/$(PYTHON): ./anaconda3
 	$(CONDA_ACTIVATE); \
 		$(CONDA)/bin/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
 
+./anaconda3: /tmp/$(CONDA_PKG)
+	bash /tmp/$(CONDA_PKG) -b -p $(CONDA)
+
 /tmp/$(CONDA_PKG):
 	curl https://repo.anaconda.com/miniconda/$(CONDA_PKG) > /tmp/$(CONDA_PKG) 
-	bash /tmp/$(CONDA_PKG) -b -p $(CONDA)
 
 pythonw=$(PYTHON)
 
@@ -128,12 +132,15 @@ repository-test-data:
 	# 'python setup.py develop' creates symlinks in system package directory.
 	# $(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
 
-	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'not long' hapiclient/test/test_hapi.py
-	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'short' hapiclient/test/test_hapi.py
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime2datetime.py
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime2datetime.py
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime_reformat.py
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_chunking.py
+ifeq (LONG_TESTS,true)
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'verylong' hapiclient/test/test_hapi.py
+endif
 
 # These require visual inspection.
 repository-test-plots:
@@ -231,7 +238,7 @@ version-tag:
 # Install package in local directory (symlinks made to local dir)
 install-local:
 #	python setup.py -e .
-	source ~/.bashrc; $(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
+	pre = sys._getframe(1).f_code.co_name + '(): '$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
 
 install:
 	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple

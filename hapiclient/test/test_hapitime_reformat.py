@@ -2,7 +2,7 @@ from hapiclient.hapi import hapitime_reformat
 
 # See comments in test_hapitime2datetime.py for execution options.
 
-def test_hapitime_reformat(logging=False):
+def test_hapitime_reformat():
 
 
     dts = [
@@ -55,12 +55,14 @@ def test_hapitime_reformat(logging=False):
         if "T" in dts[i]:
             dts.append("1989-001T" + dts[i].split("T")[1])
 
+    logging = open("test_hapitime_reformat.log", "w")
+
     # truncating
     for i in range(len(dts)):
         form_to_match = dts[i]
         for j in range(i + 1, len(dts)):
             given_form = dts[j]
-            given_form_modified = hapitime_reformat(form_to_match, given_form)
+            given_form_modified = hapitime_reformat(form_to_match, given_form, logging=logging)
             assert given_form_modified == form_to_match
             
     # padding
@@ -69,9 +71,10 @@ def test_hapitime_reformat(logging=False):
         form_to_match = dts[i]
         for j in range(i + 1, len(dts)):
             given_form = dts[j]
-            given_form_modified = hapitime_reformat(form_to_match, given_form)
+            given_form_modified = hapitime_reformat(form_to_match, given_form, logging=logging)
             assert given_form_modified == form_to_match
 
+    logging.close()
 
 if __name__ == '__main__':
     test_hapitime_reformat()
