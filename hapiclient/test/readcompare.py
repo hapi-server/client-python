@@ -1,19 +1,11 @@
-import shutil
-import numpy as np
+import os
 import pickle
+import numpy as np
 
-from hapiclient.hapi import hapi
-from hapiclient.hapi import request2path
+from hapiclient import hapi
 
 debug = False
 
-def requestinfo(server, dataset, parameters, start, stop, cachedir):
-    infopkl = request2path(server, dataset, parameters, start, stop, cachedir)
-    infopkl = infopkl + ".pkl"
-    f = open(infopkl, 'rb')
-    info = pickle.load(f)
-    f.close()
-    return info
 
 def comparisonOK(a, b):
     
@@ -30,7 +22,8 @@ def comparisonOK(a, b):
             return True
         else:
             return False
-    
+
+
 def equal(a, b):
     allequal = True
     for name in a.dtype.names:
@@ -39,6 +32,7 @@ def equal(a, b):
             if debug: print(name + ' values differ.')
 
     return allequal
+
 
 def equalNonFloats(a, b):
     allequal = True
@@ -52,6 +46,7 @@ def equalNonFloats(a, b):
                 if debug: import pdb; pdb.set_trace()
 
     return allequal
+
 
 def closeFloats(a, b):
     allclose = True
@@ -70,6 +65,18 @@ def closeFloats(a, b):
 
     return allclose
 
+
+# Create empty file
+logfile = os.path.realpath(__file__)[0:-2] + "log"
+with open(logfile, "w") as f: pass
+
+def xprint(msg):
+    print(msg)
+    f = open(logfile, "a")
+    f.write(msg + "\n")
+    f.close()
+
+
 def readcompare(server, dataset, parameters, run, opts):
 
     # Note that for this dataset, there are differences in
@@ -87,71 +94,87 @@ def readcompare(server, dataset, parameters, run, opts):
     if run == 'long':
         stop= '1970-01-02T00:00:00' # Returns 86400 time values
 
+    if run == 'verylong':
+        stop= '1970-01-02T00:00:00' # Returns 86400 time values
+
     # Checks that all four read methods give same result.
     # Does not check that an individual read is correct. 
     # Do this manually.
     
     opts['format'] = 'csv'
     
-    print('\nParameter(s) = %s; run = %s. cache = %s; usecache = %s' % (parameters, run, opts['cache'], opts['usecache']))
+    xprint('\nParameter(s) = %s; run = %s. cache = %s; usecache = %s' \
+            % (parameters, run, opts['cache'], opts['usecache']))
     if opts['cache']:
-        print('__________________________________________')
-        print('Method           read/parse  download ')
-        print('__________________________________________')
+        xprint('_____________________________________________________________')
+        xprint('Method                total      d/l->file  read & parse file')
+        xprint('_____________________________________________________________')
     else:
-        print('__________________________________________')
-        print('Method         create buff   download/parse')
-        print('__________________________________________')
-        
+        xprint('___________________________________________________________')
+        xprint('Method                total      d/l->buff  parse buff')
+        xprint('___________________________________________________________')
+
+    
     opts['method'] = 'numpynolength'
     data, meta  = hapi(server, dataset, parameters, start, stop, **opts)
-    info = requestinfo(server, dataset, parameters, start, stop, opts['cachedir'])
-    print('numpy no length   %5.2f ms %8.4f s' % (1000.*info['x_readTime'], info['x_downloadTime']))
+    xprint('csv; numpy; no len.  %8.4f   %8.4f   %8.4f' % \
+            (meta['x_totalTime'], meta['x_downloadTime'], meta['x_readTime']))
     datalast = data 
+
     
     opts['method'] = 'pandasnolength'
     data, meta  = hapi(server, dataset, parameters, start, stop, **opts)
-    info = requestinfo(server, dataset, parameters, start, stop, opts['cachedir'])
+
+    diffs = ''
     if np.array_equal(data, datalast):
-        print('pandas no length  %5.2f ms %8.4f s' % (1000.*info['x_readTime'], info['x_downloadTime']))
-    else:
-        print('pandas no length  %5.2f ms %8.4f s (diffs in float values <= 1e-15)' % (1000.*info['x_readTime'], info['x_downloadTime']))
+        diffs = '(diffs in float values <= 1e-15)'
+
+    xprint('csv; pandas; no len. %8.4f   %8.4f   %8.4f %s' % \
+            (meta['x_totalTime'], meta['x_downloadTime'], meta['x_readTime'], diffs))
+
     allpass = comparisonOK(data, datalast)
     datalast = data
+
     
     opts['method'] = 'numpy'
     data, meta  = hapi(server, dataset, parameters, start, stop, **opts)
-    info = requestinfo(server, dataset, parameters, start, stop, opts['cachedir'])
+
+    diffs = ''
     if np.array_equal(data, datalast):
-        print('numpy             %5.2f ms %8.4f s' % (1000.*info['x_readTime'], info['x_downloadTime']))
-    else:
-        print('numpy             %5.2f ms %8.4f s (diffs in float values <= 1e-15)' % (1000.*info['x_readTime'], info['x_downloadTime']))
+        diffs = '(diffs in float values <= 1e-15)'
+
+    xprint('csv; numpy           %8.4f   %8.4f   %8.4f %s' % \
+            (meta['x_totalTime'], meta['x_downloadTime'], meta['x_readTime'], diffs))
+
     allpass = comparisonOK(data, datalast)
     datalast = data
+
     
     opts['method'] = 'pandas'
     data, meta  = hapi(server, dataset, parameters, start, stop, **opts)
-    info = requestinfo(server, dataset, parameters, start, stop, opts['cachedir'])
+
+    diffs = ''
     if np.array_equal(data, datalast):
-        print('pandas            %5.2f ms %8.4f s' % (1000.*info['x_readTime'], info['x_downloadTime']))
-    else:
-        print('pandas            %5.2f ms %8.4f s (diffs in float values <= 1e-15)' % (1000.*info['x_readTime'], info['x_downloadTime']))
+        diffs = '(diffs in float values <= 1e-15)'
+
+    xprint('csv; pandas          %8.4f   %8.4f   %8.4f %s' % \
+            (meta['x_totalTime'], meta['x_downloadTime'], meta['x_readTime'], diffs))
 
     allpass = comparisonOK(data, datalast)
     datalast = data
     
+
     opts['format'] = 'binary'
     opts['method'] = '' # Ignored
     data, meta  = hapi(server, dataset, parameters, start, stop, **opts)
-    info = requestinfo(server, dataset, parameters, start, stop, opts['cachedir'])
+
+    diffs = ''
     if np.array_equal(data, datalast):
-        print('binary            %5.2f ms %8.4f s' % (1000.*info['x_readTime'], info['x_downloadTime']))
-    else:
-        print('binary            %5.2f ms %8.4f s (diffs in float values <= 1e-15)' % (1000.*info['x_readTime'], info['x_downloadTime']))
+        diffs = '(diffs in float values <= 1e-15)'
+
+    xprint('binary               %8.4f   %8.4f   %8.4f %s' % \
+            (meta['x_totalTime'], meta['x_downloadTime'], meta['x_readTime'], diffs))
 
     allpass = comparisonOK(data, datalast)
 
     return allpass
-
-def clearcache(opts):
-    shutil.rmtree(opts['cachedir'], ignore_errors=True)

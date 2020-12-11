@@ -52,3 +52,4 @@ v0.1.5b1:
 v0.1.5b2:
 	2020-07-31 -- Handle all NaN timeseries
 v0.1.5b3:
+	2020-12-08 -- Request chunking and parallel downloads

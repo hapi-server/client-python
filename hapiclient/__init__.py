@@ -21,6 +21,8 @@ try:
 except:
     print('Problem importing Matplotlib. hapiplot function will not work.')
 
+from hapiclient.util import HAPIError
+
 # Allow "from hapiclient import autoplot"
 from hapiclient.autoplot.autoplot import autoplot
 

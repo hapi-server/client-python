@@ -22,17 +22,27 @@ def setopts(defaults, given):
 
 
 def log(msg, opts):
-    """Print message to console."""
+    """Print message to console or file."""
 
     import sys
 
-    if opts['logging']:
+    if not 'logging' in opts:
+        opts = opts.copy()
+        opts['logging'] = False
+        
+    pre = sys._getframe(1).f_code.co_name + '(): '
+    if isinstance(opts['logging'], bool) and opts['logging']:
         if pythonshell() == 'jupyter-notebook':
             # Don't show full path information.
+            # TODO: Use pathsep() instead of '/'
             msg = msg.replace(opts['cachedir'] + '/', '')
             msg = msg.replace(opts['cachedir'], '')
-        pre = sys._getframe(1).f_code.co_name + '(): '
         print(pre + msg)
+    elif hasattr(opts['logging'], 'write'):
+        opts['logging'].write(pre + msg + "\n")
+        opts['logging'].flush()
+    else:
+        pass # TODO: error
 
 
 def jsonparse(res, url):
@@ -165,6 +175,9 @@ def warning(*args):
     warnings.warn(message, HAPIWarning)
 
 
+class HAPIError(Exception):
+    pass
+
 def error(msg, debug=False):
     """Display a short error message.
 
@@ -222,8 +235,6 @@ def error(msg, debug=False):
 
         # Reset back to default
         sys.excepthook = sys.__excepthook__
-
-    class HAPIError(Exception): pass
 
     try:
         # Copy default function
