@@ -1,3 +1,4 @@
+import os
 import isodate
 
 from datetime import datetime
@@ -11,11 +12,11 @@ compare_logging = True
 hapi_logging = False
 
 # Create empty file
-with open("test_chunking.log", "w") as f: pass
+logfile = os.path.realpath(__file__)[0:-2] + "log"
 
 def xprint(msg):
     print(msg)
-    f = open("test_hapitime_reformat.log", "a")
+    f = open(logfile, "a")
     f.write(msg + "\n")
     f.close()
 

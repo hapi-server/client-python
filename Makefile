@@ -11,7 +11,7 @@ PYTHONVERS=python3.8 python3.7 python3.6 python3.5 python2.7
 VERSION=0.1.5b4
 SHELL:= /bin/bash
 
-LONG_TESTS=true
+LONG_TESTS=false
 
 # Select this to have anaconda installed for you.
 CONDA=./anaconda3
@@ -141,6 +141,7 @@ endif
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_chunking.py
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime2datetime.py
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime_reformat.py
+
 # These require visual inspection.
 repository-test-plots:
 	@make clean

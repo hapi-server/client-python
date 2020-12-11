@@ -1,3 +1,4 @@
+import os
 import pickle
 import numpy as np
 
@@ -66,11 +67,12 @@ def closeFloats(a, b):
 
 
 # Create empty file
-with open("readcompare.log", "w") as f: pass
+logfile = os.path.realpath(__file__)[0:-2] + "log"
+with open(logfile, "w") as f: pass
 
 def xprint(msg):
     print(msg)
-    f = open("readcompare.log", "a")
+    f = open(logfile, "a")
     f.write(msg + "\n")
     f.close()
 

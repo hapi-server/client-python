@@ -1,3 +1,4 @@
+import os
 from hapiclient.hapi import hapitime_reformat
 
 # See comments in test_hapitime2datetime.py for execution options.
@@ -55,7 +56,7 @@ def test_hapitime_reformat():
         if "T" in dts[i]:
             dts.append("1989-001T" + dts[i].split("T")[1])
 
-    logging = open("test_hapitime_reformat.log", "w")
+    logging = open(os.path.realpath(__file__)[0:-2] + "log", "w")
 
     # truncating
     for i in range(len(dts)):
