@@ -3,10 +3,12 @@ import re
 import json
 import time
 import pickle
+import isodate
 
 import pandas
 import numpy as np
-from datetime import datetime
+from joblib import Parallel, delayed
+from datetime import datetime, timedelta
 
 from hapiclient.util import setopts, log, warning, error
 from hapiclient.util import urlopen, urlretrieve, jsonparse
@@ -33,10 +35,10 @@ def subset(meta, params):
         if p[i] not in pm:
             error('Parameter %s is not in meta' % p[i] + '\n')
             return
-    
+
     pa = [meta['parameters'][0]]  # First parameter is always the time parameter 
 
-    params_reordered = [] # Re-ordered params
+    params_reordered = []  # Re-ordered params
     # If time parameter explicity requested, put it first in params_reordered.
     if meta['parameters'][0]['name'] in p:
         params_reordered = [meta['parameters'][0]['name']]
@@ -48,15 +50,13 @@ def subset(meta, params):
             params_reordered.append(pm[i])
     meta['parameters'] = pa
 
-    #import pdb;pdb.set_trace()
-
     params_reordered_str = ','.join(params_reordered)
-    
+
     if not params == params_reordered_str:
         msg = "\n  " + "Order requested: " + params
         msg = msg + "\n  " + "Order required: " + params_reordered_str
         error('Order of requested parameters does not match order of parameters in server info metadata.' + msg + '\n')
-    
+
     return meta
 
 
@@ -68,7 +68,7 @@ def cachedir(*args):
     cachdir(basedir, server) returns basedir + os.path.sep + server2dirname(server)
     """
     import tempfile
-    
+
     if len(args) == 2:
         # cachedir(base_dir, server)
         return args[0] + os.path.sep + server2dirname(args[1])
@@ -79,7 +79,7 @@ def cachedir(*args):
 
 def server2dirname(server):
     """Convert a server URL to a directory name."""
-    
+
     urld = re.sub(r"https*://", "", server)
     urld = re.sub(r'/', '_', urld)
     return urld
@@ -97,12 +97,13 @@ def request2path(*args):
 
     # url subdirectory
     urldirectory = server2dirname(args[0])
-    fname = '%s_%s_%s_%s' % (re.sub('/','_',args[1]), 
+    fname = '%s_%s_%s_%s' % (re.sub('/', '_', args[1]),
                              re.sub(',', '-', args[2]),
                              re.sub(r'-|:|\.|Z', '', args[3]),
                              re.sub(r'-|:|\.|Z', '', args[4]))
 
     return os.path.join(cachedirectory, urldirectory, fname)
+
 
 def hapiopts():
     """Return allowed options for hapi().
@@ -111,14 +112,28 @@ def hapiopts():
     """
     # Default options
     opts = {
-                'logging': False,
-                'cache': True,
-                'cachedir': cachedir(),
-                'usecache': False,
-                'server_list': 'https://github.com/hapi-server/servers/raw/master/all.txt',
-                'format': 'binary',
-                'method': 'pandas'
-            }
+        'logging': False,
+        'cache': True,
+        'cachedir': cachedir(),
+        'usecache': False,
+        'server_list': 'https://github.com/hapi-server/servers/raw/master/all.txt',
+        'format': 'binary',
+        'method': 'pandas',
+        'parallel': False,
+        'n_parallel': 5,
+        'n_chunks': None,
+        'dt_chunk': None,
+    }
+
+    assert (opts['logging'] in [True, False])
+    assert (opts['cache'] in [True, False])
+    assert (opts['usecache'] in [True, False])
+    assert (opts['format'] in ['binary', 'CSV'])
+    assert (opts['method'] in ['pandas', 'numpy', 'pandasnolength', 'numpynolength'])
+    assert (opts['parallel'] in [True, False])
+    assert (isinstance(opts['n_parallel'], int) and opts['n_parallel'] > 1)
+    assert (opts['n_chunks'] is None or isinstance(opts['n_chunks'], int) and opts['n_chunks'] > 0)
+    assert (opts['dt_chunk'] in [None, 'infer', 'PT1M', 'PT1H', 'P1D', 'P1Y'])
 
     """
     format = 'binary' is used by default and CSV used if binary is not available from server.
@@ -129,7 +144,7 @@ def hapiopts():
     CSV read methods. See test/test_hapi.py for comparison.
     This should option should be excluded from the help string.
     """
-    
+
     return opts
 
 
@@ -139,7 +154,7 @@ def hapi(*args, **kwargs):
     For additional documentation and demonstration, see
     https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb
 
-    Version: 0.1.5b3
+    Version: 0.1.5b4
 
     Parameters
     ----------
@@ -168,6 +183,60 @@ def hapi(*args, **kwargs):
 
             `serverlist` (https://github.com/hapi-server/servers/raw/master/all.txt)
 
+            `parallel` (False) If true, make up to `n_parallel` requests to
+                server in parallel (uses threads)
+
+            `n_parallel` (5) Maximum number of parallel requests to server.
+                Max allowed is 5.
+
+            `n_chunks` (None) Get data by making `n_chunks` requests by splitting
+                requested time range. `dt_chunk` is ignored if `n_chunks` is
+                not `None`. Allowed values are integers > 1.
+
+            `dt_chunk` ('infer') For requests that span a time range larger
+                than the default chunk size for a given dataset cadence, the
+                client will split request into chunks if `dt_chunk` is not
+                `None`. 
+
+                Allowed values of `dt_chunk` are 'infer', `None`, 'PT1M',
+                'PT1H', 'P1D', and 'P1Y'. The default chunk size is determined
+                based on the cadence of the dataset requested according to
+
+                    cadence < PT1S              dt_chunk='PT1H'
+                    PT1S <= cadence <= PT1H     dt_chunk='P1D'
+                    cadence > PT1H              dt_chunk='P1M'
+                    cadence >= P1D              dt_chunk='P1Y'
+
+                If the dataset does not have a cadence listed in its metadata, an
+                attempt is made to infer the cadence by requesting a small time range
+                of data and doubling the time range until 10 records are in the response.
+                The cadence used to determine the chunk size is then the average time
+                difference between records.
+
+                If requested time range is < 1/2 of chunk size, only one request is
+                made. Otherwise, start and/or stop are modified to be at hour, day,
+                month or year boundaries and requests are made for a time span of a
+                full chunk, and trimming is performed. For example,
+
+                    Cadence = PT1M and request for
+                        start/stop=1999-11-12T00:10:00/stop=1999-11-12T12:09:00
+                        Chunk size is P1D and requested time range < 1/2 of this
+                        =>  Default behavior
+                    Cadence = PT1M and request for
+                        start/stop=1999-11-12T00:10:00/1999-11-12T12:10:00
+                        Chunk size is P1D and requested time range >= 1/2 of this
+                        =>  One request with start/stop=1999-11-12/1999-11-13
+                            and trim performed
+                    Cadence = PT1M and request for
+                        start/stop=1999-11-12T00:10:00/1999-11-13T12:09:00
+                        Chunk size is P1D and requested time range > than this
+                        =>  Two requests:
+                            (1) start/stop=1999-11-12/start=1999-11-13
+                            (2) start/stop=1999-11-13/start=1999-11-14
+                            and trim performed
+
+        
+            
     Returns
     -------
     result : various
@@ -223,12 +292,18 @@ def hapi(*args, **kwargs):
         PARAMETERS = args[2]
     if nin > 3:
         START = args[3]
+        if START[-1] != 'Z':
+            # TODO: Consider warning.
+            START = START + 'Z'
     if nin > 4:
         STOP = args[4]
+        if STOP[-1] != 'Z':
+            # TODO: Consider warning.
+            STOP = STOP + 'Z'
 
     # Override defaults
     opts = setopts(hapiopts(), kwargs)
-    
+
     from hapiclient import __version__
     log('Running hapi.py version %s' % __version__, opts)
 
@@ -258,7 +333,7 @@ def hapi(*args, **kwargs):
         res = urlopen(url)
         meta = jsonparse(res, url)
         return meta
-    
+
     if nin == 4:
         error('A stop time is required if a start time is given.')
 
@@ -266,6 +341,7 @@ def hapi(*args, **kwargs):
         # hapi(SERVER, DATASET, PARAMETERS) or
         # hapi(SERVER, DATASET, PARAMETERS, START, STOP)
 
+        # Extract all parameters.
         if re.search(r', ', PARAMETERS):
             warning("Removing spaces after commas in given parameter list of '" + PARAMETERS + "'")
             PARAMETERS = re.sub(r',\s+', ',', PARAMETERS)
@@ -283,16 +359,19 @@ def hapi(*args, **kwargs):
         # is returned.
         fname_root = request2path(SERVER, DATASET, '', '', '', opts['cachedir'])
         fnamejson = fname_root + '.json'
-        fnamepkl  = fname_root + '.pkl'
+        fnamepkl = fname_root + '.pkl'
 
         if nin == 5:  # Data requested
+
+            tic_totalTime = time.time()
+
             # URL to get CSV (will be used if binary response is not available)
             urlcsv = SERVER + '/data?id=' + DATASET + '&parameters=' + \
                      PARAMETERS + '&time.min=' + START + '&time.max=' + STOP
             # URL for binary request
             urlbin = urlcsv + '&format=binary'
 
-            # Raw CSV and HAPI Binary (no header) will be stored in .csv and 
+            # Raw CSV and HAPI Binary (no header) will be stored in .csv and
             # .bin files. Parsed response of either CSV or HAPI Binary will
             # be stored in a .npy file.
             # fnamepklx will contain additional metadata about the request
@@ -300,7 +379,7 @@ def hapi(*args, **kwargs):
             fname_root = request2path(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])
             fnamecsv = fname_root + '.csv'
             fnamebin = fname_root + '.bin'
-            fnamenpy = fname_root + '.npy'            
+            fnamenpy = fname_root + '.npy'
             fnamepklx = fname_root + ".pkl"
 
         metaFromCache = False
@@ -331,13 +410,154 @@ def hapi(*args, **kwargs):
             res = urlopen(urljson)
             meta = jsonparse(res, urljson)
 
-        # Add information to metdata so we can figure out request needed
+        # Add information to metadata so we can figure out request needed
         # to generated it. Will also be used for labeling plots by hapiplot().
         meta.update({"x_server": SERVER})
         meta.update({"x_dataset": DATASET})
 
         if opts["cache"]:
             if not os.path.exists(urld): os.makedirs(urld)
+
+        if opts['dt_chunk'] == 'infer':
+            cadence = meta.get('cadence', None)
+
+            # If cadence not given, this will cause 1-day chunks to be used.
+            if cadence is None:
+                cadence = 'PT1M'
+            else:
+                cadence = isodate.parse_duration(cadence)
+                if isinstance(cadence, isodate.Duration):
+                    # TODO: Document unexpected keyword argument.
+                    cadence = cadence.totimedelta(start=datetime.now())
+
+            pt1s = isodate.parse_duration('PT1S')
+            pt1h = isodate.parse_duration('PT1H')
+            p1d = isodate.parse_duration('P1D')
+
+            if cadence < pt1s:
+                opts['dt_chunk'] = 'PT1H'
+            elif pt1s <= cadence <= pt1h:
+                opts['dt_chunk'] = 'P1D'
+            elif cadence > pt1h:
+                opts['dt_chunk'] = 'P1M'
+            elif cadence >= p1d:
+                opts['dt_chunk'] = 'P1Y'
+
+        if opts['n_chunks'] is not None or opts['dt_chunk'] is not None:
+
+            padz = lambda x: x if 'Z' in x else x + 'Z'
+            pSTART = hapitime2datetime(padz(START))[0]
+            pSTOP  = hapitime2datetime(padz(STOP))[0]
+
+            if opts['dt_chunk']:
+                pDELTA = isodate.parse_duration(opts['dt_chunk'])
+
+                if (pSTOP - pSTART) < pDELTA / 2:
+                    opts['n_chunks'] = None
+                    opts['dt_chunk'] = None
+                    return hapi(SERVER, DATASET, PARAMETERS, START, STOP, **opts)
+
+                if opts['dt_chunk'] == 'P1Y':
+                    pSTART = datetime(pSTART.year, 1, 1)
+                    pSTOP = datetime(pSTOP.year + 1, 1, 1)
+                    opts['n_chunks'] = pSTOP.year - pSTART.year
+                elif opts['dt_chunk'] == 'P1M':
+                    pSTART = datetime(pSTART.year, pSTART.month, 1)
+                    pSTOP = datetime(pSTOP.year, pSTOP.month + 1, 1)
+                    opts['n_chunks'] = (pSTOP.year - pSTART.year) * 12 + (pSTOP.month - pSTART.month)
+                elif opts['dt_chunk'] == 'P1D':
+                    pSTART = datetime.combine(pSTART.date(), datetime.min.time())
+                    pSTOP = datetime.combine(pSTOP.date(), datetime.min.time()) + timedelta(days=1)
+                    opts['n_chunks'] = (pSTOP - pSTART).days
+                elif opts['dt_chunk'] == 'PT1H':
+                    pSTART = datetime.combine(pSTART.date(), datetime.min.time()) + timedelta(hours=pSTART.hour)
+                    pSTOP = datetime.combine(pSTOP.date(), datetime.min.time()) + timedelta(hours=pSTOP.hour + 1)
+                    opts['n_chunks'] = int(((pSTOP - pSTART).total_seconds() / 60) / 60)
+            else:
+                pDIFF = pSTOP - pSTART
+                pDELTA = pDIFF / opts['n_chunks']
+
+            n_chunks = opts['n_chunks']
+            opts['n_chunks'] = None
+            opts['dt_chunk'] = None
+
+            backend = 'sequential'
+            if opts['parallel']:
+                backend = 'threading'
+                # multiprocessing was not tested. It may work, but will
+                # need a speed comparison with threading.
+                # backend = 'multiprocessing'
+
+            log('backend = {}'.format(backend), opts)
+
+            verbose = 0
+            if opts.get('logging'):
+                verbose = 100
+
+            def nhapi(SERVER, DATASET, PARAMETERS, pSTART, pDELTA, i, **opts):
+                START = pSTART + (i * pDELTA)
+                START = str(START.date())+'T'+str(START.time())
+            
+                STOP = pSTART + ((i + 1) * pDELTA)
+                STOP = str(STOP.date()) + 'T' + str(STOP.time())
+            
+                data, meta = hapi(
+                    SERVER,
+                    DATASET,
+                    PARAMETERS,
+                    START,
+                    STOP,
+                    **opts
+                )
+                return data, meta
+
+            resD, resM = zip(
+                *Parallel(n_jobs=opts['n_parallel'], verbose=verbose, backend=backend)(
+                    delayed(nhapi)(
+                        SERVER,
+                        DATASET,
+                        PARAMETERS,
+                        pSTART,
+                        pDELTA,
+                        i,
+                        **opts
+                    ) for i in range(n_chunks)
+                )
+            )
+
+            resD = list(resD)
+
+            import sys
+            from hapiclient.hapi import hapitime_reformat
+
+            if sys.version_info < (3, ):
+                START = hapitime_reformat(str(resD[0]['Time'][0]), START)
+                resD[0] = resD[0][resD[0]['Time'] >= START]
+
+                STOP = hapitime_reformat(str(resD[-1]['Time'][0]), STOP)
+                resD[-1] = resD[-1][resD[-1]['Time'] < STOP]
+            else:
+                START = hapitime_reformat(resD[0]['Time'][0].decode('UTF-8'), START)
+                resD[0] = resD[0][resD[0]['Time'] >= bytes(START, 'UTF-8')]
+
+                STOP = hapitime_reformat(resD[-1]['Time'][0].decode('UTF-8'), STOP)
+                resD[-1] = resD[-1][resD[-1]['Time'] < bytes(STOP, 'UTF-8')]
+
+            data = np.concatenate(resD)
+
+            meta = resM[0].copy()
+            meta['x_time.max'] = resM[-1]['x_time.max']
+            meta['x_dataFile'] = None
+            meta['x_dataFiles'] = [resM[i]['x_dataFile'] for i in range(len(resM))]
+            meta['x_downloadTime'] = sum([resM[i]['x_downloadTime'] for i in range(len(resM))])
+            meta['x_downloadTimes'] = [resM[i]['x_downloadTime'] for i in range(len(resM))]
+            meta['x_readTime'] = sum([resM[i]['x_readTime'] for i in range(len(resM))])
+            meta['x_readTimes'] = [resM[i]['x_readTime'] for i in range(len(resM))]
+            meta['x_totalTime'] = time.time() - tic_totalTime
+            meta['x_dataFileParsed'] = None
+            meta['x_dataFilesParsed'] = [resM[i]['x_dataFileParsed'] for i in range(len(resM))]
+
+            return data, meta
 
         if opts["cache"] and not metaFromCache:
             # Cache metadata for all parameters if it was not already loaded
@@ -347,7 +567,7 @@ def hapi(*args, **kwargs):
             f = open(fnamejson, 'w')
             json.dump(meta, f, indent=4)
             f.close()
-            
+
             log('Writing %s ' % fnamepkl.replace(urld + '/', ''), opts)
             f = open(fnamepkl, 'wb')
             # protocol=2 used for Python 2.7 compatability.
@@ -366,20 +586,21 @@ def hapi(*args, **kwargs):
             # Read cached data file.
             log('Reading %s ' % fnamenpy.replace(urld + '/', ''), opts)
             f = open(fnamenpy, 'rb')
-            data = np.load(f)                    
+            data = np.load(f)
             f.close()
             # There is a possibility that the fnamenpy file existed but
             # fnamepklx was not found (b/c removed). In this case, the meta 
             # returned will not have all of the "x_" information inserted below.
             # Code that uses this information needs to account for this.
+            meta['x_totalTime'] = time.time() - tic_totalTime
             return data, meta
 
         cformats = ['csv', 'binary']  # client formats
         if not opts['format'] in cformats:
             # Check if requested format is implemented by this client.
             error('This client does not handle transport '
-                             'format "%s".  Available options: %s'
-                             % (opts['format'], ', '.join(cformats)))
+                  'format "%s".  Available options: %s'
+                  % (opts['format'], ', '.join(cformats)))
 
         # See if server supports binary
         if opts['format'] != 'csv':
@@ -390,10 +611,10 @@ def hapi(*args, **kwargs):
             if 'format' in kwargs and not kwargs['format'] in sformats:
                 warning("hapi", 'Requested transport format "%s" not avaiable '
                                 'from %s. Will use "csv". Available options: %s'
-                              % (opts['format'], SERVER, ', '.join(sformats)))        
+                        % (opts['format'], SERVER, ', '.join(sformats)))
                 opts['format'] = 'csv'
             if not 'binary' in sformats:
-                opts['format'] = 'csv'                
+                opts['format'] = 'csv'
 
         ##################################################################
         # Compute data type variable dt used to read HAPI response into
@@ -428,7 +649,7 @@ def hapi(*args, **kwargs):
                 psizes[i] = psizes[i][0]
 
             if type(psizes[i]) is list and len(psizes[i]) > 1:
-                #psizes[i] = list(reversed(psizes[i]))
+                # psizes[i] = list(reversed(psizes[i]))
                 psizes[i] = list(psizes[i])
 
             # First column of ith parameter.
@@ -497,21 +718,19 @@ def hapi(*args, **kwargs):
                 log('Writing %s to %s' % (urlbin, fnamebin.replace(urld + '/', '')), opts)
                 tic0 = time.time()
                 urlretrieve(urlbin, fnamebin)
-                toc0 = time.time()-tic0
+                toc0 = time.time() - tic0
                 log('Reading %s' % fnamebin.replace(urld + '/', ''), opts)
                 tic = time.time()
                 data = np.fromfile(fnamebin, dtype=dt)
-                toc = time.time() - tic
             else:
                 from io import BytesIO
                 log('Creating buffer: %s' % urlbin, opts)
                 tic0 = time.time()
                 buff = BytesIO(urlopen(urlbin).read())
-                toc0 = time.time()-tic0
+                toc0 = time.time() - tic0
                 log('Parsing buffer.', opts)
                 tic = time.time()
                 data = np.frombuffer(buff.read(), dtype=dt)
-                toc = time.time() - tic
         else:
             # HAPI CSV
             if opts["cache"]:
@@ -533,25 +752,21 @@ def hapi(*args, **kwargs):
                 tic = time.time()
                 if opts['method'] == 'numpy':
                     data = np.genfromtxt(fnamecsv, dtype=dt, delimiter=',')
-                    toc = time.time() - tic
                 if opts['method'] == 'pandas':
                     # Read file into Pandas DataFrame
                     df = pandas.read_csv(fnamecsv, sep=',', header=None)
-                    
+
                     # Allocate output N-D array (It is not possible to pass dtype=dt
                     # as computed to pandas.read_csv; pandas dtype is different
                     # from numpy's dtype.)
                     data = np.ndarray(shape=(len(df)), dtype=dt)
-                    print(df)
                     # Insert data from dataframe 'df' columns into N-D array 'data'
                     for i in range(0, len(pnames)):
                         shape = np.append(len(data), psizes[i])
                         # In numpy 1.8.2 and Python 2.7, this throws an error
                         # for no apparent reason. Works as expected in numpy 1.10.4
-                        print(cols)
-                        data[pnames[i]] = np.squeeze(np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1]+1)], shape))
-
-                    toc = time.time() - tic
+                        data[pnames[i]] = np.squeeze(
+                            np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1] + 1)], shape))
             else:
                 # At least one requested string or isotime parameter does not
                 # have a length in metadata. More work to do to read. 
@@ -584,7 +799,8 @@ def hapi(*args, **kwargs):
                             # so table is a 2-D numpy matrix
                             for i in range(0, len(pnames)):
                                 shape = np.append(len(data), psizes[i])
-                                data[pnames[i]] = np.squeeze(np.reshape(table[:, np.arange(cols[i][0], cols[i][1]+1)], shape))
+                                data[pnames[i]] = np.squeeze(
+                                    np.reshape(table[:, np.arange(cols[i][0], cols[i][1] + 1)], shape))
                     else:
                         # Table is not a 2-D numpy matrix.
                         # Extract each column (don't know how to do this with slicing
@@ -593,7 +809,7 @@ def hapi(*args, **kwargs):
                         # Then insert aggregated columns into N-D array 'data'.
                         for pn in range(0, len(cols)):
                             shape = np.append(len(data), psizes[pn])
-                            for c in range(cols[pn][0], cols[pn][1]+1):
+                            for c in range(cols[pn][0], cols[pn][1] + 1):
                                 if c == cols[pn][0]:  # New parameter
                                     tmp = table[table.dtype.names[c]]
                                 else:  # Aggregate
@@ -617,7 +833,8 @@ def hapi(*args, **kwargs):
                         shape = np.append(len(data), psizes[i])
                         # In numpy 1.8.2 and Python 2.7, this throws an error for no apparent reason.
                         # Works as expected in numpy 1.10.4
-                        data[pnames[i]] = np.squeeze(np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1]+1)], shape))
+                        data[pnames[i]] = np.squeeze(
+                            np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1] + 1)], shape))
 
                 # Any of the string parameters that do not have an associated
                 # length in the metadata will have dtype='O' (object).
@@ -646,9 +863,9 @@ def hapi(*args, **kwargs):
                     else:
                         data2[pnames[i]] = data[pnames[i]]
                         # Save memory by not copying (does this help?)
-                        #data2[pnames[i]] = np.array(data[pnames[i]],copy=False)
+                        # data2[pnames[i]] = np.array(data[pnames[i]],copy=False)
 
-            toc = time.time() - tic
+        toc = time.time() - tic
 
         # Extra metadata associated with request will be saved in
         # a pkl file with same base name as npy data file.
@@ -675,11 +892,14 @@ def hapi(*args, **kwargs):
         # h.data
         # h.meta
         # h.info
+
         # Create cache directory
         if not os.path.exists(opts["cachedir"]):
             os.makedirs(opts["cachedir"])
         if not os.path.exists(urld):
             os.makedirs(urld)
+
+        # Write metadata to cache
         log('Writing %s' % fnamepklx, opts)
         f = open(fnamepklx, 'wb')
         pickle.dump(meta, f, protocol=2)
@@ -692,121 +912,67 @@ def hapi(*args, **kwargs):
             else:
                 np.save(fnamenpy, data)
 
+        meta['x_totalTime'] = time.time() - tic_totalTime
         if missing_length:
             return data2, meta
         else:
             return data, meta
 
 
-def hapitime2datetime(Time, **kwargs):
-    """Convert HAPI timestamps to Python datetimes.
+def hapitime_reformat(form_to_match, given_form, logging=False):
+    """Reformat a given HAPI ISO 8601 time to match format of another HAPI ISO 8601 time."""
 
-    A HAPI-compliant server represents time as an ISO 8601 string
-    (with several constraints - see the `HAPI specification
-    <https://github.com/hapi-server/data-specification/blob/master/hapi-dev/HAPI-data-access-spec-dev.md#representation-of-time>`)
-    hapi() reads these into a NumPy array of Python byte literals.
+    log('ref:       {}'.format(form_to_match), {'logging': logging})
+    log('given:     {}'.format(given_form), {'logging': logging})
 
-    This function converts the byte literals to Python datetime objects.
+    if 'T' in given_form:
+        dt_given = isodate.parse_datetime(given_form)
+    else:
+        # Remove trailing Z b/c parse_date does not implement of date with
+        # trailing Z, which is valid IS8601.
+        dt_given = isodate.parse_date(given_form[0:-1])
 
-    Typical usage:
-        data = hapi(...) # Get data
-        DateTimes = hapitime2datetime(data['Time']) # Convert
+    # Get format string, e.g., %Y-%m-%dT%H
+    format_ref = hapitime_format_str([form_to_match])
 
-    Parameter
-    ----------
-    Time:
-        - A numpy array of HAPI timestamp byte literals
-        - A numpy array of HAPI timestamp strings
-        - A list of HAPI timestamp byte literals
-        - A list of HAPI timestamp strings
-        - A HAPI timestamp byte literal
-        - A HAPI timestamp strings
+    if '%f' in format_ref:
+        form_to_match = form_to_match.strip('Z')
+        form_to_match_fractional = form_to_match.split('.')[-1]
+        form_to_match = ''.join(form_to_match.split('.')[:-1])
 
-    Returns
-    ----------
-    A NumPy array Python datetime objects with length = len(Time)
+        given_form_fractional = '000000000'
+        given_form_fmt = hapitime_format_str([given_form])
+        given_form = given_form.strip('Z')
 
-    Examples
-    ----------
-    All of the following return
-      array([datetime.datetime(1970, 1, 1, 0, 0)], dtype=object)
+        if '%f' in given_form_fmt:
+            given_form_fractional = given_form.split('.')[-1]
+            given_form = ''.join(given_form.split('.')[:-1])
 
-    from hapiclient.hapi import hapitime2datetime
-    import numpy as np
+        converted = hapitime_reformat(form_to_match+'Z', given_form+'Z')
+        converted = converted.strip('Z')
+        
+        converted_fractional = '{:0<{}.{}}'.format(given_form_fractional, len(form_to_match_fractional), len(form_to_match_fractional))
+        converted = converted + '.' + converted_fractional
 
-    hapitime2datetime(np.array([b'1970-01-01T00:00:00.000Z']))
-    hapitime2datetime(np.array(['1970-01-01T00:00:00.000Z']))
+        if 'Z' in format_ref:
+            return converted + 'Z'
+        
+        return converted
 
-    hapitime2datetime([b'1970-01-01T00:00:00.000Z'])
-    hapitime2datetime(['1970-01-01T00:00:00.000Z'])
-
-    hapitime2datetime([b'1970-01-01T00:00:00.000Z'])
-    hapitime2datetime('1970-01-01T00:00:00.000Z')
-
-    """
-
-    from datetime import datetime
-
-    try:
-        # Python 2
-        import pytz
-        tzinfo = pytz.UTC
-    except:
-        tzinfo = datetime.timezone.utc
-
-    opts = {'logging': False}
-
-    opts = setopts(opts, kwargs)
+    converted = dt_given.strftime(format_ref)
     
-    if type(Time) == list:
-        Time = np.asarray(Time)
-    if type(Time) == str or type(Time) == bytes:
-        Time = np.asarray([Time])
+    if len(converted) > len(form_to_match):
+        converted = converted[0:len(form_to_match)-1] + "Z"
 
-    if type(Time) != np.ndarray:
-        error('Problem with time data.' + '\n')
-        return
-    
-    if Time.size == 0:
-        error('Time array is empty.' + '\n')
-        return
+    log('converted: {}'.format(converted), {'logging': logging})
+    log('ref fmt:   {}'.format(format_ref), {'logging': logging})
+    log('----', {'logging': logging})
 
-    reshape = False
-    if Time.shape[0] != Time.size:
-        reshape = True
-        shape = Time.shape
-        Time = Time.flatten()
+    return converted
 
-    if type(Time[0]) == np.bytes_:
-        try:
-            Time = Time.astype('U')
-        except:
-            error('Problem with time data. First value: ' + str(Time[0]) + '\n')
-            return
 
-    tic = time.time()
-
-    try:
-        # Will fail if no pandas, if YYYY-DOY format and other valid ISO 8601
-        # dates such as 2001-01-01T00:00:03.Z
-        # When infer_datetime_format is used, TimeStamp object returned.
-        # When format=... is used, datetime object is used.
-        Time = pandas.to_datetime(Time, infer_datetime_format=True).to_pydatetime()
-        if reshape:
-            Time = np.reshape(Time, shape)
-        toc = time.time() - tic
-        log("Pandas processing time = %.4fs, Input = %s\n" % (toc, Time[0]), opts)
-        return Time
-    except:
-        pass
-
-    # Convert from Python byte literals to unicode strings
-    # https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.astype.html
-    # https://www.b-list.org/weblog/2017/sep/05/how-python-does-unicode/
-    # Note the new Time variable requires 4x more memory.
-    Time = Time.astype('U')
-    # Could save memory at cost of speed by decoding at each iteration below, e.g.
-    # Time[i] -> Time[i].decode('utf-8')
+def hapitime_format_str(Time):
+    """Determine the time format string for a HAPI ISO 8601 time"""
 
     d = 0
     # Catch case where no trailing Z
@@ -814,8 +980,6 @@ def hapitime2datetime(Time, **kwargs):
     # https://github.com/hapi-server/data-specification/blob/master/hapi-dev/HAPI-data-access-spec-dev.md#representation-of-time
     if not re.match(r".*Z$", Time[0]):
         d = 1
-
-    pythonDateTime = np.empty(len(Time), dtype=object)
 
     # Parse date part
     # If h=True then hour given.
@@ -825,29 +989,25 @@ def hapitime2datetime(Time, **kwargs):
 
     if len(Time[0]) == 4 or (len(Time[0]) == 5 and Time[0][-1] == "Z"):
         fmt = '%Y'
-        to = 5
     elif re.match(r"[0-9]{4}-[0-9]{3}", Time[0]):
         # YYYY-DOY format
         fmt = "%Y-%j"
-        to = 9
-        if len(Time[0]) >= 12-d:
+        if len(Time[0]) >= 12 - d:
             h = True
-        if len(Time[0]) >= 15-d:
+        if len(Time[0]) >= 15 - d:
             hm = True
-        if len(Time[0]) >= 18-d:
+        if len(Time[0]) >= 18 - d:
             hms = True
     elif re.match(r"[0-9]{4}-[0-9]{2}", Time[0]):
         # YYYY-MM-DD format
         fmt = "%Y-%m"
-        to = 8
         if len(Time[0]) > 8:
             fmt = fmt + "-%d"
-            to = 11
-        if len(Time[0]) >= 14-d:
+        if len(Time[0]) >= 14 - d:
             h = True
-        if len(Time[0]) >= 17-d:
+        if len(Time[0]) >= 17 - d:
             hm = True
-        if len(Time[0]) >= 20-d:
+        if len(Time[0]) >= 20 - d:
             hms = True
     else:
         # TODO: Also check for invalid time string lengths.
@@ -869,16 +1029,158 @@ def hapitime2datetime(Time, **kwargs):
 
     if re.match(r".*Z$", Time[0]):
         fmt = fmt + "Z"
-    
-    # TODO: Why not use pandas.to_datetime here with fmt?
+
+    return fmt
+
+
+def hapitime2datetime(Time, **kwargs):
+    """Convert HAPI timestamps to Python datetimes.
+
+    A HAPI-compliant server represents time as an ISO 8601 string
+    (with several constraints - see the `HAPI specification
+    <https://github.com/hapi-server/data-specification/blob/master/hapi-dev/HAPI-data-access-spec-dev.md#representation-of-time>`)
+    hapi() reads these into a NumPy array of Python byte literals.
+
+    This function converts the byte literals to Python datetime objects.
+
+    Typical usage:
+        data = hapi(...) # Get data
+        DateTimes = hapitime2datetime(data['Time']) # Convert
+
+    All HAPI time strings must have a trailing Z. This function only checks first
+    element in Time array for compliance. If 
+
+    Parameter
+    ----------
+    Time:
+        - A numpy array of HAPI timestamp byte literals
+        - A numpy array of HAPI timestamp strings
+        - A list of HAPI timestamp byte literals
+        - A list of HAPI timestamp strings
+        - A HAPI timestamp byte literal
+        - A HAPI timestamp strings
+
+    Returns
+    ----------
+    A NumPy array Python datetime objects with length = len(Time)
+
+    Examples
+    ----------
+    All of the following return
+      array([datetime.datetime(1970, 1, 1, 0, 0, tzinfo=<UTC>)], dtype=object)
+
+    from hapiclient.hapi import hapitime2datetime
+    import numpy as np
+
+    hapitime2datetime(np.array([b'1970-01-01T00:00:00.000Z']))
+    hapitime2datetime(np.array(['1970-01-01T00:00:00.000Z']))
+
+    hapitime2datetime([b'1970-01-01T00:00:00.000Z'])
+    hapitime2datetime(['1970-01-01T00:00:00.000Z'])
+
+    hapitime2datetime([b'1970-01-01T00:00:00.000Z'])
+    hapitime2datetime('1970-01-01T00:00:00.000Z')
+
+    """
+
+    # hapitime2datetime([['1999-001Z','1999-01Z']]) throws an error.
+    if type(Time) == list:
+        Time = np.asarray(Time)
+        if not all(list(map(lambda x: type(x) in [np.str_, np.bytes_, str, bytes], Time))):
+            raise ValueError
+
+    from datetime import datetime
+
     try:
+        # Python 2
+        import pytz
+        tzinfo = pytz.UTC
+    except:
+        tzinfo = datetime.timezone.utc
+
+    opts = kwargs.copy()
+
+    if type(Time) == list:
+        Time = np.asarray(Time)
+    if type(Time) == str or type(Time) == bytes:
+        Time = np.asarray([Time])
+
+    if type(Time) != np.ndarray:
+        error('Problem with time data.' + '\n')
+        return
+
+    if Time.size == 0:
+        error('Time array is empty.' + '\n')
+        return
+
+    reshape = False
+    if Time.shape[0] != Time.size:
+        reshape = True
+        shape = Time.shape
+        Time = Time.flatten()
+
+    if type(Time[0]) == np.bytes_:
+        try:
+            Time = Time.astype('U')
+        except:
+            error('Problem with time data. First value: ' + str(Time[0]) + '\n')
+            return
+
+    tic = time.time()
+
+    if (Time[0][-1] != "Z"):
+        error("HAPI Times must have trailing Z. First element of input Time array does not have trailing Z.")
+
+    try:
+        # This is the fastest conversion option. But will fail on
+        #   YYYY-DOY format and other valid ISO 8601
+        #   dates such as 2001-01-01T00:00:03.Z
+        # When infer_datetime_format is used, TimeStamp object returned.
+        # When format=... is used, datetime object is used.
+        # ts_localize is not redundant - although all HAPI timestamps will
+        # have trailing Z, in some cases, infer_datetime_format will not return
+        # a timezone-aware Timestamp.
+        # TODO: Use hapitime_format_str() and pass this as format=...
+        #import pdb;pdb.set_trace()
+        Timeo = Time[0]
+        Time = pandas.to_datetime(Time, infer_datetime_format=True).tz_convert(tzinfo).to_pydatetime()
+        if reshape:
+            Time = np.reshape(Time, shape)
+        toc = time.time() - tic
+        log("Pandas processing time = %.4fs, first time = %s" % (toc, Timeo), opts)
+        return Time
+    except:
+        log("Pandas processing failed, first time = %s" % Time[0], opts)
+        pass
+
+    # Convert from Python byte literals to unicode strings
+    # https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.astype.html
+    # https://www.b-list.org/weblog/2017/sep/05/how-python-does-unicode/
+    # Note the new Time variable requires 4x more memory.
+    Time = Time.astype('U')
+    # Could save memory at cost of speed by decoding at each iteration below, e.g.
+    # Time[i] -> Time[i].decode('utf-8')
+
+    pythonDateTime = np.empty(len(Time), dtype=object)
+
+    fmt = hapitime_format_str(Time)
+
+    # TODO: Will using pandas.to_datetime here with fmt work?
+    try:
+        parse_error = True
         for i in range(0, len(Time)):
+            if (Time[i][-1] != "Z"):
+                parse_error = False
+                raise
             pythonDateTime[i] = datetime.strptime(Time[i], fmt).replace(tzinfo=tzinfo)
     except:
-        error('Could not parse time value ' + Time[i] + ' using ' + fmt)
-    
+        if parse_error:
+            error('Could not parse time value ' + Time[i] + ' using ' + fmt)
+        else:
+            error("HAPI Times must have trailing Z. Time[" + str(i) + "] = " + Time[i] + " does not have trailing Z.")
+
     toc = time.time() - tic
-    log("Manual processing time = %.4fs, Input = %s, fmto = %s, fmt = %s\n" % (toc, Time[0], fmto, fmt), opts)
+    log("Manual processing time = %.4fs, Input = %s, fmt = %s" % (toc, Time[0], fmt), opts)
 
     if reshape:
         pythonDateTime = np.reshape(pythonDateTime, shape)

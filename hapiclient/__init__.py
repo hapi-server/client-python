@@ -21,10 +21,12 @@ try:
 except:
     print('Problem importing Matplotlib. hapiplot function will not work.')
 
+from hapiclient.util import HAPIError
+
 # Allow "from hapiclient import autoplot"
 from hapiclient.autoplot.autoplot import autoplot
 
 # Allow "from hapiclient import gallery"
 from hapiclient.gallery.gallery import gallery
 
-__version__ = '0.1.5b3'
+__version__ = '0.1.5b4'

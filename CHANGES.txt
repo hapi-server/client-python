@@ -51,4 +51,7 @@ v0.1.5b1:
 	2020-07-30 -- Use threadsafe plots
 v0.1.5b2:
 	2020-07-31 -- Handle all NaN timeseries
-v0.1.5b3:
+v0.1.5b4:
+	2020-12-11 -- Chunked requests
+v0.1.5b5:
+	

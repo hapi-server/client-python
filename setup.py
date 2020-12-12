@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys
 
-install_requires = ["isodate>=0.6.0","urllib3"]
+install_requires = ["isodate>=0.6.0","urllib3","joblib"]
 
 print(sys.version_info)
 if sys.version_info >= (3, 6):
@@ -40,7 +40,7 @@ if sys.argv[1] == 'develop':
 # version is modified by misc/version.py (executed from Makefile). Do not edit.
 setup(
     name='hapiclient',
-    version='0.1.5b3',
+    version='0.1.5b4',
     author='Bob Weigel',
     author_email='rweigel@gmu.edu',
     packages=find_packages(),

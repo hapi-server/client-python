@@ -1,0 +1,60 @@
+________________________________________________________________________________
+options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
+options 2: {'logging': False, 'usecache': False, 'cache': False}
+x_totalTime1 = 0.7053 s
+x_totalTime2 = 0.6169 s
+________________________________________________________________________________
+options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
+options 2: {'logging': False, 'usecache': False, 'cache': False, 'n_chunks': 2}
+x_totalTime1 = 0.7053 s
+x_totalTime2 = 1.0725 s
+________________________________________________________________________________
+options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
+options 2: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': 'PT1H'}
+x_totalTime1 = 0.7053 s
+x_totalTime2 = 2.3334 s
+________________________________________________________________________________
+options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
+options 2: {'logging': False, 'usecache': False, 'cache': False, 'parallel': True, 'n_chunks': 2}
+x_totalTime1 = 0.7053 s
+x_totalTime2 = 0.6128 s
+________________________________________________________________________________
+options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
+options 2: {'logging': False, 'usecache': False, 'cache': False, 'parallel': True, 'dt_chunk': 'PT1H'}
+x_totalTime1 = 0.7053 s
+x_totalTime2 = 0.7664 s
+________________________________________________________________________________
+options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
+options 2: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
+x_totalTime1 = 0.7747 s
+x_totalTime2 = 0.8439 s
+________________________________________________________________________________
+options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
+options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
+x_totalTime1 = 0.6427 s
+x_totalTime2 = 0.7466 s
+________________________________________________________________________________
+options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
+options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
+x_totalTime1 = 0.6427 s
+x_totalTime2 = 0.6501 s
+________________________________________________________________________________
+options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
+options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
+x_totalTime1 = 0.6427 s
+x_totalTime2 = 0.5770 s
+________________________________________________________________________________
+options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
+options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
+x_totalTime1 = 1.8516 s
+x_totalTime2 = 12.5979 s
+________________________________________________________________________________
+options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
+options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
+x_totalTime1 = 1.8516 s
+x_totalTime2 = 15.6459 s
+________________________________________________________________________________
+options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
+options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
+x_totalTime1 = 1.8516 s
+x_totalTime2 = 14.4577 s

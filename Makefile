@@ -1,15 +1,17 @@
 # Default Python version to use for tests
-PYTHON=python3.6
+PYTHON=python3.8
 PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
 # TODO: Use tox.
-PYTHONVERS=python2.7 python3.5 python3.6 python3.7 python3.8
+PYTHONVERS=python3.8 python3.7 python3.6 python3.5 python2.7    
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
 VERSION=0.1.5b4
 SHELL:= /bin/bash
+
+LONG_TESTS=false
 
 # Select this to have anaconda installed for you.
 CONDA=./anaconda3
@@ -18,7 +20,7 @@ CONDA=./anaconda3
 
 # ifeq ($(shell uname -s),MINGW64_NT-10.0-18362)
 ifeq ($(TRAVIS_OS_NAME),windows)
-# 	CONDA=/c/tools/anaconda3
+  # CONDA=/c/tools/anaconda3
 	CONDA=/c/tools/miniconda3
 endif
 
@@ -95,13 +97,15 @@ else
 	make $(CONDA)/envs/$(PYTHON) PYTHON=$(PYTHON)
 endif
 
-$(CONDA)/envs/$(PYTHON): /tmp/$(CONDA_PKG)
+$(CONDA)/envs/$(PYTHON): ./anaconda3
 	$(CONDA_ACTIVATE); \
 		$(CONDA)/bin/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
 
+./anaconda3: /tmp/$(CONDA_PKG)
+	bash /tmp/$(CONDA_PKG) -b -p $(CONDA)
+
 /tmp/$(CONDA_PKG):
 	curl https://repo.anaconda.com/miniconda/$(CONDA_PKG) > /tmp/$(CONDA_PKG) 
-	bash /tmp/$(CONDA_PKG) -b -p $(CONDA)
 
 pythonw=$(PYTHON)
 
@@ -118,28 +122,34 @@ ifeq ($(UNAME_S),Darwin)
 	pythonw=$(subst bin/$(PYTHON),bin/pythonw,$(a))
 endif
 
-# 'python setup.py develop' creates symlinks in system package directory.
 repository-test-data:
 	@make clean
 
 	make condaenv PYTHON=$(PYTHON)
 
-	#https://stackoverflow.com/questions/30306099/pip-install-editable-vs-python-setup-py-develop
+	# https://stackoverflow.com/questions/30306099/pip-install-editable-vs-python-setup-py-develop
 	$(CONDA_ACTIVATE) $(PYTHON); pip install pytest deepdiff; pip install --editable .
-	#$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
+	# 'python setup.py develop' creates symlinks in system package directory.
+	# $(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
 
-	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'not long' hapiclient/test/test_hapi.py
+ifeq (LONG_TESTS,true)
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
+else
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v -m 'short' hapiclient/test/test_hapi.py	
+endif
+
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_chunking.py
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime2datetime.py
+	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) -m pytest -v hapiclient/test/test_hapitime_reformat.py
 
 # These require visual inspection.
 repository-test-plots:
 	@make clean
 	make condaenv PYTHON=$(PYTHON)
 	$(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
-# Run using pythonw instead of python only so plot windows always work
-# for programs called from command line. This is needed for 
-# OS-X, Python 3.5, and matplotlib instaled from pip.
+	# Run using pythonw instead of python only so plot windows always work
+	# for programs called from command line. This is needed for 
+	# OS-X, Python 3.5, and matplotlib instaled from pip.
 	$(CONDA_ACTIVATE) $(PYTHON); $(pythonw) hapi_demo.py
 
 repository-test-plots-other:
@@ -228,7 +238,7 @@ version-tag:
 # Install package in local directory (symlinks made to local dir)
 install-local:
 #	python setup.py -e .
-	source ~/.bashrc; $(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
+	$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
 
 install:
 	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple
