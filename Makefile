@@ -20,7 +20,7 @@ CONDA=./anaconda3
 
 # ifeq ($(shell uname -s),MINGW64_NT-10.0-18362)
 ifeq ($(TRAVIS_OS_NAME),windows)
-# 	CONDA=/c/tools/anaconda3
+  # CONDA=/c/tools/anaconda3
 	CONDA=/c/tools/miniconda3
 endif
 
