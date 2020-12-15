@@ -55,5 +55,5 @@ v0.1.5b4:
 	2020-12-11 -- Chunked requests
 v0.1.5:
 	2020-12-14 -- urllib3 and chunked requests
-v0.1.6
+v0.1.6:
 	2020-12-15 -- Closes #25, pythonshell() Windows issue; e576f7e
