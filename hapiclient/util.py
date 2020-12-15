@@ -83,26 +83,43 @@ def pythonshell():
 
     pythonshell() returns
 
-    'shell' (started python on command line using "python")
-    'ipython' (started ipython on command line using "ipython")
-    'ipython-notebook' (running in Spyder or started with "ipython qtconsole")
-    'jupyter-notebook' (running in a Jupyter notebook)
+    'shell'             if started python on command line using "python"
+    'ipython'           if started ipython on command line using "ipython"
+    'ipython-notebook'  if running in Spyder or started with "ipython qtconsole"
+    'jupyter-notebook'  if running in a Jupyter notebook started using executable
+                        named jupyter-notebook
+
+    On Windows, jupyter-notebook cannot be detected and ipython-notebook
+    will be returned.
 
     See also https://stackoverflow.com/a/37661854
     """
 
-    from os import environ, path
-    env = environ
+    import os
+    import sys
+
+    env = os.environ
+
+    program = ''
+    if '_' in env:
+        program = os.path.basename(env['_'])
+
     shell = 'shell'
-    program = path.basename(env['_'])
-
-    if 'jupyter-notebook' in program:
-        shell = 'jupyter-notebook'
-    elif 'JPY_PARENT_PID' in env or 'ipython' in program:
-        shell = 'ipython'
-        if 'JPY_PARENT_PID' in env:
-            shell = 'ipython-notebook'
-
+    try:
+        shell_name = get_ipython().__class__.__name__
+        if shell_name == 'TerminalInteractiveShell':
+            shell = 'ipython'
+        elif shell_name == 'ZMQInteractiveShell':
+            if 'jupyter-notebook' in program:
+                shell = 'jupyter-notebook'
+            else:
+                shell = 'ipython-notebook'
+                # Not needed, but could be used
+                #if 'spyder' in sys.modules:
+                #    shell = 'spyder-notebook'
+    except:
+        pass
+        
     return shell
 
 
