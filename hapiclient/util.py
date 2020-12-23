@@ -209,10 +209,11 @@ def error(msg, debug=False):
     from os import path
 
     debug = False
-    try:
-        from IPython.core.interactiveshell import InteractiveShell
-    except:
-        pass
+    if pythonshell() != 'shell':
+        try:
+            from IPython.core.interactiveshell import InteractiveShell
+        except:
+            pass
 
     sys.stdout.flush()
     
@@ -228,7 +229,7 @@ def error(msg, debug=False):
         #import traceback
         exception = sys.exc_info()
         if not debug and exception[0].__name__ == "HAPIError":
-            sys.stderr.write("\033[0;31mError:\033[0m " + str(exception[1]))
+            sys.stderr.write("\033[0;31mHAPIError:\033[0m " + str(exception[1]))
         else:
             # Use default
             showtraceback_default(self, exc_tuple=None,
@@ -243,7 +244,7 @@ def error(msg, debug=False):
 
     def exception_handler(exception_type, exception, traceback):
         if not debug and exception_type.__name__ == "HAPIError":
-            print("\033[0;31mError:\033[0m %s" % exception)
+            print("\033[0;31mHAPIError:\033[0m %s" % exception)
         else:
             # Use default.
             sys.__excepthook__(exception_type, exception, traceback)
@@ -253,18 +254,22 @@ def error(msg, debug=False):
         # Reset back to default
         sys.excepthook = sys.__excepthook__
 
-    try:
-        # Copy default function
-        showtraceback_default = InteractiveShell.showtraceback
-        # TODO: Use set_custom_exc
-        # https://ipython.readthedocs.io/en/stable/api/generated/IPython.core.interactiveshell.html
-        InteractiveShell.showtraceback = exception_handler_ipython
-    except:
-        # IPython over-rides this, so this does nothing in IPython shell.
-        # https://stackoverflow.com/questions/1261668/cannot-override-sys-excepthook
-        # Don't need to copy default function as it is provided as sys.__excepthook__.
-        sys.excepthook = exception_handler
 
+    if pythonshell() == 'shell':
+        sys.excepthook = exception_handler
+    else:
+        try:
+            # Copy default function
+            showtraceback_default = InteractiveShell.showtraceback
+            # TODO: Use set_custom_exc
+            # https://ipython.readthedocs.io/en/stable/api/generated/IPython.core.interactiveshell.html
+            InteractiveShell.showtraceback = exception_handler_ipython
+        except:
+            # IPython over-rides this, so this does nothing in IPython shell.
+            # https://stackoverflow.com/questions/1261668/cannot-override-sys-excepthook
+            # Don't need to copy default function as it is provided as sys.__excepthook__.
+            sys.excepthook = exception_handler
+    
     raise HAPIError(msg)
 
 

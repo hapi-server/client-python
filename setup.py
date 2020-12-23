@@ -3,7 +3,6 @@ import sys
 
 install_requires = ["isodate>=0.6.0","urllib3","joblib"]
 
-print(sys.version_info)
 if sys.version_info >= (3, 6):
     # Python 3.6 and Matplotlib 3.3 on OS-X 10.15.4 give error when using
     # rc = matplotlib.style: 
