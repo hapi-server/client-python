@@ -125,16 +125,6 @@ def hapiopts():
         'dt_chunk': None,
     }
 
-    assert (opts['logging'] in [True, False])
-    assert (opts['cache'] in [True, False])
-    assert (opts['usecache'] in [True, False])
-    assert (opts['format'] in ['binary', 'CSV'])
-    assert (opts['method'] in ['pandas', 'numpy', 'pandasnolength', 'numpynolength'])
-    assert (opts['parallel'] in [True, False])
-    assert (isinstance(opts['n_parallel'], int) and opts['n_parallel'] > 1)
-    assert (opts['n_chunks'] is None or isinstance(opts['n_chunks'], int) and opts['n_chunks'] > 0)
-    assert (opts['dt_chunk'] in [None, 'infer', 'PT1M', 'PT1H', 'P1D', 'P1Y'])
-
     """
     format = 'binary' is used by default and CSV used if binary is not available from server.
     This should option should be excluded from the help string.
@@ -198,14 +188,15 @@ def hapi(*args, **kwargs):
                 client will split request into chunks if `dt_chunk` is not
                 `None`. 
 
-                Allowed values of `dt_chunk` are 'infer', `None`, 'PT1M',
-                'PT1H', 'P1D', and 'P1Y'. The default chunk size is determined
-                based on the cadence of the dataset requested according to
+                Allowed values of `dt_chunk` are 'infer', `None`, and an ISO 8601
+                duration that is unambiguous (durations that include Y and M are not
+                allowed). The default chunk size is determined based on the cadence
+                of the dataset requested according to
 
                     cadence < PT1S              dt_chunk='PT1H'
                     PT1S <= cadence <= PT1H     dt_chunk='P1D'
-                    cadence > PT1H              dt_chunk='P1M'
-                    cadence >= P1D              dt_chunk='P1Y'
+                    cadence > PT1H              dt_chunk='P30D'
+                    cadence >= P1D              dt_chunk='P365D'
 
                 If the dataset does not have a cadence listed in its metadata, an
                 attempt is made to infer the cadence by requesting a small time range
@@ -303,6 +294,16 @@ def hapi(*args, **kwargs):
 
     # Override defaults
     opts = setopts(hapiopts(), kwargs)
+
+    assert (opts['logging'] in [True, False])
+    assert (opts['cache'] in [True, False])
+    assert (opts['usecache'] in [True, False])
+    assert (opts['format'] in ['binary', 'csv'])
+    assert (opts['method'] in ['', 'pandas', 'numpy', 'pandasnolength', 'numpynolength'])
+    assert (opts['parallel'] in [True, False])
+    assert (isinstance(opts['n_parallel'], int) and opts['n_parallel'] > 1)
+    assert (opts['n_chunks'] is None or isinstance(opts['n_chunks'], int) and opts['n_chunks'] > 0)
+    assert (opts['dt_chunk'] in [None, 'infer', 'PT1H', 'P1D', 'P1M', 'P1Y'])
 
     from hapiclient import __version__
     log('Running hapi.py version %s' % __version__, opts)
@@ -421,13 +422,16 @@ def hapi(*args, **kwargs):
         if opts['dt_chunk'] == 'infer':
             cadence = meta.get('cadence', None)
 
-            # If cadence not given, this will cause 1-day chunks to be used.
+            # If cadence not given, use 1-day chunks.
             if cadence is None:
                 cadence = 'PT1M'
             else:
                 cadence = isodate.parse_duration(cadence)
                 if isinstance(cadence, isodate.Duration):
-                    # TODO: Document unexpected keyword argument.
+                    # When a duration does not correspond to an unambiguous
+                    # time duration (e.g., P1M), parse_duration returns an
+                    # isodate.duration.Duration object. Otherwise, it returns
+                    # a datetime.timedelta object.
                     cadence = cadence.totimedelta(start=datetime.now())
 
             pt1s = isodate.parse_duration('PT1S')
@@ -451,8 +455,15 @@ def hapi(*args, **kwargs):
 
             if opts['dt_chunk']:
                 pDELTA = isodate.parse_duration(opts['dt_chunk'])
+                
+                if opts['dt_chunk'] == 'P1Y':
+                    half = isodate.parse_duration('P365D') / 2
+                elif opts['dt_chunk'] == 'P1M':
+                    half = isodate.parse_duration('P30D') / 2
+                else:
+                    half = pDELTA / 2
 
-                if (pSTOP - pSTART) < pDELTA / 2:
+                if (pSTOP - pSTART) < half:
                     opts['n_chunks'] = None
                     opts['dt_chunk'] = None
                     return hapi(SERVER, DATASET, PARAMETERS, START, STOP, **opts)
@@ -530,6 +541,7 @@ def hapi(*args, **kwargs):
             import sys
             from hapiclient.hapi import hapitime_reformat
 
+            tic_trimTime = time.time()
             if sys.version_info < (3, ):
                 START = hapitime_reformat(str(resD[0]['Time'][0]), START)
                 resD[0] = resD[0][resD[0]['Time'] >= START]
@@ -542,8 +554,11 @@ def hapi(*args, **kwargs):
 
                 STOP = hapitime_reformat(resD[-1]['Time'][0].decode('UTF-8'), STOP)
                 resD[-1] = resD[-1][resD[-1]['Time'] < bytes(STOP, 'UTF-8')]
+            trimTime = time.time() - tic_trimTime
 
+            tic_catTime = time.time()
             data = np.concatenate(resD)
+            catTime = time.time() - tic_trimTime
 
             meta = resM[0].copy()
             meta['x_time.max'] = resM[-1]['x_time.max']
@@ -553,6 +568,8 @@ def hapi(*args, **kwargs):
             meta['x_downloadTimes'] = [resM[i]['x_downloadTime'] for i in range(len(resM))]
             meta['x_readTime'] = sum([resM[i]['x_readTime'] for i in range(len(resM))])
             meta['x_readTimes'] = [resM[i]['x_readTime'] for i in range(len(resM))]
+            meta['x_trimTime'] = trimTime
+            meta['x_catTime'] = catTime
             meta['x_totalTime'] = time.time() - tic_totalTime
             meta['x_dataFileParsed'] = None
             meta['x_dataFilesParsed'] = [resM[i]['x_dataFileParsed'] for i in range(len(resM))]
@@ -719,37 +736,38 @@ def hapi(*args, **kwargs):
                 tic0 = time.time()
                 urlretrieve(urlbin, fnamebin)
                 toc0 = time.time() - tic0
-                log('Reading %s' % fnamebin.replace(urld + '/', ''), opts)
+                log('Reading and parsing %s' % fnamebin.replace(urld + '/', ''), opts)
                 tic = time.time()
                 data = np.fromfile(fnamebin, dtype=dt)
             else:
                 from io import BytesIO
-                log('Creating buffer: %s' % urlbin, opts)
+                log('Writing %s to buffer' % urlbin.replace(urld + '/', ''), opts)
                 tic0 = time.time()
                 buff = BytesIO(urlopen(urlbin).read())
                 toc0 = time.time() - tic0
-                log('Parsing buffer.', opts)
+                log('Parsing BytesIO buffer.', opts)
                 tic = time.time()
                 data = np.frombuffer(buff.read(), dtype=dt)
         else:
             # HAPI CSV
             if opts["cache"]:
-                log('Saving %s' % urlcsv.replace(urld + '/', ''), opts)
+                log('Writing %s to %s' % (urlcsv, fnamecsv.replace(urld + '/', '')), opts)
                 tic0 = time.time()
                 urlretrieve(urlcsv, fnamecsv)
                 toc0 = time.time() - tic0
-                log('Parsing %s' % fnamecsv.replace(urld + '/', ''), opts)
+                log('Reading and parsing %s' % fnamecsv.replace(urld + '/', ''), opts)
+                tic = time.time()
             else:
                 from io import StringIO
-                log('Creating buffer: %s' % urlcsv.replace(urld + '/', ''), opts)
+                log('Writing %s to buffer' % urlcsv.replace(urld + '/', ''), opts)
                 tic0 = time.time()
                 fnamecsv = StringIO(urlopen(urlcsv).read().decode())
                 toc0 = time.time() - tic0
-                log('Parsing buffer.', opts)
+                log('Parsing StringIO buffer.', opts)
+                tic = time.time()
 
             if not missing_length:
                 # All string and isotime parameters have a length in metadata.
-                tic = time.time()
                 if opts['method'] == 'numpy':
                     data = np.genfromtxt(fnamecsv, dtype=dt, delimiter=',')
                 if opts['method'] == 'pandas':
@@ -770,7 +788,6 @@ def hapi(*args, **kwargs):
             else:
                 # At least one requested string or isotime parameter does not
                 # have a length in metadata. More work to do to read. 
-                tic = time.time()
                 if opts['method'] == 'numpy' or opts['method'] == 'numpynolength':
                     # If requested method was numpy, use numpynolength method.
 

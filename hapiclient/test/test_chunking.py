@@ -24,10 +24,20 @@ def xprint(msg):
 def compare(data1, data2, meta1, meta2, opts1, opts2):
     if compare_logging:
         xprint('_'*80)
+        xprint('request  : %s, %s, %s, %s, %s' % \
+                (meta1['x_dataset'], meta1['x_parameters'], meta1['x_time.min'], meta1['x_time.max'], meta1['cadence']))
         xprint('options 1: %s' % opts1)
         xprint('options 2: %s' % opts2)
         xprint('x_totalTime1 = %6.4f s' % (meta1['x_totalTime']))
         xprint('x_totalTime2 = %6.4f s' % (meta2['x_totalTime']))
+        if False and 'x_downloadTimes' in meta2:
+            print(meta1['x_downloadTime'])
+            print(meta1['x_readTime'])
+            print(meta2['x_downloadTimes'])
+            print(meta2['x_readTimes'])
+            print(meta2['x_trimTime'])
+            print(meta2['x_catTime'])
+    
     assert equal(data1, data2)
 
 
@@ -42,24 +52,27 @@ def cat(d1, d2):
 opts0 = {'logging': hapi_logging, 'usecache': False, 'cache': False}
 
 # Test dict.
+# Key indicates chunk size to use for chunk test
 td = {
-        "P1Y":
+        "P1D":
             {
-                "start": "1970-01-02T01:50:00Z",
-                "stop": "1970-08-03T06:50:00Z"
+                "__comment": "dataset2 has cadence of PT1H",
+                "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
+                "dataset": "dataset2",
+                "parameters": "scalar",
+                "start": "1970-01-01T00:00:00.000Z",
+                "stop": "1970-02-01T00:00:00.000Z"
         },
         "P1M": {
-                "start": "1971-06-02T01:50:00Z",
-                "stop": "1974-08-03T06:50:00Z"
-        },
-        "P1D": {
-                "server": 'http://hapi-server.org/servers/SSCWeb/hapi',
-                "dataset": 'ace',
-                "parameters": 'X_GSM',
-                "start": "2000-01-01T00:00:00.000Z",
-                "stop": "2000-01-10T00:00:00.000Z"
+                "__comment": "dataset2 has cadence of PT1H",
+                "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
+                "dataset": "dataset2",
+                "parameters": "scalar",
+                "start": "1971-01-01T01:50:00Z",
+                "stop": "1972-08-03T06:50:00Z"
         },
         "PT1H": {
+                "__comment": "dataset1 has cadence of PT1S",
                 "server": "http://hapi-server.org/servers/TestData2.0/hapi",
                 "dataset": "dataset1",
                 "parameters": "scalar",
@@ -68,23 +81,29 @@ td = {
         }
 }
 
+td = {
+        "P1M": {
+                "__comment": "dataset2 has cadence of PT1H",
+                "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
+                "dataset": "dataset2",
+                "parameters": "scalar",
+                "start": "1971-01-01T01:50:00Z",
+                "stop": "1972-08-03T06:50:00Z"
+        },
+        "PT1H": {
+                "__comment": "dataset1 has cadence of PT1S",
+                "server": "http://hapi-server.org/servers/TestData2.0/hapi",
+                "dataset": "dataset1",
+                "parameters": "scalar",
+                "start": "1970-01-01T00:00:00.000Z",
+                "stop": "1970-01-01T05:00:00.000Z"
+        }
+}
 
 def test_chunks():
 
     # Test of dt_chunk and n_chunks keyword arguments
     for key in td:
-
-        if key != 'PT1H':# and key != 'P1D':
-            # Only regularly test 1-hour for now.
-            # TODO: Update when lower cadence TestData datasets are available.
-            continue
-
-        if compare_logging:
-            print('server:     ', td[key]['server'])
-            print('dataset:    ', td[key]['dataset'])
-            print('parameters: ', td[key]['parameters'])
-            print('start:      ', td[key]['start'])
-            print('stop:       ', td[key]['stop'])
 
         s = td[key]['server']
         d = td[key]['dataset']
@@ -132,8 +151,6 @@ def test_chunk_threshold():
     # stop-start < PT1D/2. 
     start = td[key]['start']
     stop = hapitime2datetime(start) + isodate.parse_duration(chunk)/3
-    #print(stop)
-    #import pdb;pdb.set_trace()
     stop = datetime.isoformat(stop[0])[0:19] + "Z"
 
     # Reference result
@@ -157,6 +174,7 @@ def test_timeformats():
     # data time formats.
 
     key = "PT1H"
+
     s = td[key]['server']
     d = td[key]['dataset']
     p = td[key]['parameters']
@@ -192,15 +210,25 @@ def test_timeformats():
     ############################################################################
 
     key = "P1D"
+    tdx = {
+            "P1D": {
+                    "__comment": "Timeformat is YYYY-DOY",
+                    "server": 'http://hapi-server.org/servers/SSCWeb/hapi',
+                    "dataset": 'ace',
+                    "parameters": 'X_GSM',
+                    "start": "2000-01-01T00:00:00.000Z",
+                    "stop": "2000-01-10T00:00:00.000Z"
+            }
+    }
 
-    s = td[key]['server']
-    d = td[key]['dataset']
-    p = td[key]['parameters']
+    s = tdx[key]['server']
+    d = tdx[key]['dataset']
+    p = tdx[key]['parameters']
 
-    start_ymd = td[key]['start']
+    start_ymd = tdx[key]['start']
     start_doy = hapitime_reformat('1989-272T00:00:00.000Z',start_ymd)
 
-    stop_ymd = td[key]['stop']
+    stop_ymd = tdx[key]['stop']
     stop_doy = hapitime_reformat('1989-272T00:00:00.000Z',stop_ymd)
 
     # Reference result
