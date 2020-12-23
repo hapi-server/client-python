@@ -2,8 +2,8 @@ import os
 import isodate
 
 from datetime import datetime
-from hapiclient import hapi, hapitime2datetime
-from hapiclient.hapi import hapitime_reformat
+from hapiclient import hapi
+from hapiclient.time import hapitime2datetime, hapitime_reformat
 from hapiclient.test.readcompare import equal
 
 # See comments in test_hapitime2datetime.py for execution options.
@@ -11,8 +11,10 @@ from hapiclient.test.readcompare import equal
 compare_logging = True
 hapi_logging = False
 
-# Create empty file
 logfile = os.path.realpath(__file__)[0:-2] + "log"
+with open(logfile, "w") as f:
+    # Create empty file
+    pass
 
 def xprint(msg):
     print(msg)
@@ -54,22 +56,30 @@ opts0 = {'logging': hapi_logging, 'usecache': False, 'cache': False}
 # Test dict.
 # Key indicates chunk size to use for chunk test
 td = {
-        "P1D":
-            {
+        "P1Y": {
                 "__comment": "dataset3 has cadence of P1D",
                 "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
                 "dataset": "dataset3",
                 "parameters": "scalar",
-                "start": "1970-01-01T00:00:00.000Z",
-                "stop": "1971-01-01T00:00:00.000Z"
+                "start": "1971-01-01T01:50:00Z",
+                "stop": "1975-08-03T06:50:00Z"
         },
         "P1M": {
-                "__comment": "dataset2 has cadence of PT1H",
+                "__comment": "dataset3 has cadence of P1D",
+                "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
+                "dataset": "dataset3",
+                "parameters": "scalar",
+                "start": "1971-01-01T01:50:00Z",
+                "stop": "1971-08-03T06:50:00Z"
+        },
+        "P1D":
+            {
+                "__comment": "dataset2 has cadence of P1H",
                 "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
                 "dataset": "dataset2",
                 "parameters": "scalar",
-                "start": "1971-01-01T01:50:00Z",
-                "stop": "1972-08-03T06:50:00Z"
+                "start": "1970-01-01T00:00:00.000Z",
+                "stop": "1970-01-10T00:00:00.000Z"
         },
         "PT1H": {
                 "__comment": "dataset1 has cadence of PT1S",
@@ -199,7 +209,7 @@ def test_timeformats():
                     "dataset": 'ace',
                     "parameters": 'X_GSM',
                     "start": "2000-01-01T00:00:00.000Z",
-                    "stop": "2000-01-10T00:00:00.000Z"
+                    "stop": "2000-01-02T00:00:00.000Z"
             }
     }
 
