@@ -56,12 +56,12 @@ opts0 = {'logging': hapi_logging, 'usecache': False, 'cache': False}
 td = {
         "P1D":
             {
-                "__comment": "dataset2 has cadence of PT1H",
+                "__comment": "dataset3 has cadence of P1D",
                 "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
-                "dataset": "dataset2",
+                "dataset": "dataset3",
                 "parameters": "scalar",
                 "start": "1970-01-01T00:00:00.000Z",
-                "stop": "1970-02-01T00:00:00.000Z"
+                "stop": "1971-01-01T00:00:00.000Z"
         },
         "P1M": {
                 "__comment": "dataset2 has cadence of PT1H",
@@ -81,24 +81,6 @@ td = {
         }
 }
 
-td = {
-        "P1M": {
-                "__comment": "dataset2 has cadence of PT1H",
-                "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
-                "dataset": "dataset2",
-                "parameters": "scalar",
-                "start": "1971-01-01T01:50:00Z",
-                "stop": "1972-08-03T06:50:00Z"
-        },
-        "PT1H": {
-                "__comment": "dataset1 has cadence of PT1S",
-                "server": "http://hapi-server.org/servers/TestData2.0/hapi",
-                "dataset": "dataset1",
-                "parameters": "scalar",
-                "start": "1970-01-01T00:00:00.000Z",
-                "stop": "1970-01-01T05:00:00.000Z"
-        }
-}
 
 def test_chunks():
 
