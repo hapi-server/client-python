@@ -63,4 +63,4 @@ v0.1.7:
 v0.1.8:
 	2020-12-23 -- 1cfbfc3 Add P1D chunk tests
 	2020-12-23 -- f41599c Add P1Y chunk tests
-	2020-12-23 -- Refactor hapi.py
+	2020-12-23 -- ff8e1ab Refactor hapi.py; clean up util.py
