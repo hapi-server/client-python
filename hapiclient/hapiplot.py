@@ -6,7 +6,7 @@ import numpy as np
 from matplotlib import rc_context
 from matplotlib import rcParams
 
-from hapiclient.hapi import hapitime2datetime
+from hapiclient.time import hapitime2datetime
 from hapiclient.hapi import request2path
 from hapiclient.hapi import cachedir
 from hapiclient.util import log, warning

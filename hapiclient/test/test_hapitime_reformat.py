@@ -1,5 +1,5 @@
 import os
-from hapiclient.hapi import hapitime_reformat
+from hapiclient.time import hapitime_reformat
 
 # See comments in test_hapitime2datetime.py for execution options.
 

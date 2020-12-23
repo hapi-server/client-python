@@ -2,7 +2,7 @@
 from hapiclient.hapi import hapi
 
 # Allow "from hapiclient import hapitime2datetime"
-from hapiclient.hapi import hapitime2datetime
+from hapiclient.time import hapitime2datetime
 
 import warnings
 try:

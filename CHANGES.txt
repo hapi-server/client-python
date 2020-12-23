@@ -60,3 +60,7 @@ v0.1.6:
 v0.1.7:
 	2020-12-23 -- 797ce42 Make error() work when pythonshell() == 'shell'
 	2020-12-23 -- 84daa48 Chunking bugfixes
+v0.1.8:
+	2020-12-23 -- 1cfbfc3 Add P1D chunk tests
+	2020-12-23 -- f41599c Add P1Y chunk tests
+	2020-12-23 -- Refactor hapi.py

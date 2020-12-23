@@ -1,22 +1,25 @@
 import os
 import re
+import sys
 import json
 import time
 import pickle
-import isodate
-
-import pandas
-import numpy as np
-from joblib import Parallel, delayed
+import warnings
 from datetime import datetime, timedelta
 
+import pandas
+import isodate
+import numpy as np
+from joblib import Parallel, delayed
+
+from hapiclient.time import hapitime2datetime, hapitime_reformat
 from hapiclient.util import setopts, log, warning, error
 from hapiclient.util import urlopen, urlretrieve, jsonparse
 
 
 def subset(meta, params):
     """Extract subset of parameters from meta object returned by hapi()
-    
+
     metar = subset(meta, parameters) modifies meta["parameters"] array so
     it only contains elements for the time variable and the parameters in
     the comma-separated list `parameters`.
@@ -36,7 +39,7 @@ def subset(meta, params):
             error('Parameter %s is not in meta' % p[i] + '\n')
             return
 
-    pa = [meta['parameters'][0]]  # First parameter is always the time parameter 
+    pa = [meta['parameters'][0]]  # First parameter is always the time parameter
 
     params_reordered = []  # Re-ordered params
     # If time parameter explicity requested, put it first in params_reordered.
@@ -55,14 +58,15 @@ def subset(meta, params):
     if not params == params_reordered_str:
         msg = "\n  " + "Order requested: " + params
         msg = msg + "\n  " + "Order required: " + params_reordered_str
-        error('Order of requested parameters does not match order of parameters in server info metadata.' + msg + '\n')
+        error('Order of requested parameters does not match order of ' \
+              'parameters in server info metadata.' + msg + '\n')
 
     return meta
 
 
 def cachedir(*args):
     """HAPI cache directory.
-    
+
     cachedir() returns tempfile.gettempdir() + os.path.sep + 'hapi-data'
 
     cachdir(basedir, server) returns basedir + os.path.sep + server2dirname(server)
@@ -107,9 +111,18 @@ def request2path(*args):
 
 def hapiopts():
     """Return allowed options for hapi().
-    
-       Used by hapiplot() and hapi().
+
+    Used by hapiplot() and hapi().
+
+    format = 'binary' is used by default and CSV used if binary is not
+    available from server. This should option should be excluded from the help
+    string.
+
+    method = 'pandas' is used by default. Other methods
+    (numpy, pandasnolength, numpynolength) can be used for testing
+    CSV read methods. See test/test_hapi.py for comparison.
     """
+
     # Default options
     opts = {
         'logging': False,
@@ -125,16 +138,6 @@ def hapiopts():
         'dt_chunk': None,
     }
 
-    """
-    format = 'binary' is used by default and CSV used if binary is not available from server.
-    This should option should be excluded from the help string.
- 
-    method = 'pandas' is used by default. Other methods 
-    (numpy, pandasnolength, numpynolength) can be used for testing
-    CSV read methods. See test/test_hapi.py for comparison.
-    This should option should be excluded from the help string.
-    """
-
     return opts
 
 
@@ -145,6 +148,7 @@ def hapi(*args, **kwargs):
     https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb
 
     Version: 0.1.7
+
 
     Parameters
     ----------
@@ -162,7 +166,7 @@ def hapi(*args, **kwargs):
         last data record returned by a HAPI server should have a timestamp
         before `start`.
     options : dict
-        
+
             `logging` (False) - Log to console
 
             `cache` (True) - Save responses and processed responses in cachedir
@@ -186,7 +190,7 @@ def hapi(*args, **kwargs):
             `dt_chunk` ('infer') For requests that span a time range larger
                 than the default chunk size for a given dataset cadence, the
                 client will split request into chunks if `dt_chunk` is not
-                `None`. 
+                `None`.
 
                 Allowed values of `dt_chunk` are 'infer', `None`, and an ISO 8601
                 duration that is unambiguous (durations that include Y and M are not
@@ -226,12 +230,11 @@ def hapi(*args, **kwargs):
                             (2) start/stop=1999-11-13/start=1999-11-14
                             and trim performed
 
-        
-            
+
     Returns
     -------
     result : various
-        `result` depend on the input parameters.
+        `result` depends on the input parameters.
 
         servers = hapi() returns a list of available HAPI server URLs from
         https://github.com/hapi-server/data-specification/blob/master/all.txt
@@ -256,13 +259,14 @@ def hapi(*args, **kwargs):
           data['scalar'] is a NumPy array of shape (N)
           data['vector'] is a NumPy array of shape (N,3)
           data['Time'] is a NumPy array of byte literals with shape (N).
-          
-          Byte literal times can be converted to Python datetimes using 
-          
+
+          Byte literal times can be converted to Python datetimes using
+
           dtarray = hapitime2datetime(data['Time'])
-        
+
         data, meta = hapi(server, dataset, parameters, start, stop) returns
         the metadata for parameters in `meta`.
+
 
     References
     ----------
@@ -270,7 +274,7 @@ def hapi(*args, **kwargs):
 
     Examples
     ----------
-       See https://github.com/hapi-server/client-python-notebooks
+        See https://github.com/hapi-server/client-python-notebooks
     """
 
     nin = len(args)
@@ -344,7 +348,8 @@ def hapi(*args, **kwargs):
 
         # Extract all parameters.
         if re.search(r', ', PARAMETERS):
-            warning("Removing spaces after commas in given parameter list of '" + PARAMETERS + "'")
+            warning("Removing spaces after commas in given parameter list of '" \
+                    + PARAMETERS + "'")
             PARAMETERS = re.sub(r',\s+', ',', PARAMETERS)
 
         # urld = url subdirectory of cachedir to store files from SERVER
@@ -455,7 +460,7 @@ def hapi(*args, **kwargs):
 
             if opts['dt_chunk']:
                 pDELTA = isodate.parse_duration(opts['dt_chunk'])
-                
+
                 if opts['dt_chunk'] == 'P1Y':
                     half = isodate.parse_duration('P365D') / 2
                 elif opts['dt_chunk'] == 'P1M':
@@ -508,10 +513,10 @@ def hapi(*args, **kwargs):
             def nhapi(SERVER, DATASET, PARAMETERS, pSTART, pDELTA, i, **opts):
                 START = pSTART + (i * pDELTA)
                 START = str(START.date())+'T'+str(START.time())
-            
+
                 STOP = pSTART + ((i + 1) * pDELTA)
                 STOP = str(STOP.date()) + 'T' + str(STOP.time())
-            
+
                 data, meta = hapi(
                     SERVER,
                     DATASET,
@@ -538,9 +543,6 @@ def hapi(*args, **kwargs):
 
             resD = list(resD)
 
-            import sys
-            from hapiclient.hapi import hapitime_reformat
-
             tic_trimTime = time.time()
             if sys.version_info < (3, ):
                 START = hapitime_reformat(str(resD[0]['Time'][0]), START)
@@ -558,7 +560,7 @@ def hapi(*args, **kwargs):
 
             tic_catTime = time.time()
             data = np.concatenate(resD)
-            catTime = time.time() - tic_trimTime
+            catTime = time.time() - tic_catTime
 
             meta = resM[0].copy()
             meta['x_time.max'] = resM[-1]['x_time.max']
@@ -606,7 +608,7 @@ def hapi(*args, **kwargs):
             data = np.load(f)
             f.close()
             # There is a possibility that the fnamenpy file existed but
-            # fnamepklx was not found (b/c removed). In this case, the meta 
+            # fnamepklx was not found (b/c removed). In this case, the meta
             # returned will not have all of the "x_" information inserted below.
             # Code that uses this information needs to account for this.
             meta['x_totalTime'] = time.time() - tic_totalTime
@@ -633,102 +635,19 @@ def hapi(*args, **kwargs):
             if not 'binary' in sformats:
                 opts['format'] = 'csv'
 
-        ##################################################################
-        # Compute data type variable dt used to read HAPI response into
-        # a data structure.
-        pnames, psizes, dt = [], [], []
-        # Each element of cols is an array with start/end column number of
-        # parameter.
-
-        cols = np.zeros([len(meta["parameters"]), 2], dtype=np.int32)
-        ss = 0  # running sum of prod(size)
-
-        # missing_length = True will be set if HAPI String or ISOTime
-        # parameter has no length attribute in metadata (length attribute is
-        # required for both in binary but only for primary time column in CSV).
-        # When missing_length=True the CSV read gets more complicated.
-        missing_length = False
-
-        # Extract sizes and types of parameters.
-        for i in range(0, len(meta["parameters"])):
-            ptype = str(meta["parameters"][i]["type"])
-            pnames.append(str(meta["parameters"][i]["name"]))
-            if 'size' in meta["parameters"][i]:
-                psizes.append(meta["parameters"][i]['size'])
-            else:
-                psizes.append(1)
-
-            # For size = [N] case, readers want
-            # dtype = ('name', type, N)
-            # not 
-            # dtype = ('name', type, [N])
-            if type(psizes[i]) is list and len(psizes[i]) == 1:
-                psizes[i] = psizes[i][0]
-
-            if type(psizes[i]) is list and len(psizes[i]) > 1:
-                # psizes[i] = list(reversed(psizes[i]))
-                psizes[i] = list(psizes[i])
-
-            # First column of ith parameter.
-            cols[i][0] = ss
-            # Last column of ith parameter.
-            cols[i][1] = ss + np.prod(psizes[i]) - 1
-            # Running sum of columns.
-            ss = cols[i][1] + 1
-
-            # HAPI numerical formats are 64-bit LE floating point and 32-bit LE
-            # signed integers.
-            if ptype == 'double':
-                dtype = (pnames[i], '<d', psizes[i])
-            if ptype == 'integer':
-                dtype = (pnames[i], np.dtype('<i4'), psizes[i])
-
-            if opts['format'] == 'binary':
-                # TODO: If 'length' not available, warn and fall back to CSV.
-                # Technically, server response is invalid in this case b/c length attribute
-                # required for all parameters if format=binary.
-                if ptype == 'string' or ptype == 'isotime':
-                    dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
-            else:
-                # When format=csv, length attribute may not be given (but must be given for
-                # first parameter according to the HAPI spec).
-                if ptype == 'string' or ptype == 'isotime':
-                    if 'length' in meta["parameters"][i]:
-                        # length is specified for parameter in metadata. Use it.
-                        if ptype == 'string' or 'isotime':
-                            dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
-                    else:
-                        # A string or isotime parameter did not have a length.
-                        # Will need to use slower CSV read method.
-                        missing_length = True
-                        if ptype == 'string' or ptype == 'isotime':
-                            dtype = (pnames[i], object, psizes[i])
-
-            # For testing reader. Force use of slow read method.
-            if opts['format'] == 'csv':
-                if opts['method'] == 'numpynolength' or opts['method'] == 'pandasnolength':
-                    missing_length = True
-                    if ptype == 'string' or ptype == 'isotime':
-                        dtype = (pnames[i], object, psizes[i])
-
-            # https://numpy.org/doc/stable/release/1.17.0-notes.html#shape-1-fields-in-dtypes-won-t-be-collapsed-to-scalars-in-a-future-version
-            if dtype[2] == 1:
-                dtype = dtype[0:2]
-
-            dt.append(dtype)
-        ##################################################################
+        dt, cols, psizes, pnames, missing_length = compute_dt(meta, opts)
 
         # length attribute required for all parameters when serving binary but
         # is only required for time parameter when serving CSV. This catches
         # case where server provides binary but is missing a length attribute
-        # in one or more string parameters that were requested. Note that
-        # this is will never be true. Need to update code above.
-        # if opts['format'] == 'binary' and missing_length:
-        #    warnings.warn('Requesting CSV instead of binary because of problem with server metadata.')
-        #    opts['format'] == 'csv'
+        # in one or more string parameters that were requested. In this case,
+        # there is not enough information to parse binary.
+        if opts['format'] == 'binary' and missing_length:
+             warnings.warn('Requesting CSV instead of binary because of problem with server metadata.')
+             opts['format'] == 'csv'
 
-        # Read the data. toc0 is time to download (or build buffer); 
-        # toc is time to parse (includes download time if buffered IO is used.)
+        # Read the data. toc0 is time to download to file or into buffer;
+        # toc is time to parse.
         if opts['format'] == 'binary':
             # HAPI Binary
             if opts["cache"]:
@@ -786,101 +705,7 @@ def hapi(*args, **kwargs):
                         data[pnames[i]] = np.squeeze(
                             np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1] + 1)], shape))
             else:
-                # At least one requested string or isotime parameter does not
-                # have a length in metadata. More work to do to read. 
-                if opts['method'] == 'numpy' or opts['method'] == 'numpynolength':
-                    # If requested method was numpy, use numpynolength method.
-
-                    # With dtype='None', the data type is determined automatically
-                    table = np.genfromtxt(fnamecsv, dtype=None, delimiter=',',
-                                          encoding='utf-8')
-                    # table is a 1-D array. Each element is a row in the file.
-                    # - If the data types are not the same for each column,
-                    # the elements are tuples with length equal to the number
-                    # of columns.
-                    # - If the data types are the same for each column, which
-                    # will happen if only Time is requested or Time and
-                    # a string or isotime parameter is requested, then table
-                    # has rows that are 1-D numpy arrays.
-
-                    # Contents of 'table' will be placed into N-D array 'data'.
-                    data = np.ndarray(shape=(len(table)), dtype=dt)
-
-                    # Insert data from 'table' into N-D array 'data'
-                    if table.dtype.names is None:
-                        if len(pnames) == 1:
-                            # Only time parameter requested.
-                            data[pnames[0]] = table[:]
-                        else:
-                            # All columns in 'table' have the same data type
-                            # so table is a 2-D numpy matrix
-                            for i in range(0, len(pnames)):
-                                shape = np.append(len(data), psizes[i])
-                                data[pnames[i]] = np.squeeze(
-                                    np.reshape(table[:, np.arange(cols[i][0], cols[i][1] + 1)], shape))
-                    else:
-                        # Table is not a 2-D numpy matrix.
-                        # Extract each column (don't know how to do this with slicing
-                        # notation, e.g., data['varname'] = table[:][1:3]). Instead,
-                        # loop over each parameter (pn) and aggregate columns.
-                        # Then insert aggregated columns into N-D array 'data'.
-                        for pn in range(0, len(cols)):
-                            shape = np.append(len(data), psizes[pn])
-                            for c in range(cols[pn][0], cols[pn][1] + 1):
-                                if c == cols[pn][0]:  # New parameter
-                                    tmp = table[table.dtype.names[c]]
-                                else:  # Aggregate
-                                    tmp = np.vstack((tmp, table[table.dtype.names[c]]))
-                            tmp = np.squeeze(np.reshape(np.transpose(tmp), shape))
-
-                            data[pnames[pn]] = tmp
-
-                if opts['method'] == 'pandas' or opts['method'] == 'pandasnolength':
-                    # If requested method was pandas, use pandasnolength method.
-
-                    # Read file into Pandas DataFrame
-                    df = pandas.read_csv(fnamecsv, sep=',', header=None)
-
-                    # Allocate output N-D array (It is not possible to pass dtype=dt
-                    # as computed to pandas.read_csv, so need to create new ND array.)
-                    data = np.ndarray(shape=(len(df)), dtype=dt)
-
-                    # Insert data from dataframe into N-D array
-                    for i in range(0, len(pnames)):
-                        shape = np.append(len(data), psizes[i])
-                        # In numpy 1.8.2 and Python 2.7, this throws an error for no apparent reason.
-                        # Works as expected in numpy 1.10.4
-                        data[pnames[i]] = np.squeeze(
-                            np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1] + 1)], shape))
-
-                # Any of the string parameters that do not have an associated
-                # length in the metadata will have dtype='O' (object).
-                # These parameters must be converted to have a dtype='SN', where
-                # N is the maximum string length. N is determined automatically
-                # when using astype('<S') (astype uses largest N needed).
-                dt2 = []  # Will have dtypes with strings lengths calculated.
-                for i in range(0, len(pnames)):
-                    if data[pnames[i]].dtype == 'O':
-                        dtype = (pnames[i], str(data[pnames[i]].astype('<S').dtype), psizes[i])
-                    else:
-                        dtype = dt[i]
-
-                    # https://numpy.org/doc/stable/release/1.17.0-notes.html#shape-1-fields-in-dtypes-won-t-be-collapsed-to-scalars-in-a-future-version
-                    if len(dtype) > 2 and dtype[2] == 1:
-                        dtype = dtype[0:2]
-                    dt2.append(dtype)
-
-                # Create new N-D array that won't have any parameters with
-                # type = 'O'.
-                data2 = np.ndarray(data.shape, dt2)
-
-                for i in range(0, len(pnames)):
-                    if data[pnames[i]].dtype == 'O':
-                        data2[pnames[i]] = data[pnames[i]].astype(dt2[i][1])
-                    else:
-                        data2[pnames[i]] = data[pnames[i]]
-                        # Save memory by not copying (does this help?)
-                        # data2[pnames[i]] = np.array(data[pnames[i]],copy=False)
+                data = parse_missing_length(fnamecsv, dt, cols, psizes, pnames, opts)
 
         toc = time.time() - tic
 
@@ -903,20 +728,18 @@ def hapi(*args, **kwargs):
         else:
             meta.update({"x_dataFile": fnamecsv})
 
-        # Note that this should only technically be
-        # written if cache=True. Will do this when output is
-        # h = hapi(...)
-        # h.data
-        # h.meta
-        # h.info
 
         # Create cache directory
+        # Note that this should only technically be
+        # written if cache=True.
         if not os.path.exists(opts["cachedir"]):
             os.makedirs(opts["cachedir"])
         if not os.path.exists(urld):
             os.makedirs(urld)
 
         # Write metadata to cache
+        # Note that this should only technically be
+        # written if cache=True.
         log('Writing %s' % fnamepklx, opts)
         f = open(fnamepklx, 'wb')
         pickle.dump(meta, f, protocol=2)
@@ -924,282 +747,197 @@ def hapi(*args, **kwargs):
 
         if opts["cache"]:
             log('Writing %s' % fnamenpy, opts)
-            if missing_length:
-                np.save(fnamenpy, data2)
-            else:
-                np.save(fnamenpy, data)
+            np.save(fnamenpy, data)
 
         meta['x_totalTime'] = time.time() - tic_totalTime
-        if missing_length:
-            return data2, meta
+
+        return data, meta
+
+
+def compute_dt(meta, opts):
+
+    # Compute data type variable dt used to read HAPI response into
+    # a data structure.
+    pnames, psizes, dt = [], [], []
+    # Each element of cols is an array with start/end column number of
+    # parameter.
+
+    cols = np.zeros([len(meta["parameters"]), 2], dtype=np.int32)
+    ss = 0  # running sum of prod(size)
+
+    # missing_length = True will be set if HAPI String or ISOTime
+    # parameter has no length attribute in metadata (length attribute is
+    # required for both in binary but only for primary time column in CSV).
+    # When missing_length=True the CSV read gets more complicated.
+    missing_length = False
+
+    # Extract sizes and types of parameters.
+    for i in range(0, len(meta["parameters"])):
+        ptype = str(meta["parameters"][i]["type"])
+        pnames.append(str(meta["parameters"][i]["name"]))
+        if 'size' in meta["parameters"][i]:
+            psizes.append(meta["parameters"][i]['size'])
         else:
-            return data, meta
+            psizes.append(1)
 
+        # For size = [N] case, readers want
+        # dtype = ('name', type, N)
+        # not
+        # dtype = ('name', type, [N])
+        if type(psizes[i]) is list and len(psizes[i]) == 1:
+            psizes[i] = psizes[i][0]
 
-def hapitime_reformat(form_to_match, given_form, logging=False):
-    """Reformat a given HAPI ISO 8601 time to match format of another HAPI ISO 8601 time."""
+        if type(psizes[i]) is list and len(psizes[i]) > 1:
+            # psizes[i] = list(reversed(psizes[i]))
+            psizes[i] = list(psizes[i])
 
-    log('ref:       {}'.format(form_to_match), {'logging': logging})
-    log('given:     {}'.format(given_form), {'logging': logging})
+        # First column of ith parameter.
+        cols[i][0] = ss
+        # Last column of ith parameter.
+        cols[i][1] = ss + np.prod(psizes[i]) - 1
+        # Running sum of columns.
+        ss = cols[i][1] + 1
 
-    if 'T' in given_form:
-        dt_given = isodate.parse_datetime(given_form)
-    else:
-        # Remove trailing Z b/c parse_date does not implement of date with
-        # trailing Z, which is valid IS8601.
-        dt_given = isodate.parse_date(given_form[0:-1])
+        # HAPI numerical formats are 64-bit LE floating point and 32-bit LE
+        # signed integers.
+        if ptype == 'double':
+            dtype = (pnames[i], '<d', psizes[i])
+        if ptype == 'integer':
+            dtype = (pnames[i], np.dtype('<i4'), psizes[i])
 
-    # Get format string, e.g., %Y-%m-%dT%H
-    format_ref = hapitime_format_str([form_to_match])
-
-    if '%f' in format_ref:
-        form_to_match = form_to_match.strip('Z')
-        form_to_match_fractional = form_to_match.split('.')[-1]
-        form_to_match = ''.join(form_to_match.split('.')[:-1])
-
-        given_form_fractional = '000000000'
-        given_form_fmt = hapitime_format_str([given_form])
-        given_form = given_form.strip('Z')
-
-        if '%f' in given_form_fmt:
-            given_form_fractional = given_form.split('.')[-1]
-            given_form = ''.join(given_form.split('.')[:-1])
-
-        converted = hapitime_reformat(form_to_match+'Z', given_form+'Z')
-        converted = converted.strip('Z')
-        
-        converted_fractional = '{:0<{}.{}}'.format(given_form_fractional, len(form_to_match_fractional), len(form_to_match_fractional))
-        converted = converted + '.' + converted_fractional
-
-        if 'Z' in format_ref:
-            return converted + 'Z'
-        
-        return converted
-
-    converted = dt_given.strftime(format_ref)
-    
-    if len(converted) > len(form_to_match):
-        converted = converted[0:len(form_to_match)-1] + "Z"
-
-    log('converted: {}'.format(converted), {'logging': logging})
-    log('ref fmt:   {}'.format(format_ref), {'logging': logging})
-    log('----', {'logging': logging})
-
-    return converted
-
-
-def hapitime_format_str(Time):
-    """Determine the time format string for a HAPI ISO 8601 time"""
-
-    d = 0
-    # Catch case where no trailing Z
-    # Technically HAPI ISO 8601 must have trailing Z:
-    # https://github.com/hapi-server/data-specification/blob/master/hapi-dev/HAPI-data-access-spec-dev.md#representation-of-time
-    if not re.match(r".*Z$", Time[0]):
-        d = 1
-
-    # Parse date part
-    # If h=True then hour given.
-    # If hm=True, then hour and minute given.
-    # If hms=True, them hour, minute, and second given.
-    (h, hm, hms) = (False, False, False)
-
-    if len(Time[0]) == 4 or (len(Time[0]) == 5 and Time[0][-1] == "Z"):
-        fmt = '%Y'
-    elif re.match(r"[0-9]{4}-[0-9]{3}", Time[0]):
-        # YYYY-DOY format
-        fmt = "%Y-%j"
-        if len(Time[0]) >= 12 - d:
-            h = True
-        if len(Time[0]) >= 15 - d:
-            hm = True
-        if len(Time[0]) >= 18 - d:
-            hms = True
-    elif re.match(r"[0-9]{4}-[0-9]{2}", Time[0]):
-        # YYYY-MM-DD format
-        fmt = "%Y-%m"
-        if len(Time[0]) > 8:
-            fmt = fmt + "-%d"
-        if len(Time[0]) >= 14 - d:
-            h = True
-        if len(Time[0]) >= 17 - d:
-            hm = True
-        if len(Time[0]) >= 20 - d:
-            hms = True
-    else:
-        # TODO: Also check for invalid time string lengths.
-        # Should use JSON schema regular expressions for allowed versions of ISO 8601.
-        error('First time value %s is not a valid HAPI Time' % Time[0])
-
-    fmto = fmt
-    if h:
-        fmt = fmt + "T%H"
-    if hm:
-        fmt = fmt + ":%M"
-    if hms:
-        fmt = fmt + ":%S"
-
-    if re.match(r".*\.[0-9].*$", Time[0]):
-        fmt = fmt + ".%f"
-    if re.match(r".*\.$", Time[0]) or re.match(r".*\.Z$", Time[0]):
-        fmt = fmt + "."
-
-    if re.match(r".*Z$", Time[0]):
-        fmt = fmt + "Z"
-
-    return fmt
-
-
-def hapitime2datetime(Time, **kwargs):
-    """Convert HAPI timestamps to Python datetimes.
-
-    A HAPI-compliant server represents time as an ISO 8601 string
-    (with several constraints - see the `HAPI specification
-    <https://github.com/hapi-server/data-specification/blob/master/hapi-dev/HAPI-data-access-spec-dev.md#representation-of-time>`)
-    hapi() reads these into a NumPy array of Python byte literals.
-
-    This function converts the byte literals to Python datetime objects.
-
-    Typical usage:
-        data = hapi(...) # Get data
-        DateTimes = hapitime2datetime(data['Time']) # Convert
-
-    All HAPI time strings must have a trailing Z. This function only checks first
-    element in Time array for compliance. If 
-
-    Parameter
-    ----------
-    Time:
-        - A numpy array of HAPI timestamp byte literals
-        - A numpy array of HAPI timestamp strings
-        - A list of HAPI timestamp byte literals
-        - A list of HAPI timestamp strings
-        - A HAPI timestamp byte literal
-        - A HAPI timestamp strings
-
-    Returns
-    ----------
-    A NumPy array Python datetime objects with length = len(Time)
-
-    Examples
-    ----------
-    All of the following return
-      array([datetime.datetime(1970, 1, 1, 0, 0, tzinfo=<UTC>)], dtype=object)
-
-    from hapiclient.hapi import hapitime2datetime
-    import numpy as np
-
-    hapitime2datetime(np.array([b'1970-01-01T00:00:00.000Z']))
-    hapitime2datetime(np.array(['1970-01-01T00:00:00.000Z']))
-
-    hapitime2datetime([b'1970-01-01T00:00:00.000Z'])
-    hapitime2datetime(['1970-01-01T00:00:00.000Z'])
-
-    hapitime2datetime([b'1970-01-01T00:00:00.000Z'])
-    hapitime2datetime('1970-01-01T00:00:00.000Z')
-
-    """
-
-    # hapitime2datetime([['1999-001Z','1999-01Z']]) throws an error.
-    if type(Time) == list:
-        Time = np.asarray(Time)
-        if not all(list(map(lambda x: type(x) in [np.str_, np.bytes_, str, bytes], Time))):
-            raise ValueError
-
-    from datetime import datetime
-
-    try:
-        # Python 2
-        import pytz
-        tzinfo = pytz.UTC
-    except:
-        tzinfo = datetime.timezone.utc
-
-    opts = kwargs.copy()
-
-    if type(Time) == list:
-        Time = np.asarray(Time)
-    if type(Time) == str or type(Time) == bytes:
-        Time = np.asarray([Time])
-
-    if type(Time) != np.ndarray:
-        error('Problem with time data.' + '\n')
-        return
-
-    if Time.size == 0:
-        error('Time array is empty.' + '\n')
-        return
-
-    reshape = False
-    if Time.shape[0] != Time.size:
-        reshape = True
-        shape = Time.shape
-        Time = Time.flatten()
-
-    if type(Time[0]) == np.bytes_:
-        try:
-            Time = Time.astype('U')
-        except:
-            error('Problem with time data. First value: ' + str(Time[0]) + '\n')
-            return
-
-    tic = time.time()
-
-    if (Time[0][-1] != "Z"):
-        error("HAPI Times must have trailing Z. First element of input Time array does not have trailing Z.")
-
-    try:
-        # This is the fastest conversion option. But will fail on
-        #   YYYY-DOY format and other valid ISO 8601
-        #   dates such as 2001-01-01T00:00:03.Z
-        # When infer_datetime_format is used, TimeStamp object returned.
-        # When format=... is used, datetime object is used.
-        # ts_localize is not redundant - although all HAPI timestamps will
-        # have trailing Z, in some cases, infer_datetime_format will not return
-        # a timezone-aware Timestamp.
-        # TODO: Use hapitime_format_str() and pass this as format=...
-        #import pdb;pdb.set_trace()
-        Timeo = Time[0]
-        Time = pandas.to_datetime(Time, infer_datetime_format=True).tz_convert(tzinfo).to_pydatetime()
-        if reshape:
-            Time = np.reshape(Time, shape)
-        toc = time.time() - tic
-        log("Pandas processing time = %.4fs, first time = %s" % (toc, Timeo), opts)
-        return Time
-    except:
-        log("Pandas processing failed, first time = %s" % Time[0], opts)
-        pass
-
-    # Convert from Python byte literals to unicode strings
-    # https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.astype.html
-    # https://www.b-list.org/weblog/2017/sep/05/how-python-does-unicode/
-    # Note the new Time variable requires 4x more memory.
-    Time = Time.astype('U')
-    # Could save memory at cost of speed by decoding at each iteration below, e.g.
-    # Time[i] -> Time[i].decode('utf-8')
-
-    pythonDateTime = np.empty(len(Time), dtype=object)
-
-    fmt = hapitime_format_str(Time)
-
-    # TODO: Will using pandas.to_datetime here with fmt work?
-    try:
-        parse_error = True
-        for i in range(0, len(Time)):
-            if (Time[i][-1] != "Z"):
-                parse_error = False
-                raise
-            pythonDateTime[i] = datetime.strptime(Time[i], fmt).replace(tzinfo=tzinfo)
-    except:
-        if parse_error:
-            error('Could not parse time value ' + Time[i] + ' using ' + fmt)
+        if opts['format'] == 'binary':
+            # TODO: If 'length' not available, warn and fall back to CSV.
+            # Technically, server response is invalid in this case b/c length attribute
+            # required for all parameters if format=binary.
+            if ptype == 'string' or ptype == 'isotime':
+                dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
         else:
-            error("HAPI Times must have trailing Z. Time[" + str(i) + "] = " + Time[i] + " does not have trailing Z.")
+            # When format=csv, length attribute may not be given (but must be given for
+            # first parameter according to the HAPI spec).
+            if ptype == 'string' or ptype == 'isotime':
+                if 'length' in meta["parameters"][i]:
+                    # length is specified for parameter in metadata. Use it.
+                    if ptype == 'string' or 'isotime':
+                        dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
+                else:
+                    # A string or isotime parameter did not have a length.
+                    # Will need to use slower CSV read method.
+                    missing_length = True
+                    if ptype == 'string' or ptype == 'isotime':
+                        dtype = (pnames[i], object, psizes[i])
 
-    toc = time.time() - tic
-    log("Manual processing time = %.4fs, Input = %s, fmt = %s" % (toc, Time[0], fmt), opts)
+        # For testing reader. Force use of slow read method.
+        if opts['format'] == 'csv':
+            if opts['method'] == 'numpynolength' or opts['method'] == 'pandasnolength':
+                missing_length = True
+                if ptype == 'string' or ptype == 'isotime':
+                    dtype = (pnames[i], object, psizes[i])
 
-    if reshape:
-        pythonDateTime = np.reshape(pythonDateTime, shape)
+        # https://numpy.org/doc/stable/release/1.17.0-notes.html#shape-1-fields-in-dtypes-won-t-be-collapsed-to-scalars-in-a-future-version
+        if dtype[2] == 1:
+            dtype = dtype[0:2]
 
-    return pythonDateTime
+        dt.append(dtype)
+
+    return dt, cols, psizes, pnames, missing_length
+
+
+def parse_missing_length(fnamecsv, dt, cols, psizes, pnames, opts):
+
+    # At least one requested string or isotime parameter does not
+    # have a length in metadata. More work to do to read.
+    if opts['method'] == 'numpy' or opts['method'] == 'numpynolength':
+        # If requested method was numpy, use numpynolength method.
+
+        # With dtype='None', the data type is determined automatically
+        table = np.genfromtxt(fnamecsv, dtype=None, delimiter=',',
+                              encoding='utf-8')
+        # table is a 1-D array. Each element is a row in the file.
+        # - If the data types are not the same for each column,
+        # the elements are tuples with length equal to the number
+        # of columns.
+        # - If the data types are the same for each column, which
+        # will happen if only Time is requested or Time and
+        # a string or isotime parameter is requested, then table
+        # has rows that are 1-D numpy arrays.
+
+        # Contents of 'table' will be placed into N-D array 'data'.
+        data = np.ndarray(shape=(len(table)), dtype=dt)
+
+        # Insert data from 'table' into N-D array 'data'
+        if table.dtype.names is None:
+            if len(pnames) == 1:
+                # Only time parameter requested.
+                data[pnames[0]] = table[:]
+            else:
+                # All columns in 'table' have the same data type
+                # so table is a 2-D numpy matrix
+                for i in range(0, len(pnames)):
+                    shape = np.append(len(data), psizes[i])
+                    data[pnames[i]] = np.squeeze(
+                        np.reshape(table[:, np.arange(cols[i][0], cols[i][1] + 1)], shape))
+        else:
+            # Table is not a 2-D numpy matrix.
+            # Extract each column (don't know how to do this with slicing
+            # notation, e.g., data['varname'] = table[:][1:3]). Instead,
+            # loop over each parameter (pn) and aggregate columns.
+            # Then insert aggregated columns into N-D array 'data'.
+            for pn in range(0, len(cols)):
+                shape = np.append(len(data), psizes[pn])
+                for c in range(cols[pn][0], cols[pn][1] + 1):
+                    if c == cols[pn][0]:  # New parameter
+                        tmp = table[table.dtype.names[c]]
+                    else:  # Aggregate
+                        tmp = np.vstack((tmp, table[table.dtype.names[c]]))
+                tmp = np.squeeze(np.reshape(np.transpose(tmp), shape))
+
+                data[pnames[pn]] = tmp
+
+    if opts['method'] == 'pandas' or opts['method'] == 'pandasnolength':
+        # If requested method was pandas, use pandasnolength method.
+
+        # Read file into Pandas DataFrame
+        df = pandas.read_csv(fnamecsv, sep=',', header=None)
+
+        # Allocate output N-D array (It is not possible to pass dtype=dt
+        # as computed to pandas.read_csv, so need to create new ND array.)
+        data = np.ndarray(shape=(len(df)), dtype=dt)
+
+        # Insert data from dataframe into N-D array
+        for i in range(0, len(pnames)):
+            shape = np.append(len(data), psizes[i])
+            # In numpy 1.8.2 and Python 2.7, this throws an error for no apparent reason.
+            # Works as expected in numpy 1.10.4
+            data[pnames[i]] = np.squeeze(
+                np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1] + 1)], shape))
+
+    # Any of the string parameters that do not have an associated
+    # length in the metadata will have dtype='O' (object).
+    # These parameters must be converted to have a dtype='SN', where
+    # N is the maximum string length. N is determined automatically
+    # when using astype('<S') (astype uses largest N needed).
+    dt2 = []  # Will have dtypes with strings lengths calculated.
+    for i in range(0, len(pnames)):
+        if data[pnames[i]].dtype == 'O':
+            dtype = (pnames[i], str(data[pnames[i]].astype('<S').dtype), psizes[i])
+        else:
+            dtype = dt[i]
+
+        # https://numpy.org/doc/stable/release/1.17.0-notes.html#shape-1-fields-in-dtypes-won-t-be-collapsed-to-scalars-in-a-future-version
+        if len(dtype) > 2 and dtype[2] == 1:
+            dtype = dtype[0:2]
+        dt2.append(dtype)
+
+    # Create new N-D array that won't have any parameters with
+    # type = 'O'.
+    data2 = np.ndarray(data.shape, dt2)
+
+    for i in range(0, len(pnames)):
+        if data[pnames[i]].dtype == 'O':
+            data2[pnames[i]] = data[pnames[i]].astype(dt2[i][1])
+        else:
+            data2[pnames[i]] = data[pnames[i]]
+            # Save memory by not copying (does this help?)
+            # data2[pnames[i]] = np.array(data[pnames[i]],copy=False)
+
+    return data2

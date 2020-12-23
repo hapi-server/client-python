@@ -1,12 +1,10 @@
 def setopts(defaults, given):
     """Override default keyword dictionary options.
 
-        kwargs = setopts(defaults, kwargs)
+    kwargs = setopts(defaults, kwargs)
 
-        A warning is shown if kwargs contains a key not found in default.
+    A warning is shown if kwargs contains a key not found in default.
     """
-    from inspect import stack
-    fname = stack()[1][1]
 
     # Override defaults
     for key, value in given.items():
@@ -16,26 +14,32 @@ def setopts(defaults, given):
         if key in defaults:
             defaults[key] = value
         else:
-            warning('Ignoring invalid keyword option "%s".' % key, fname)
+            warning('Ignoring invalid keyword option "%s".' % key)
 
     return defaults
 
 
-def log(msg, opts):
-    """Print message to console or file."""
+def test_log():
 
+    log("Test 1", {"logging": True})
+    log("Test 2", {"logging": False})
+
+
+def log(msg, opts):
+    """Print message to console or file"""
+
+    import os
     import sys
 
     if not 'logging' in opts:
         opts = opts.copy()
         opts['logging'] = False
-        
+
     pre = sys._getframe(1).f_code.co_name + '(): '
     if isinstance(opts['logging'], bool) and opts['logging']:
         if pythonshell() == 'jupyter-notebook':
             # Don't show full path information.
-            # TODO: Use pathsep() instead of '/'
-            msg = msg.replace(opts['cachedir'] + '/', '')
+            msg = msg.replace(opts['cachedir'] + os.path.sep, '')
             msg = msg.replace(opts['cachedir'], '')
         print(pre + msg)
     elif hasattr(opts['logging'], 'write'):
@@ -53,29 +57,6 @@ def jsonparse(res, url):
         return loads(res.read().decode('utf-8'))
     except:
         error('Could not parse JSON from %s' % url)
-
-
-def system(cmd):
-    """Execute system command and return exit code, stderr, and stdout.
-
-        exitcode, stderr, stdout = system(cmd)
-
-        If execution fails, an OSError is raised.
-    """
-
-    #TODO: Document difference between exitcode != 0 and OSError
-
-    from shlex import split
-    from subprocess import Popen, PIPE
-    try:
-        args = split(cmd)
-        proc = Popen(args, stdout=PIPE, stderr=PIPE)
-        out, err = proc.communicate()
-        exitcode = proc.returncode
-        return exitcode, out.decode(), err.decode()
-    except OSError as err:
-        msg = "Execution failed: " + cmd + "\n" + err[1]
-        raise OSError(msg)
 
 
 def pythonshell():
@@ -96,7 +77,6 @@ def pythonshell():
     """
 
     import os
-    import sys
 
     env = os.environ
 
@@ -119,7 +99,7 @@ def pythonshell():
                 #    shell = 'spyder-notebook'
     except:
         pass
-        
+
     return shell
 
 
@@ -129,7 +109,6 @@ def warning_test():
     # Should show warnings in order and only HAPIWarning {1,2} should
     # have a different format
     from warnings import warn
-    from hapiclient.util import warning
 
     warn('Normal warning 1')
     warn('Normal warning 2')
@@ -195,6 +174,7 @@ def warning(*args):
 class HAPIError(Exception):
     pass
 
+
 def error(msg, debug=False):
     """Display a short error message.
 
@@ -216,7 +196,7 @@ def error(msg, debug=False):
             pass
 
     sys.stdout.flush()
-    
+
     fname = stack()[1][1]
     fname = path.basename(fname)
     #line = stack()[1][2]
@@ -269,12 +249,12 @@ def error(msg, debug=False):
             # https://stackoverflow.com/questions/1261668/cannot-override-sys-excepthook
             # Don't need to copy default function as it is provided as sys.__excepthook__.
             sys.excepthook = exception_handler
-    
+
     raise HAPIError(msg)
 
 
 def head(url):
-    '''HTTP HEAD request on URL.'''
+    """HTTP HEAD request on URL."""
 
     import urllib3
     http = urllib3.PoolManager()
@@ -282,8 +262,7 @@ def head(url):
         res = http.request('HEAD', url, retries=2)
         if res.status != 200:
             raise Exception('Head request failed on ' + url)
-        else:
-            return res.headers
+        return res.headers
     except Exception as e:
         raise e
 
@@ -291,14 +270,7 @@ def head(url):
 
 
 def urlopen(url):
-    """Python 2/3 urlopen compatibility function.
-
-    If Python 3, returns
-    urllib.request.urlopen(url, fname)
-
-    If Python 2, returns
-    urllib.urlopen(url, fname)
-    """
+    """Wrapper to request.get() in urllib3"""
 
     import sys
     from json import load
@@ -311,7 +283,8 @@ def urlopen(url):
         return module + '.' + obj.__class__.__name__
 
     import urllib3
-    c = " If problem persists, a contact email for the server may be listed at http://hapi-server.org/servers/"
+    c = " If problem persists, a contact email for the server may be listed "
+    c = c + "at http://hapi-server.org/servers/"
     try:
         http = urllib3.PoolManager()
         res = http.request('GET', url, preload_content=False, retries=2)
@@ -321,9 +294,15 @@ def urlopen(url):
                 if 'status' in jres:
                     if 'message' in jres['status']:
                         error('\n%s\n  %s\n' % (url, jres['status']['message']))
-                error("Problem with " + url + ". Server responded with non-200 HTTP status (" + str(res.status) + ") and invalid HAPI JSON error message in response body." + c)
+                error("Problem with " + url + \
+                      ". Server responded with non-200 HTTP status (" \
+                        + str(res.status) + \
+                        ") and invalid HAPI JSON error message in response body." + c)
             except:
-                error("Problem with " + url + ". Server responded with non-200 HTTP status (" + str(res.status) + ") and no HAPI JSON error message in response body." + c)
+                error("Problem with " + url + \
+                      ". Server responded with non-200 HTTP status (" + \
+                      str(res.status) + \
+                      ") and no HAPI JSON error message in response body." + c)
     except urllib3.exceptions.NewConnectionError:
         error('Connection error for : ' + url + c)
     except urllib3.exceptions.ConnectTimeoutError:
@@ -332,26 +311,27 @@ def urlopen(url):
         error('Failed to connect to: ' + url + c)
     except urllib3.exceptions.ReadTimeoutError:
         error('Read timeout for: ' + url + c)
-    except urllib3.exceptions.LocationValueError:
-        error('Invalid URL: ' + url)
     except urllib3.exceptions.LocationParseError:
         error('Could not parse URL: ' + url)
+    except urllib3.exceptions.LocationValueError:
+        error('Invalid URL: ' + url)
     except urllib3.exceptions.HTTPError as e:
         error('Exception ' + get_full_class_name(e) + " for: " + url)
     except Exception as e:
-        error(type(sys.exc_info()[1]).__name__ + ': ' + str(e) + ' for URL: ' + url)
+        error(type(sys.exc_info()[1]).__name__ + ': ' \
+              + str(e) + ' for URL: ' + url)
 
     return res
 
 
 def urlretrieve(url, fname, check_last_modified=False, **kwargs):
-    """Python 2/3 urlretrieve compatability function.
+    """Download URL to file
 
-    If Python 3, returns
-    urllib.request.urlretrieve(url, fname)
+    urlretrieve(url, fname, check_last_modified=False, **kwargs)
 
-    If Python 2, returns
-    urllib.urlretrieve(url, fname)
+    If check_last_modified=True, `fname` is found, URL returns Last-Modfied
+    header, and `fname` timestamp is after Last-Modfied timestamp, the URL
+    is not downloaded.
     """
 
     import shutil
@@ -371,9 +351,9 @@ def urlretrieve(url, fname, check_last_modified=False, **kwargs):
         else:
             log('Local version of ' + fname + ' is up-to-date; using it.', kwargs)
 
-    dir = path.dirname(fname)
-    if not path.exists(dir):
-        makedirs(dir)
+    dirname = path.dirname(fname)
+    if not path.exists(dirname):
+        makedirs(dirname)
 
     with open(fname, 'wb') as out:
         res = urlopen(url)
@@ -382,7 +362,7 @@ def urlretrieve(url, fname, check_last_modified=False, **kwargs):
 
 
 def modified(url, fname, **kwargs):
-    """Check if timestamp on file is older than Last-Modifed in HEAD request"""
+    """Check if timestamp on file is later than Last-Modifed in HEAD request"""
 
     from os import stat, path
     from time import mktime, strptime
@@ -397,7 +377,7 @@ def modified(url, fname, **kwargs):
     headers = head(url)
 
     # TODO: Write headers to file.head
-    if debug: 
+    if debug:
         print("Header:\n--\n")
         print(headers)
         print("--")
@@ -407,12 +387,14 @@ def modified(url, fname, **kwargs):
     if "Last-Modified" in headers:
         urlLastModified = mktime(strptime(headers["Last-Modified"],
                                           "%a, %d %b %Y %H:%M:%S GMT"))
-        if urlLastModified > fileLastModified:
-            return True
 
         if debug:
             print("File Last Modified = %s" % fileLastModified)
             print("URL Last Modified = %s" % urlLastModified)
+
+        if urlLastModified > fileLastModified:
+            return True
+        return False
     else:
         if debug:
             print("No Last-Modified header. Will re-download")
@@ -423,7 +405,7 @@ def modified(url, fname, **kwargs):
 ##############################################################################
 # Start compatability code
 def prompt(msg):
-    '''Python 2/3 imput compatability function. Pauses for user input.
+    '''Python 2/3 imnut compatability function. Pauses for user input.
 
     If Python 3, calls
     input(msg)
@@ -439,22 +421,21 @@ def prompt(msg):
 
 
 def urlquote(url):
-    '''Python 2/3 urlquote compatability function.
+    """Python 2/3 urlquote compatability function.
 
     If Python 3, returns
     urllib.parse.quote(url)
 
     If Python 2, returns
     urllib.quote(url)
-    '''
+    """
 
     import sys
-    if sys.version_info[0] > 2:
-        import urllib.parse
-        return urllib.parse.quote(url)
-    else:
+    if sys.version_info[0] == 2:
         from urllib import quote
         return quote(url)
+    import urllib.parse
+    return urllib.parse.quote(url)
 
 # End compatability code
 ##############################################################################

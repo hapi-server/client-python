@@ -1,4 +1,4 @@
-Contributions to this project in the form of pull requests, submission of issues, and commenting on issues are welcome and encouraged.
+We welcome and encourage contributions to this project in the form of pull requests, submission of issues, and comments on issues.
 
 Contributors are expected
 
