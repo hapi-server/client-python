@@ -64,3 +64,5 @@ v0.1.8:
 	2020-12-23 -- 1cfbfc3 Add P1D chunk tests
 	2020-12-23 -- f41599c Add P1Y chunk tests
 	2020-12-23 -- ff8e1ab Refactor hapi.py; clean up util.py
+v0.1.9:
+	2020-12-23 -- Remove hapiplot. Addresses #31.
