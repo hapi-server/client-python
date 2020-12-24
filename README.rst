@@ -13,6 +13,10 @@ Installation
     # or
     pip install 'git+https://github.com/hapi-server/client-python' --upgrade
 
+    pip install hapiplot --upgrade
+    # or
+    pip install 'git+https://github.com/hapi-server/plot-python' --upgrade
+
 See the `Appendix <#Appendix>`__ for a fail-safe installation method.
 
 Basic Example
@@ -20,10 +24,11 @@ Basic Example
 
 .. code:: python
 
-    # Get and plot Dst index from CDAWeb HAPI server
+    # Get Dst index from CDAWeb HAPI server
     from hapiclient import hapi
-    from hapiclient import hapiplot
 
+    # See http://hapi-server.org/servers/ for a list of
+    # other HAPI servers and datasets.
     server     = 'https://cdaweb.gsfc.nasa.gov/hapi'
     dataset    = 'OMNI2_H0_MRG1HR'
     start      = '2003-09-01T00:00:00'
@@ -33,20 +38,42 @@ Basic Example
 
     # Get data
     data, meta = hapi(server, dataset, parameters, start, stop, **opts)
-    # Show documentation
-    #help(hapi)
+    print(meta)
+    print(data)
 
     # Plot all parameters
+    from hapiplot import hapi
     hapiplot(data, meta)
-    # Show documentation
-    #help(hapiplot)
+
 
 Documentation
 -------------
 
 Basic usage examples for various HAPI servers are given in `hapi_demo.py <https://github.com/hapi-server/client-python/blob/master/hapi_demo.py>`__
 
+See http://hapi-server.org/servers/ for a list of HAPI servers and datasets.
+
 All of the features are extensively demonstrated in the `hapi_demo.ipynb <https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb>`__ Jupyter Notebook.
+
+
+Data Model and Time Format
+--------------------------
+
+A request for data of the form
+```
+data, meta = hapi(server, dataset, parameters, start, stop)
+```
+
+returns the [Numpy N-D array](https://docs.scipy.org/doc/numpy-1.15.1/user/quickstart.html) `data` and a Python dictionary `meta` from a HAPI-compliant data server `server`. The structure of `data` and `meta` mirrors the structure of a response from a HAPI server.
+
+The HAPI client data model is intentionally basic. There is an ongoing discussion of a data model for Heliophysics data among the `PyHC community <https://heliopython.org/>`_. When this data model is complete, a function that converts `data` and `meta` to that data model will be included in the `hapiclient` package.
+
+Examples of transforming and manipulating `data` is given in a `Jupyter Notebook <https://colab.research.google.com/drive/11Zy99koiE90JKJ4u_KPTaEBMQFzbfU3P#scrollTo=aI_7DxnZtQZ3>`_. The examples include 
+
+# Fast and well-tested conversion from ISO 8601 timestamp strings to Python `datetime` objects
+# Putting the content of `data` in a Pandas `DataFrame` object
+# Creating an Astropy NDArray
+
 
 Development
 -----------

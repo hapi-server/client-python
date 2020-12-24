@@ -110,7 +110,7 @@ def request2path(*args):
 
 
 def hapiopts():
-    """Return allowed options for hapi().
+    """Return dict of default options for hapi()
 
     Used by hapiplot() and hapi().
 
@@ -144,11 +144,12 @@ def hapiopts():
 def hapi(*args, **kwargs):
     """Request data from a HAPI server.
 
-    For additional documentation and demonstration, see
-    https://github.com/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb
+    Version: 0.1.9
 
-    Version: 0.1.9b0
 
+    Examples
+    ----------
+    `Jupyter Notebook <https://colab.research.google.com/drive/11Zy99koiE90JKJ4u_KPTaEBMQFzbfU3P?usp=sharing>_`
 
     Parameters
     ----------
@@ -272,9 +273,6 @@ def hapi(*args, **kwargs):
     ----------
         * `HAPI Server Definition <https://github.com/hapi-server/data-specification>`_
 
-    Examples
-    ----------
-        See https://github.com/hapi-server/client-python-notebooks
     """
 
     nin = len(args)
