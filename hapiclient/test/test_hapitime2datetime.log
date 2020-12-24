@@ -1,47 +1,47 @@
 test_api(): API test.
-hapitime2datetime(): Pandas processing time = 0.0036s, first time = 1970-01-01T00:00:00.000Z
-hapitime2datetime(): Pandas processing time = 0.0008s, first time = 1970-01-01T00:00:00.000Z
-hapitime2datetime(): Pandas processing time = 0.0007s, first time = 1970-01-01T00:00:00.000Z
-hapitime2datetime(): Pandas processing time = 0.0007s, first time = 1970-01-01T00:00:00.000Z
-hapitime2datetime(): Pandas processing time = 0.0007s, first time = 1970-01-01T00:00:00.000Z
-hapitime2datetime(): Pandas processing time = 0.0007s, first time = 1970-01-01T00:00:00.000Z
+hapitime2datetime(): Pandas processing time = 0.0028s, first time = 1970-01-01T00:00:00.000Z
+hapitime2datetime(): Pandas processing time = 0.0038s, first time = 1970-01-01T00:00:00.000Z
+hapitime2datetime(): Pandas processing time = 0.0024s, first time = 1970-01-01T00:00:00.000Z
+hapitime2datetime(): Pandas processing time = 0.0020s, first time = 1970-01-01T00:00:00.000Z
+hapitime2datetime(): Pandas processing time = 0.0019s, first time = 1970-01-01T00:00:00.000Z
+hapitime2datetime(): Pandas processing time = 0.0025s, first time = 1970-01-01T00:00:00.000Z
 test_parsing(): Parse test.
 hapitime2datetime(): Pandas processing failed, first time = 1989Z
-hapitime2datetime(): Manual processing time = 0.0029s, Input = 1989Z, fmt = %YZ
+hapitime2datetime(): Manual processing time = 0.0061s, Input = 1989Z, fmt = %YZ
 hapitime2datetime(): Pandas processing failed, first time = 1989-01Z
-hapitime2datetime(): Manual processing time = 0.0012s, Input = 1989-01Z, fmt = %Y-%mZ
+hapitime2datetime(): Manual processing time = 0.0033s, Input = 1989-01Z, fmt = %Y-%mZ
 hapitime2datetime(): Pandas processing failed, first time = 1989-001Z
-hapitime2datetime(): Manual processing time = 0.0011s, Input = 1989-001Z, fmt = %Y-%jZ
+hapitime2datetime(): Manual processing time = 0.0023s, Input = 1989-001Z, fmt = %Y-%jZ
 hapitime2datetime(): Pandas processing failed, first time = 1989-01-01Z
-hapitime2datetime(): Manual processing time = 0.0011s, Input = 1989-01-01Z, fmt = %Y-%m-%dZ
+hapitime2datetime(): Manual processing time = 0.0027s, Input = 1989-01-01Z, fmt = %Y-%m-%dZ
 hapitime2datetime(): Pandas processing failed, first time = 1989-001T00Z
-hapitime2datetime(): Manual processing time = 0.0048s, Input = 1989-001T00Z, fmt = %Y-%jT%HZ
+hapitime2datetime(): Manual processing time = 0.0057s, Input = 1989-001T00Z, fmt = %Y-%jT%HZ
 hapitime2datetime(): Pandas processing failed, first time = 1989-01-01T00Z
-hapitime2datetime(): Manual processing time = 0.0038s, Input = 1989-01-01T00Z, fmt = %Y-%m-%dT%HZ
+hapitime2datetime(): Manual processing time = 0.0065s, Input = 1989-01-01T00Z, fmt = %Y-%m-%dT%HZ
 hapitime2datetime(): Pandas processing failed, first time = 1989-001T00:00Z
-hapitime2datetime(): Manual processing time = 0.0014s, Input = 1989-001T00:00Z, fmt = %Y-%jT%H:%MZ
+hapitime2datetime(): Manual processing time = 0.0052s, Input = 1989-001T00:00Z, fmt = %Y-%jT%H:%MZ
 hapitime2datetime(): Pandas processing failed, first time = 1989-01-01T00:00Z
-hapitime2datetime(): Manual processing time = 0.0033s, Input = 1989-01-01T00:00Z, fmt = %Y-%m-%dT%H:%MZ
+hapitime2datetime(): Manual processing time = 0.0036s, Input = 1989-01-01T00:00Z, fmt = %Y-%m-%dT%H:%MZ
 hapitime2datetime(): Pandas processing failed, first time = 1989-001T00:00:00.Z
-hapitime2datetime(): Manual processing time = 0.0028s, Input = 1989-001T00:00:00.Z, fmt = %Y-%jT%H:%M:%S.Z
-hapitime2datetime(): Pandas processing time = 0.0010s, first time = 1989-01-01T00:00:00.Z
-hapitime2datetime(): Pandas processing time = 0.0012s, first time = 1989-01-01T00:00:00.0Z
+hapitime2datetime(): Manual processing time = 0.0060s, Input = 1989-001T00:00:00.Z, fmt = %Y-%jT%H:%M:%S.Z
+hapitime2datetime(): Pandas processing time = 0.0025s, first time = 1989-01-01T00:00:00.Z
+hapitime2datetime(): Pandas processing time = 0.0027s, first time = 1989-01-01T00:00:00.0Z
 hapitime2datetime(): Pandas processing failed, first time = 1989-001T00:00:00.0Z
-hapitime2datetime(): Manual processing time = 0.0021s, Input = 1989-001T00:00:00.0Z, fmt = %Y-%jT%H:%M:%S.%fZ
-hapitime2datetime(): Pandas processing time = 0.0010s, first time = 1989-01-01T00:00:00.00Z
+hapitime2datetime(): Manual processing time = 0.0035s, Input = 1989-001T00:00:00.0Z, fmt = %Y-%jT%H:%M:%S.%fZ
+hapitime2datetime(): Pandas processing time = 0.0043s, first time = 1989-01-01T00:00:00.00Z
 hapitime2datetime(): Pandas processing failed, first time = 1989-001T00:00:00.00Z
-hapitime2datetime(): Manual processing time = 0.0009s, Input = 1989-001T00:00:00.00Z, fmt = %Y-%jT%H:%M:%S.%fZ
-hapitime2datetime(): Pandas processing time = 0.0008s, first time = 1989-01-01T00:00:00.000Z
+hapitime2datetime(): Manual processing time = 0.0062s, Input = 1989-001T00:00:00.00Z, fmt = %Y-%jT%H:%M:%S.%fZ
+hapitime2datetime(): Pandas processing time = 0.0023s, first time = 1989-01-01T00:00:00.000Z
 hapitime2datetime(): Pandas processing failed, first time = 1989-001T00:00:00.000Z
-hapitime2datetime(): Manual processing time = 0.0006s, Input = 1989-001T00:00:00.000Z, fmt = %Y-%jT%H:%M:%S.%fZ
-hapitime2datetime(): Pandas processing time = 0.0008s, first time = 1989-01-01T00:00:00.0000Z
+hapitime2datetime(): Manual processing time = 0.0026s, Input = 1989-001T00:00:00.000Z, fmt = %Y-%jT%H:%M:%S.%fZ
+hapitime2datetime(): Pandas processing time = 0.0025s, first time = 1989-01-01T00:00:00.0000Z
 hapitime2datetime(): Pandas processing failed, first time = 1989-001T00:00:00.0000Z
-hapitime2datetime(): Manual processing time = 0.0006s, Input = 1989-001T00:00:00.0000Z, fmt = %Y-%jT%H:%M:%S.%fZ
-hapitime2datetime(): Pandas processing time = 0.0007s, first time = 1989-01-01T00:00:00.00000Z
+hapitime2datetime(): Manual processing time = 0.0022s, Input = 1989-001T00:00:00.0000Z, fmt = %Y-%jT%H:%M:%S.%fZ
+hapitime2datetime(): Pandas processing time = 0.0022s, first time = 1989-01-01T00:00:00.00000Z
 hapitime2datetime(): Pandas processing failed, first time = 1989-001T00:00:00.00000Z
-hapitime2datetime(): Manual processing time = 0.0006s, Input = 1989-001T00:00:00.00000Z, fmt = %Y-%jT%H:%M:%S.%fZ
+hapitime2datetime(): Manual processing time = 0.0027s, Input = 1989-001T00:00:00.00000Z, fmt = %Y-%jT%H:%M:%S.%fZ
 hapitime2datetime(): Pandas processing failed, first time = 1989-01-01T00:00:00.000000Z
-hapitime2datetime(): Manual processing time = 0.0026s, Input = 1989-01-01T00:00:00.000000Z, fmt = %Y-%m-%dT%H:%M:%S.%fZ
+hapitime2datetime(): Manual processing time = 0.0065s, Input = 1989-01-01T00:00:00.000000Z, fmt = %Y-%m-%dT%H:%M:%S.%fZ
 hapitime2datetime(): Pandas processing failed, first time = 1989-001T00:00:00.000000Z
-hapitime2datetime(): Manual processing time = 0.0007s, Input = 1989-001T00:00:00.000000Z, fmt = %Y-%jT%H:%M:%S.%fZ
+hapitime2datetime(): Manual processing time = 0.0045s, Input = 1989-001T00:00:00.000000Z, fmt = %Y-%jT%H:%M:%S.%fZ
 test_error_conditions(): Checking that hapitime2datetime(1999) throws HAPIError

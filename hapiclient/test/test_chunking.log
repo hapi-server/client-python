@@ -2,161 +2,161 @@ ________________________________________________________________________________
 request  : dataset3, scalar, 1971-01-01T01:50:00Z, 1975-08-03T06:50:00Z, P1D
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False}
-x_totalTime1 = 0.3544 s
-x_totalTime2 = 0.2931 s
+x_totalTime1 = 0.3062 s
+x_totalTime2 = 0.2994 s
 ________________________________________________________________________________
 request  : dataset3, scalar, 1971-01-01T01:50:00Z, 1975-08-03T06:50:00Z, P1D
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'n_chunks': 2}
-x_totalTime1 = 0.3544 s
-x_totalTime2 = 0.5433 s
+x_totalTime1 = 0.3062 s
+x_totalTime2 = 0.5278 s
 ________________________________________________________________________________
 request  : dataset3, scalar, 1971-01-01T01:50:00Z, 1975-08-03T06:50:00Z, P1D
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': 'P1Y'}
-x_totalTime1 = 0.3544 s
-x_totalTime2 = 1.0930 s
+x_totalTime1 = 0.3062 s
+x_totalTime2 = 1.0939 s
 ________________________________________________________________________________
 request  : dataset3, scalar, 1971-01-01T01:50:00Z, 1975-08-03T06:50:00Z, P1D
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'parallel': True, 'n_chunks': 2}
-x_totalTime1 = 0.3544 s
-x_totalTime2 = 0.4799 s
+x_totalTime1 = 0.3062 s
+x_totalTime2 = 0.4614 s
 ________________________________________________________________________________
 request  : dataset3, scalar, 1971-01-01T01:50:00Z, 1975-08-03T06:50:00Z, P1D
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'parallel': True, 'dt_chunk': 'P1Y'}
-x_totalTime1 = 0.3544 s
-x_totalTime2 = 0.8673 s
+x_totalTime1 = 0.3062 s
+x_totalTime2 = 0.7343 s
 ________________________________________________________________________________
 request  : dataset3, scalar, 1971-01-01T01:50:00Z, 1971-08-03T06:50:00Z, P1D
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False}
-x_totalTime1 = 0.2481 s
-x_totalTime2 = 0.1955 s
+x_totalTime1 = 0.2349 s
+x_totalTime2 = 0.1962 s
 ________________________________________________________________________________
 request  : dataset3, scalar, 1971-01-01T01:50:00Z, 1971-08-03T06:50:00Z, P1D
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'n_chunks': 2}
-x_totalTime1 = 0.2481 s
-x_totalTime2 = 0.4215 s
+x_totalTime1 = 0.2349 s
+x_totalTime2 = 0.4495 s
 ________________________________________________________________________________
 request  : dataset3, scalar, 1971-01-01T01:50:00Z, 1971-08-03T06:50:00Z, P1D
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': 'P1M'}
-x_totalTime1 = 0.2481 s
-x_totalTime2 = 1.7370 s
+x_totalTime1 = 0.2349 s
+x_totalTime2 = 1.8001 s
 ________________________________________________________________________________
 request  : dataset3, scalar, 1971-01-01T01:50:00Z, 1971-08-03T06:50:00Z, P1D
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'parallel': True, 'n_chunks': 2}
-x_totalTime1 = 0.2481 s
-x_totalTime2 = 0.4837 s
+x_totalTime1 = 0.2349 s
+x_totalTime2 = 0.3792 s
 ________________________________________________________________________________
 request  : dataset3, scalar, 1971-01-01T01:50:00Z, 1971-08-03T06:50:00Z, P1D
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'parallel': True, 'dt_chunk': 'P1M'}
-x_totalTime1 = 0.2481 s
-x_totalTime2 = 1.2103 s
+x_totalTime1 = 0.2349 s
+x_totalTime2 = 1.1635 s
 ________________________________________________________________________________
 request  : dataset2, scalar, 1970-01-01T00:00:00.000Z, 1970-01-10T00:00:00.000Z, PT1H
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False}
-x_totalTime1 = 0.2211 s
-x_totalTime2 = 0.2268 s
+x_totalTime1 = 0.2040 s
+x_totalTime2 = 0.1997 s
 ________________________________________________________________________________
 request  : dataset2, scalar, 1970-01-01T00:00:00.000Z, 1970-01-10T00:00:00.000Z, PT1H
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'n_chunks': 2}
-x_totalTime1 = 0.2211 s
-x_totalTime2 = 0.4704 s
+x_totalTime1 = 0.2040 s
+x_totalTime2 = 0.4630 s
 ________________________________________________________________________________
 request  : dataset2, scalar, 1970-01-01T00:00:00.000Z, 1970-01-10T00:00:00.000Z, PT1H
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': 'P1D'}
-x_totalTime1 = 0.2211 s
-x_totalTime2 = 2.2210 s
+x_totalTime1 = 0.2040 s
+x_totalTime2 = 2.2859 s
 ________________________________________________________________________________
 request  : dataset2, scalar, 1970-01-01T00:00:00.000Z, 1970-01-10T00:00:00.000Z, PT1H
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'parallel': True, 'n_chunks': 2}
-x_totalTime1 = 0.2211 s
-x_totalTime2 = 0.4605 s
+x_totalTime1 = 0.2040 s
+x_totalTime2 = 0.3949 s
 ________________________________________________________________________________
 request  : dataset2, scalar, 1970-01-01T00:00:00.000Z, 1970-01-10T00:00:00.000Z, PT1H
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'parallel': True, 'dt_chunk': 'P1D'}
-x_totalTime1 = 0.2211 s
-x_totalTime2 = 1.4106 s
+x_totalTime1 = 0.2040 s
+x_totalTime2 = 1.3901 s
 ________________________________________________________________________________
 request  : dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False}
-x_totalTime1 = 0.7116 s
-x_totalTime2 = 0.6832 s
+x_totalTime1 = 0.8364 s
+x_totalTime2 = 0.7222 s
 ________________________________________________________________________________
 request  : dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'n_chunks': 2}
-x_totalTime1 = 0.7116 s
-x_totalTime2 = 1.1806 s
+x_totalTime1 = 0.8364 s
+x_totalTime2 = 1.0263 s
 ________________________________________________________________________________
 request  : dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': 'PT1H'}
-x_totalTime1 = 0.7116 s
-x_totalTime2 = 2.4776 s
+x_totalTime1 = 0.8364 s
+x_totalTime2 = 2.3952 s
 ________________________________________________________________________________
 request  : dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'parallel': True, 'n_chunks': 2}
-x_totalTime1 = 0.7116 s
-x_totalTime2 = 0.6976 s
+x_totalTime1 = 0.8364 s
+x_totalTime2 = 0.5888 s
 ________________________________________________________________________________
 request  : dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'parallel': True, 'dt_chunk': 'PT1H'}
-x_totalTime1 = 0.7116 s
-x_totalTime2 = 1.0274 s
+x_totalTime1 = 0.8364 s
+x_totalTime2 = 0.8526 s
 ________________________________________________________________________________
 request  : dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T08:00:00Z, PT1S
 options 1: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'logging': False, 'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
-x_totalTime1 = 0.8915 s
-x_totalTime2 = 0.8804 s
+x_totalTime1 = 0.8322 s
+x_totalTime2 = 0.8780 s
 ________________________________________________________________________________
 request  : dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
 options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
-x_totalTime1 = 0.6287 s
-x_totalTime2 = 0.6645 s
+x_totalTime1 = 0.5981 s
+x_totalTime2 = 0.6445 s
 ________________________________________________________________________________
 request  : dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
 options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
-x_totalTime1 = 0.6287 s
-x_totalTime2 = 0.6695 s
+x_totalTime1 = 0.5981 s
+x_totalTime2 = 0.6560 s
 ________________________________________________________________________________
 request  : dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
 options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
-x_totalTime1 = 0.6287 s
-x_totalTime2 = 0.6939 s
+x_totalTime1 = 0.5981 s
+x_totalTime2 = 0.7175 s
 ________________________________________________________________________________
-request  : ace, X_GSM, 2000-01-01T00:00:00.000Z, 2000-01-10T00:00:00.000Z, PT720S
+request  : ace, X_GSM, 2000-01-01T00:00:00.000Z, 2000-01-02T00:00:00.000Z, PT720S
 options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
-x_totalTime1 = 1.3811 s
-x_totalTime2 = 11.7504 s
+x_totalTime1 = 1.1120 s
+x_totalTime2 = 2.3608 s
 ________________________________________________________________________________
-request  : ace, X_GSM, 2000-01-01T00:00:00.000Z, 2000-01-10T00:00:00.000Z, PT720S
+request  : ace, X_GSM, 2000-01-01T00:00:00.000Z, 2000-01-02T00:00:00.000Z, PT720S
 options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
-x_totalTime1 = 1.3811 s
-x_totalTime2 = 12.6819 s
+x_totalTime1 = 1.1120 s
+x_totalTime2 = 2.2774 s
 ________________________________________________________________________________
-request  : ace, X_GSM, 2000-01-01T00:00:00.000Z, 2000-01-10T00:00:00.000Z, PT720S
+request  : ace, X_GSM, 2000-01-01T00:00:00.000Z, 2000-01-02T00:00:00.000Z, PT720S
 options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
 options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
-x_totalTime1 = 1.3811 s
-x_totalTime2 = 11.5439 s
+x_totalTime1 = 1.1120 s
+x_totalTime2 = 2.4542 s
