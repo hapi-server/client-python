@@ -85,14 +85,14 @@ repository-test:
 	# $(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
 
 ifeq (LONG_TESTS,true)
-	$(CONDA_ACTIVATE) $(PYTHON); $(python) -m pytest -v -m 'long' hapiclient/test/test_hapi.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v -m 'long' hapiclient/test/test_hapi.py
 else
-	$(CONDA_ACTIVATE) $(PYTHON); $(python) -m pytest -v -m 'short' hapiclient/test/test_hapi.py	
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v -m 'short' hapiclient/test/test_hapi.py	
 endif
 
-	$(CONDA_ACTIVATE) $(PYTHON); $(python) -m pytest -v hapiclient/test/test_chunking.py
-	$(CONDA_ACTIVATE) $(PYTHON); $(python) -m pytest -v hapiclient/test/test_hapitime2datetime.py
-	$(CONDA_ACTIVATE) $(PYTHON); $(python) -m pytest -v hapiclient/test/test_hapitime_reformat.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_chunking.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_hapitime2datetime.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_hapitime_reformat.py
 ################################################################################
 
 ################################################################################
