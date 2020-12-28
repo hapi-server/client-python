@@ -1,0 +1,60 @@
+
+Parameter(s) = scalar; run = short. cache = False; usecache = False
+___________________________________________________________
+Method                total      d/l->buff  parse buff
+___________________________________________________________
+csv; numpy; no len.    0.2068     0.1556     0.0013
+csv; pandas; no len.   0.2195     0.1801     0.0036 (diffs in float values <= 1e-15)
+csv; numpy             0.2339     0.1799     0.0003 (diffs in float values <= 1e-15)
+csv; pandas            0.2396     0.1838     0.0025 (diffs in float values <= 1e-15)
+binary                 0.2475     0.1748     0.0000 (diffs in float values <= 1e-15)
+
+Parameter(s) = scalar,vector; run = short. cache = False; usecache = False
+___________________________________________________________
+Method                total      d/l->buff  parse buff
+___________________________________________________________
+csv; numpy; no len.    0.2308     0.1813     0.0005
+csv; pandas; no len.   0.2422     0.1865     0.0031 
+csv; numpy             0.2325     0.1823     0.0003 
+csv; pandas            0.2432     0.1854     0.0029 
+binary                 0.2544     0.1697     0.0000 
+
+Parameter(s) = ; run = short. cache = False; usecache = False
+___________________________________________________________
+Method                total      d/l->buff  parse buff
+___________________________________________________________
+csv; numpy; no len.    0.2327     0.1779     0.0069
+csv; pandas; no len.   0.2543     0.1821     0.0196 
+csv; numpy             0.2249     0.1796     0.0042 
+csv; pandas            0.2507     0.1816     0.0189 
+binary                 0.2379     0.1785     0.0000 
+
+Parameter(s) = scalar; run = short. cache = True; usecache = False
+_____________________________________________________________
+Method                total      d/l->file  read & parse file
+_____________________________________________________________
+csv; numpy; no len.    0.2177     0.1751     0.0013
+csv; pandas; no len.   0.2107     0.1516     0.0028 (diffs in float values <= 1e-15)
+csv; numpy             0.2065     0.1760     0.0005 (diffs in float values <= 1e-15)
+csv; pandas            0.2110     0.1504     0.0035 (diffs in float values <= 1e-15)
+binary                 0.2740     0.1852     0.0001 (diffs in float values <= 1e-15)
+
+Parameter(s) = scalar,vector; run = short. cache = True; usecache = False
+_____________________________________________________________
+Method                total      d/l->file  read & parse file
+_____________________________________________________________
+csv; numpy; no len.    0.2471     0.1848     0.0007
+csv; pandas; no len.   0.2412     0.1848     0.0031 
+csv; numpy             0.2294     0.1802     0.0006 
+csv; pandas            0.2084     0.1544     0.0029 
+binary                 0.2284     0.1516     0.0003 
+
+Parameter(s) = ; run = short. cache = True; usecache = False
+_____________________________________________________________
+Method                total      d/l->file  read & parse file
+_____________________________________________________________
+csv; numpy; no len.    0.2335     0.1781     0.0077
+csv; pandas; no len.   0.2544     0.1828     0.0199 
+csv; numpy             0.2141     0.1786     0.0040 
+csv; pandas            0.2581     0.1776     0.0198 
+binary                 0.2963     0.1950     0.0003 

@@ -12,17 +12,17 @@ import isodate
 import numpy as np
 from joblib import Parallel, delayed
 
-from hapiclient.time import hapitime2datetime, hapitime_reformat
+from hapiclient.hapitime import hapitime2datetime, hapitime_reformat
 from hapiclient.util import setopts, log, warning, error
 from hapiclient.util import urlopen, urlretrieve, jsonparse
 
 
 def subset(meta, params):
-    """Extract subset of parameters from meta object returned by hapi()
+    """Extract subset of parameters from meta object returned by hapi().
 
-    metar = subset(meta, parameters) modifies meta["parameters"] array so
-    it only contains elements for the time variable and the parameters in
-    the comma-separated list `parameters`.
+    ``metar = subset(meta, parameters)`` modifies ``meta["parameters"]`` array
+    so that it only contains elements for the time variable and the parameters
+    in the comma-separated string ``parameters``.
     """
 
     if params == '':

@@ -19,14 +19,14 @@ def setopts(defaults, given):
     return defaults
 
 
-def test_log():
+def log_test():
 
     log("Test 1", {"logging": True})
     log("Test 2", {"logging": False})
 
 
 def log(msg, opts):
-    """Print message to console or file"""
+    """Print message to console or file."""
 
     import os
     import sys
@@ -402,24 +402,6 @@ def modified(url, fname, **kwargs):
         return True
 
 
-##############################################################################
-# Start compatability code
-def prompt(msg):
-    '''Python 2/3 imnut compatability function. Pauses for user input.
-
-    If Python 3, calls
-    input(msg)
-
-    If Python 2, calls
-    raw_input(msg)
-    '''
-    import sys
-    if sys.version_info[0] > 2:
-        input(msg)
-    else:
-        raw_input(msg)
-
-
 def urlquote(url):
     """Python 2/3 urlquote compatability function.
 
@@ -436,6 +418,3 @@ def urlquote(url):
         return quote(url)
     import urllib.parse
     return urllib.parse.quote(url)
-
-# End compatability code
-##############################################################################
