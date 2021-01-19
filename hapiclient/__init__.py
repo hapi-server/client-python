@@ -7,4 +7,4 @@ from hapiclient.hapitime import hapitime2datetime
 # Allow "from hapiclient import HAPIError"
 from hapiclient.util import HAPIError
 
-__version__ = '0.1.9b0'
+__version__ = '0.1.9b1'

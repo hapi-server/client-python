@@ -66,3 +66,6 @@ v0.1.8:
 	2020-12-23 -- ff8e1ab Refactor hapi.py; clean up util.py
 v0.1.9b0:
 	2020-12-24 -- Remove hapiplot. Addresses #31.
+	2020-12-28 -- 1c1d32f Fix time name conflict.
+v0.1.9b1:
+	2020-01-19 -- Add missing hapitime.py file
