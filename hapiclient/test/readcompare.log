@@ -3,58 +3,58 @@ Parameter(s) = scalar; run = short. cache = False; usecache = False
 ___________________________________________________________
 Method                total      d/l->buff  parse buff
 ___________________________________________________________
-csv; numpy; no len.    0.2068     0.1556     0.0013
-csv; pandas; no len.   0.2195     0.1801     0.0036 (diffs in float values <= 1e-15)
-csv; numpy             0.2339     0.1799     0.0003 (diffs in float values <= 1e-15)
-csv; pandas            0.2396     0.1838     0.0025 (diffs in float values <= 1e-15)
-binary                 0.2475     0.1748     0.0000 (diffs in float values <= 1e-15)
+csv; numpy; no len.    0.2259     0.2012     0.0010
+csv; pandas; no len.   0.2217     0.1939     0.0035
+csv; numpy             0.2685     0.2422     0.0003
+csv; pandas            0.2267     0.1982     0.0027
+binary                 0.2076     0.1638     0.0000
 
 Parameter(s) = scalar,vector; run = short. cache = False; usecache = False
 ___________________________________________________________
 Method                total      d/l->buff  parse buff
 ___________________________________________________________
-csv; numpy; no len.    0.2308     0.1813     0.0005
-csv; pandas; no len.   0.2422     0.1865     0.0031 
-csv; numpy             0.2325     0.1823     0.0003 
-csv; pandas            0.2432     0.1854     0.0029 
-binary                 0.2544     0.1697     0.0000 
+csv; numpy; no len.    0.2212     0.1981     0.0007
+csv; pandas; no len.   0.2278     0.1954     0.0030
+csv; numpy             0.2183     0.1943     0.0003
+csv; pandas            0.2165     0.1866     0.0042
+binary                 0.1999     0.1579     0.0000
 
 Parameter(s) = ; run = short. cache = False; usecache = False
 ___________________________________________________________
 Method                total      d/l->buff  parse buff
 ___________________________________________________________
-csv; numpy; no len.    0.2327     0.1779     0.0069
-csv; pandas; no len.   0.2543     0.1821     0.0196 
-csv; numpy             0.2249     0.1796     0.0042 
-csv; pandas            0.2507     0.1816     0.0189 
-binary                 0.2379     0.1785     0.0000 
+csv; numpy; no len.    0.2150     0.1836     0.0072
+csv; pandas; no len.   0.2349     0.1830     0.0196
+csv; numpy             0.2110     0.1855     0.0034
+csv; pandas            0.2397     0.1945     0.0201
+binary                 0.2190     0.1749     0.0000
 
 Parameter(s) = scalar; run = short. cache = True; usecache = False
 _____________________________________________________________
 Method                total      d/l->file  read & parse file
 _____________________________________________________________
-csv; numpy; no len.    0.2177     0.1751     0.0013
-csv; pandas; no len.   0.2107     0.1516     0.0028 (diffs in float values <= 1e-15)
-csv; numpy             0.2065     0.1760     0.0005 (diffs in float values <= 1e-15)
-csv; pandas            0.2110     0.1504     0.0035 (diffs in float values <= 1e-15)
-binary                 0.2740     0.1852     0.0001 (diffs in float values <= 1e-15)
+csv; numpy; no len.    0.2306     0.2008     0.0014
+csv; pandas; no len.   0.2252     0.1952     0.0028
+csv; numpy             0.2257     0.1956     0.0005
+csv; pandas            0.2254     0.1952     0.0028
+binary                 0.2271     0.1763     0.0001
 
 Parameter(s) = scalar,vector; run = short. cache = True; usecache = False
 _____________________________________________________________
 Method                total      d/l->file  read & parse file
 _____________________________________________________________
-csv; numpy; no len.    0.2471     0.1848     0.0007
-csv; pandas; no len.   0.2412     0.1848     0.0031 
-csv; numpy             0.2294     0.1802     0.0006 
-csv; pandas            0.2084     0.1544     0.0029 
-binary                 0.2284     0.1516     0.0003 
+csv; numpy; no len.    0.2249     0.1970     0.0007
+csv; pandas; no len.   0.2544     0.2250     0.0030
+csv; numpy             0.2105     0.1820     0.0010
+csv; pandas            0.2121     0.1845     0.0030
+binary                 0.2080     0.1607     0.0001
 
 Parameter(s) = ; run = short. cache = True; usecache = False
 _____________________________________________________________
 Method                total      d/l->file  read & parse file
 _____________________________________________________________
-csv; numpy; no len.    0.2335     0.1781     0.0077
-csv; pandas; no len.   0.2544     0.1828     0.0199 
-csv; numpy             0.2141     0.1786     0.0040 
-csv; pandas            0.2581     0.1776     0.0198 
-binary                 0.2963     0.1950     0.0003 
+csv; numpy; no len.    0.2480     0.2101     0.0092
+csv; pandas; no len.   0.2460     0.1963     0.0195
+csv; numpy             0.2222     0.1893     0.0037
+csv; pandas            0.2558     0.2041     0.0207
+binary                 0.2244     0.1733     0.0001
