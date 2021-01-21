@@ -69,13 +69,14 @@ test:
 
 # Test contents in repository using different python versions
 repository-test-all:
+	- rm -rf $(CONDA)
 	@ for version in $(PYTHONVERS) ; do \
 		make repository-test PYTHON=$$version ; \
 	done
 
 repository-test:
 	@make clean
-
+	conda remove --name $(PYTHON) --all -y
 	make condaenv PYTHON=$(PYTHON)
 
 	# https://stackoverflow.com/questions/30306099/pip-install-editable-vs-python-setup-py-develop
