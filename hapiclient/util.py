@@ -273,6 +273,7 @@ def urlopen(url):
     """Wrapper to request.get() in urllib3"""
 
     import sys
+    import urllib3
     from json import load
 
     # https://stackoverflow.com/a/2020083
@@ -282,27 +283,35 @@ def urlopen(url):
             return obj.__class__.__name__
         return module + '.' + obj.__class__.__name__
 
-    import urllib3
     c = " If problem persists, a contact email for the server may be listed "
     c = c + "at http://hapi-server.org/servers/"
+    msg = '';
     try:
         http = urllib3.PoolManager()
         res = http.request('GET', url, preload_content=False, retries=2)
         if res.status != 200:
             try:
                 jres = load(res)
-                if 'status' in jres:
-                    if 'message' in jres['status']:
-                        error('\n%s\n  %s\n' % (url, jres['status']['message']))
-                error("Problem with " + url + \
-                      ". Server responded with non-200 HTTP status (" \
+            except Exception as e:
+                msg = "Problem with " + url + \
+                        ". Server responded with non-200 HTTP status (" \
                         + str(res.status) + \
-                        ") and invalid HAPI JSON error message in response body." + c)
-            except:
-                error("Problem with " + url + \
+                        ") and an invalid JSON in response body." + c
+
+            if msg == '' and 'status' in jres:
+                if 'message' in jres['status']:
+                    msg = '%s\n' % (jres['status']['message'])
+
+            if msg == '':
+                msg = "Problem with " + url + \
                       ". Server responded with non-200 HTTP status (" + \
                       str(res.status) + \
-                      ") and no HAPI JSON error message in response body." + c)
+                      ") but no JSON without HAPI error message in response body." + c
+
+            raise HAPIError
+
+    except HAPIError:
+        error(msg)
     except urllib3.exceptions.NewConnectionError:
         error('Connection error for : ' + url + c)
     except urllib3.exceptions.ConnectTimeoutError:
@@ -318,7 +327,7 @@ def urlopen(url):
     except urllib3.exceptions.HTTPError as e:
         error('Exception ' + get_full_class_name(e) + " for: " + url)
     except Exception as e:
-        error(type(sys.exc_info()[1]).__name__ + ': ' \
+        print(type(sys.exc_info()[1]).__name__ + ': ' \
               + str(e) + ' for URL: ' + url)
 
     return res
