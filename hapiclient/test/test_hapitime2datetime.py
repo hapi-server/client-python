@@ -2,7 +2,7 @@
 #   pytest -v test_hapitime2datetime.py
 
 # To test a single function on the command line, use, e.g.,
-#   pytest -v  est_hapitime2datetime.py -k test_parse_string_input
+#   pytest -v test_hapitime2datetime.py -k test_parse_string_input
 
 # To use in program, use, e.g.,
 #   from hapiclient.test.test_hapitime2datetime import test_parse_string_input

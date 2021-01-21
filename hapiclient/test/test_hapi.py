@@ -109,9 +109,6 @@ def test_reader_short():
     dataset = 'dataset1'
     run = 'short'
     
-    #
-    # Cache = False (will read data into buffer)    
-    #
     opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'usecache': False}
 
     opts['cache'] = False
