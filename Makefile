@@ -76,8 +76,9 @@ repository-test-all:
 
 repository-test:
 	@make clean
-	conda remove --name $(PYTHON) --all -y
+
 	make condaenv PYTHON=$(PYTHON)
+	conda remove --name $(PYTHON) --all -y
 
 	# https://stackoverflow.com/questions/30306099/pip-install-editable-vs-python-setup-py-develop
 	$(CONDA_ACTIVATE) $(PYTHON); \
