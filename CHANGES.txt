@@ -68,4 +68,5 @@ v0.1.9b0:
 	2020-12-24 -- Remove hapiplot. Addresses #31.
 	2020-12-28 -- 1c1d32f Fix time name conflict.
 v0.1.9b1:
-	2020-01-19 -- Add missing hapitime.py file
+	2020-01-19 -- 53669fc Add missing hapitime.py file
+	2020-01-20 -- 9f8b82f Use atol instead of rtol in readcompare.py.

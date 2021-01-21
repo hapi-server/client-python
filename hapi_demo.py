@@ -22,11 +22,25 @@ def main():
         except Exception as e:
             print("\033[0;31mError:\033[0m " + str(e))
 
+
+def testdata():
+
+    from hapiclient import hapi
+    
+    server     = 'http://hapi-server.org/servers/TestData2.0/hapi'
+    dataset    = 'scalar'
+    start      = '1970-01-01T00:00:00'
+    stop       = '2001-01-01T00:01:00'
+    parameters = 'scalar,vector'
+    opts       = {'logging': True, 'usecache': True}
+
+    data, meta = hapi(server, dataset, parameters, start, stop, **opts)
+
+
 def omniweb():
 
     from hapiclient import hapi
-    from hapiplot import hapiplot
-        
+
     server     = 'https://cdaweb.gsfc.nasa.gov/hapi'
     dataset    = 'OMNI2_H0_MRG1HR'
     start      = '2003-09-01T00:00:00'
@@ -39,7 +53,8 @@ def omniweb():
 
     # Plot all parameters
     hapiplot(data, meta)
-    
+
+
 def sscweb():
 
     from hapiclient import hapi
@@ -55,7 +70,8 @@ def sscweb():
     data, meta = hapi(server, dataset, parameters, start, stop, **opts)
     hapiplot(data, meta, **opts)
 
-def cdaweb():    
+
+def cdaweb():
 
     from hapiclient import hapi
     from hapiplot import hapiplot
@@ -93,6 +109,7 @@ def cdaweb():
     servers = hapi(logging=True)  # servers is an array of URLs
     print('')
 
+
 def cassini():
 
     from hapiclient import hapi
@@ -110,6 +127,7 @@ def cassini():
     popts = {'logging': False, 'logy': True, 'logz': True}
     hapiplot(data, meta, **popts)
 
+
 def lisird():
 
     from hapiclient import hapi
@@ -123,7 +141,9 @@ def lisird():
 
     opts       = {'usecache': True, 'logging': True}
     data, meta = hapi(server, dataset, parameters, start, stop, **opts)
-    hapiplot(data, meta)    
+
+    hapiplot(data, meta)
+
 
 if __name__ == '__main__':
     try:
