@@ -14,7 +14,6 @@ else:
     install_requires.append("pandas>=0.23,<0.25")
     install_requires.append("numpy<1.17")
     install_requires.append("pyparsing<3")
-    install_requires.append("zipp<3")
     install_requires.append("kiwisolver<=1.1")
 
 if sys.argv[1] == 'develop':

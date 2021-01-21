@@ -2,6 +2,12 @@
 #   make repository-test     # Test using $(PYTHON)
 #   make repository-test-all # Test on all versions in $(PYTHONVERS)
 #
+# Beta releases:
+#   1. Run make repository-test-all
+#	2. For non-doc/formatting changes, update version in CHANGES.txt.
+#	3. run `make version-update` if version changed in CHANGES.txt.
+#	3. Commit and push
+#
 # Making a local package:
 #  1. Update CHANGES.txt to have a new version line
 #  2. make package
@@ -25,6 +31,9 @@
 #   1. make repository-test tests with Anaconda virtual environment
 #      make package-test and release-test tests with native Python virtual
 #      environment.
+#   2. Switch to using tox and conda-tox
+#	3. 'pip install --editable . does not install develop dependencies, so
+#	   'python setup.py develop' is used. Won't need figure out when 2. is finished.
 
 URL=https://upload.pypi.org/
 REP=pypi
@@ -44,11 +53,7 @@ SHELL:= /bin/bash
 
 LONG_TESTS=false
 
-# Select this to have anaconda installed for you.
 CONDA=./anaconda3
-# Use existing anaconda
-# CONDA=/opt/anaconda3
-# CONDA=~/anaconda3
 
 # ifeq ($(shell uname -s),MINGW64_NT-10.0-18362)
 ifeq ($(TRAVIS_OS_NAME),windows)
@@ -56,7 +61,8 @@ ifeq ($(TRAVIS_OS_NAME),windows)
 	CONDA=/c/tools/miniconda3
 endif
 
-CONDA_ACTIVATE=source $(CONDA)/etc/profile.d/conda.sh; conda activate
+SOURCE_CONDA=source $(CONDA)/etc/profile.d/conda.sh
+CONDA_ACTIVATE=$(SOURCE_CONDA); conda activate
 
 # ifeq ($(shell uname -s),MINGW64_NT-10.0-18362)
 ifeq ($(TRAVIS_OS_NAME),windows)
@@ -69,22 +75,17 @@ test:
 
 # Test contents in repository using different python versions
 repository-test-all:
-	- rm -rf $(CONDA)
+	rm -rf $(CONDA)
 	@ for version in $(PYTHONVERS) ; do \
 		make repository-test PYTHON=$$version ; \
 	done
 
 repository-test:
 	@make clean
-
+	rm -rf $(CONDA)
 	make condaenv PYTHON=$(PYTHON)
-	conda remove --name $(PYTHON) --all -y
 
-	# https://stackoverflow.com/questions/30306099/pip-install-editable-vs-python-setup-py-develop
-	$(CONDA_ACTIVATE) $(PYTHON); \
-		pip install pytest deepdiff; pip install --editable .
-	# Previously used:
-	# $(CONDA_ACTIVATE) $(PYTHON); $(PYTHON) setup.py develop | grep "Best"
+	$(CONDA_ACTIVATE) $(PYTHON); pip install pytest deepdiff; pip install .
 
 ifeq (LONG_TESTS,true)
 	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v -m 'long' hapiclient/test/test_hapi.py
