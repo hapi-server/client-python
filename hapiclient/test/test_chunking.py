@@ -58,7 +58,7 @@ opts0 = {'logging': hapi_logging, 'usecache': False, 'cache': False}
 td = {
         "P1Y": {
                 "__comment": "dataset3 has cadence of P1D",
-                "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
+                "server": "http://hapi-server.org/servers/TestData2.0/hapi",
                 "dataset": "dataset3",
                 "parameters": "scalar",
                 "start": "1971-01-01T01:50:00Z",
@@ -66,7 +66,7 @@ td = {
         },
         "P1M": {
                 "__comment": "dataset3 has cadence of P1D",
-                "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
+                "server": "http://hapi-server.org/servers/TestData2.0/hapi",
                 "dataset": "dataset3",
                 "parameters": "scalar",
                 "start": "1971-01-01T01:50:00Z",
@@ -75,7 +75,7 @@ td = {
         "P1D":
             {
                 "__comment": "dataset2 has cadence of P1H",
-                "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
+                "server": "http://hapi-server.org/servers/TestData2.0/hapi",
                 "dataset": "dataset2",
                 "parameters": "scalar",
                 "start": "1970-01-01T00:00:00.000Z",
