@@ -108,8 +108,8 @@ endif
 condaenv:
 # ifeq ($(shell uname -s),MINGW64_NT-10.0-18362)
 ifeq ($(TRAVIS_OS_NAME),windows)
-	cp $(CONDA)/Library/bin/libcrypto-1_1-x64.* $(CONDA)/DLLs/
-	cp $(CONDA)/Library/bin/libssl-1_1-x64.* $(CONDA)/DLLs/
+	cp $(CONDA)/Library/bin/libcrypto-* $(CONDA)/DLLs/
+	cp $(CONDA)/Library/bin/libssl-* $(CONDA)/DLLs/
 
 	# $(CONDA)/Scripts/conda config --set ssl_verify no
 	$(CONDA)/Scripts/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
