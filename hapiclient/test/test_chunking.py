@@ -102,6 +102,7 @@ def test_chunks():
         p = td[key]['parameters']
 
         if '-dev' in s:
+            import warnings
             warnings.warn("Change server from dev to production for these tests")
 
 
