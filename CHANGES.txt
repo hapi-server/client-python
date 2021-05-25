@@ -74,4 +74,6 @@ v0.1.9b1:
 	2020-01-20 -- d3625e3 Fix for wrong error message (#24)
 v0.1.9b2:
 	2020-05-25 -- 23b659c Simplify dtype/length code
+v0.1.9b3:
+	2020-05-25 -- 
 	

@@ -48,7 +48,7 @@ PYTHONVERS=python3.8 python3.7 python3.6 python3.5 python2.7
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.1.9b2
+VERSION=0.1.9b3
 SHELL:= /bin/bash
 
 LONG_TESTS=false
@@ -129,6 +129,22 @@ $(CONDA)/envs/$(PYTHON): ./anaconda3
 ################################################################################
 
 ################################################################################
+venv-test:
+	cp hapi_demo.py /tmp # TODO: Explain why needed.
+	cp hapi_demo.py /tmp
+	source env-$(PYTHON)/bin/activate && \
+		pip install pytest deepdiff ipython && \
+		pip uninstall -y hapiplot && \
+		pip install --pre hapiplot && \
+		pip uninstall -y hapiclient && \
+		pip install --pre '$(PACKAGE)' \
+			--index-url $(URL)/simple  \
+			--extra-index-url https://pypi.org/simple && \
+		env-$(PYTHON)/bin/pytest -v -m 'short' hapiclient/test/test_hapi.py
+		env-$(PYTHON)/bin/ipython /tmp/hapi_demo.py
+################################################################################
+
+################################################################################
 # Packaging
 package:
 	make clean
@@ -148,15 +164,7 @@ env-$(PYTHON):
 package-test:
 	make package
 	make env-$(PYTHON)
-	cp hapi_demo.py /tmp
-	source env-$(PYTHON)/bin/activate && \
-		pip install pytest && \
-		pip install deepdiff && \
-		pip uninstall -y hapiclient && \
-		pip install dist/hapiclient-$(VERSION).tar.gz \
-			--index-url $(URL)/simple  \
-			--extra-index-url https://pypi.org/simple && \
-		env-$(PYTHON)/bin/pytest -v -m 'short' hapiclient/test/test_hapi.py
+	make venv-test PACKAGE='dist/hapiclient-$(VERSION).tar.gz'
 ################################################################################
 
 ################################################################################
@@ -181,15 +189,7 @@ release-test-all:
 release-test:
 	rm -rf env
 	source activate $(PYTHON); pip install virtualenv; $(PYTHON) -m virtualenv env
-	cp hapi_demo.py /tmp
-	source env/bin/activate && \
-		pip install pytest && \
-		pip install deepdiff && \
-		pip install 'hapiclient==$(VERSION)' \
-			--index-url $(URL)/simple  \
-			--extra-index-url https://pypi.org/simple && \
-		env/bin/pytest -v hapiclient/test/test_hapi.py && \
-		env/bin/python /tmp/hapi_demo.py
+	make venv-test PACKAGE='dist/hapiclient-$(VERSION).tar.gz'
 ################################################################################
 
 ################################################################################
