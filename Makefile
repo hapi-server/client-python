@@ -39,7 +39,7 @@ URL=https://upload.pypi.org/
 REP=pypi
 
 # Default Python version to use for tests
-PYTHON=python3.8
+PYTHON=python3.7
 PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
@@ -156,7 +156,6 @@ package-test:
 		pip install dist/hapiclient-$(VERSION).tar.gz \
 			--index-url $(URL)/simple  \
 			--extra-index-url https://pypi.org/simple && \
-		env-$(PYTHON)/bin/python /tmp/hapi_demo.py && \
 		env-$(PYTHON)/bin/pytest -v -m 'short' hapiclient/test/test_hapi.py
 ################################################################################
 
