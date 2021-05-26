@@ -1,5 +1,3 @@
-[<img src="https://travis-ci.org/hapi-server/client-python.svg?branch=master"/>](https://travis-ci.org/hapi-server/client-python)
-
 **HAPI Client for Python**
 
 # Installation
