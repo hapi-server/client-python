@@ -1,6 +1,6 @@
-<center><a href="http://hapi-server.org/">HAPI</a> client for Python 2/3</center>
-
 [<img src="https://travis-ci.org/hapi-server/client-python.svg?branch=master"/>](https://travis-ci.org/hapi-server/client-python)
+
+**HAPI Client for Python**
 
 # Installation
 
