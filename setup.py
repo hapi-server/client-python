@@ -36,6 +36,6 @@ setup(
     url='http://pypi.python.org/pypi/hapiclient/',
     license='LICENSE.txt',
     description='Interface to Heliophysics data server API',
-    long_description=open('README.rst').read(),
+    long_description=open('README.md').read(),
     install_requires=install_requires
 )
