@@ -75,5 +75,7 @@ v0.1.9b1:
 v0.1.9b2:
 	2020-05-25 -- 23b659c Simplify dtype/length code
 v0.1.9b3:
-	2020-05-25 -- 
+	2020-05-25 -- 8161460 Refactor Makefile
+v0.1.9b4:
+	2020-05-26 -- 2cabeb4 README.rst -> README.md
 	
