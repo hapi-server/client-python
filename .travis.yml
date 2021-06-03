@@ -1,11 +1,54 @@
-language: bash
+language: python
+jobs:
+  include:
+    - name: "Python 2.7 on Linux"
+      os: linux
+      before_install:
+        - sudo apt update
+        - sudo apt install python2.7 python-pip
+        - sudo pip install tox
+    - name: "Python 3.8 on Linux"
+      os: linux
+      dist: xenial
+      language: python
+      python: 3.8
+      before_install:
+        - sudo rm /usr/bin/python
+        - sudo ln -s /usr/bin/python3 /usr/bin/python
+        - python3 -m pip install tox-travis
+    - name: "Python 2.7 on macOS"
+      os: osx
+      osx_image: xcode11.2
+      language: shell
+      before_install:
+        - sudo pip install tox-travis
+    - name: "Python 3.8 on macOS"
+      os: osx
+      osx_image: xcode11.6  # Python 3.8.0 running on macOS 10.14.6
+      language: shell       # 'language: python' is an error on Travis CI macOS
+      before_install:
+        - python3 --version
+        - python3 -m pip install --upgrade pip
+        - sudo pip install tox-travis
+    - name: "Python 2.7 on Windows"
+      os: windows           # Windows 10.0.17134 N/A Build 17134
+      language: shell # 'language: python' errors Travis CI Windows
+      before_install:
+        - choco install python2
+        - python --version
+        - python -m pip install --upgrade pip
+        - pip install tox-travis
+      env: PATH=/c/Python27:/c/Python27/Scripts:$PATH
+    - name: "Python 3.8 on Windows"
+      os: windows           # Windows 10.0.17134 N/A Build 17134
+      language: shell       # 'language: python' is an error on Travis CI Windows
+      before_install:
+        - choco install python --version 3.8.8
+        - python --version
+        - python -m pip install --upgrade pip
+        - python -m pip install tox-travis
+      env: PATH=/c/Python38:/c/Python38/Scripts:$PATH
 
-os:
-  - linux
-  - osx
-  - windows
-
+install: pip install --upgrade pip
 script:
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install make; fi
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install -y miniconda3; fi
-  - make repository-test-all
+  - tox -e short-test

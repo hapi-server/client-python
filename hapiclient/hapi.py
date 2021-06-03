@@ -144,7 +144,7 @@ def hapiopts():
 def hapi(*args, **kwargs):
     """Request data from a HAPI server.
 
-    Version: 0.1.9b2
+    Version: 0.1.9b4
 
 
     Examples
@@ -803,26 +803,17 @@ def compute_dt(meta, opts):
         if ptype == 'integer':
             dtype = (pnames[i], np.dtype('<i4'), psizes[i])
 
-        if opts['format'] == 'binary':
-            # TODO: If 'length' not available, warn and fall back to CSV.
-            # Technically, server response is invalid in this case b/c length attribute
-            # required for all parameters if format=binary.
-            if ptype == 'string' or ptype == 'isotime':
-                dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
-        else:
-            # When format=csv, length attribute may not be given (but must be given for
-            # first parameter according to the HAPI spec).
-            if ptype == 'string' or ptype == 'isotime':
-                if 'length' in meta["parameters"][i]:
-                    # length is specified for parameter in metadata. Use it.
-                    if ptype == 'string' or 'isotime':
-                        dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
-                else:
-                    # A string or isotime parameter did not have a length.
-                    # Will need to use slower CSV read method.
-                    missing_length = True
-                    if ptype == 'string' or ptype == 'isotime':
-                        dtype = (pnames[i], object, psizes[i])
+        if ptype == 'string' or ptype == 'isotime':
+            if 'length' in meta["parameters"][i]:
+                # length is specified for parameter in metadata. Use it.
+                if ptype == 'string' or 'isotime':
+                    dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
+            else:
+                # A string or isotime parameter did not have a length.
+                # Will need to use slower CSV read method.
+                missing_length = True
+                if ptype == 'string' or ptype == 'isotime':
+                    dtype = (pnames[i], object, psizes[i])
 
         # For testing reader. Force use of slow read method.
         if opts['format'] == 'csv':

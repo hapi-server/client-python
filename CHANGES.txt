@@ -73,4 +73,9 @@ v0.1.9b1:
 	2020-01-20 -- 9f8b82f Use atol instead of rtol in readcompare.py
 	2020-01-20 -- d3625e3 Fix for wrong error message (#24)
 v0.1.9b2:
+	2020-05-25 -- 23b659c Simplify dtype/length code
+v0.1.9b3:
+	2020-05-25 -- 8161460 Refactor Makefile
+v0.1.9b4:
+	2020-05-26 -- 2cabeb4 README.rst -> README.md
 	
