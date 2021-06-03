@@ -25,7 +25,7 @@ jobs:
     - name: "Python 3.8 on macOS"
       os: osx
       osx_image: xcode11.6  # Python 3.8.0 running on macOS 10.14.6
-      language: shell       # 'language: python' is an error on Travis CI macOS
+      language: shell        # 'language: python' is an error on Travis CI macOS
       before_install:
         - python3 --version
         - python3 -m pip install --upgrade pip
