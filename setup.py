@@ -37,5 +37,6 @@ setup(
     license='LICENSE.txt',
     description='Interface to Heliophysics data server API',
     long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     install_requires=install_requires
 )
