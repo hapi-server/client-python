@@ -48,7 +48,7 @@ PYTHONVERS=python3.8 python3.7 python3.6 python3.5 python2.7
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.1.9b4
+VERSION=0.2.0
 SHELL:= /bin/bash
 
 LONG_TESTS=false
@@ -153,7 +153,7 @@ package:
 
 package-test-all:
 	@ for version in $(PYTHONVERS) ; do \
-		make repository-test-plots PYTHON=$$version ; \
+		make repository-test PYTHON=$$version ; \
 	done
 
 env-$(PYTHON):

@@ -47,7 +47,7 @@ hapiplot(data, meta)
 
 # Documentation
 
-Basic usage examples for various HAPI servers are given in [hapi_demo.py](https://github.com/hapi-server/client-python/blob/master/hapi_demo.py>) and the [Examples section](https://colab.research.google.com/github/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb#examples) 
+Basic usage examples for various HAPI servers are given in [hapi_demo.py](https://github.com/hapi-server/client-python/blob/master/hapi_demo.py>) and the [Examples section](https://colab.research.google.com/github/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb#examples) of a Jupyter Notebook hosted on Google Colab.
 
 See http://hapi-server.org/servers/ for a list of HAPI servers and datasets.
 
