@@ -80,4 +80,4 @@ v0.1.9b4:
 	2021-05-26 -- 2cabeb4 README.rst -> README.md
 	2021-05-26 -- b825a54 Fix README file extension
 v0.2.0:
-	2021-06-16 -- 1e891a9 Tox and Travis
+	2021-06-16 -- 1e891a9 Tox and Travis update
