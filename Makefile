@@ -198,7 +198,7 @@ version-update:
 	python misc/version.py
 
 version-tag:
-	git commit -a -m "Last $(VERSION) commit"
+	- git commit -a -m "Last $(VERSION) commit"
 	git push
 	git tag -a v$(VERSION) -m "Version "$(VERSION)
 	git push --tags
