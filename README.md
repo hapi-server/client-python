@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/hapi-server/client-python.svg?branch=master)](https://travis-ci.org/hapi-server/client-python) [![DOI](https://zenodo.org/badge/93170857.svg)](https://zenodo.org/badge/latestdoi/93170857)
+[![Build Status](https://travis-ci.org/hapi-server/client-python.svg?branch=master)](https://travis-ci.org/hapi-server/client-python) [![DOI](https://zenodo.org/badge/93170855.svg)](https://zenodo.org/badge/latestdoi/93170855)
 
 **HAPI Client for Python**
 
