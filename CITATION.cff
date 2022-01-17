@@ -1,0 +1,9 @@
+cff-version: 0.2.1
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Robert S.
+    given-names: Weigel
+    orcid: https://orcid.org/0000-0002-9521-5228
+title: hapi-server/client-python: 
+version: v0.2.1
+date-released: 2021-10-06

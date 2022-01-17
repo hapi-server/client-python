@@ -1,6 +1,8 @@
-[![Build Status](https://travis-ci.org/hapi-server/client-python.svg?branch=master)](https://travis-ci.org/hapi-server/client-python)
+[![Build Status](https://travis-ci.org/hapi-server/client-python.svg?branch=master)](https://travis-ci.org/hapi-server/client-python) [![DOI](https://zenodo.org/badge/93170857.svg)](https://zenodo.org/badge/latestdoi/93170857)
 
 **HAPI Client for Python**
+
+Basic usage examples for various HAPI servers are given in [hapi_demo.py](https://github.com/hapi-server/client-python/blob/master/hapi_demo.py>) and the [Examples section](https://colab.research.google.com/github/hapi-server/client-python-notebooks/blob/master/hapi_demo.ipynb#examples) of a Jupyter Notebook hosted on Google Colab.
 
 # Installation
 
