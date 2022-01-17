@@ -131,7 +131,7 @@ def hapiopts():
         'usecache': False,
         'server_list': 'https://github.com/hapi-server/servers/raw/master/all.txt',
         'format': 'binary',
-        'method': 'pandas',
+        'method': '',
         'parallel': False,
         'n_parallel': 5,
         'n_chunks': None,
@@ -144,7 +144,7 @@ def hapiopts():
 def hapi(*args, **kwargs):
     """Request data from a HAPI server.
 
-    Version: 0.2.1
+    Version: 0.2.2
 
 
     Examples
@@ -633,7 +633,7 @@ def hapi(*args, **kwargs):
             if not 'binary' in sformats:
                 opts['format'] = 'csv'
 
-        dt, cols, psizes, pnames, missing_length = compute_dt(meta, opts)
+        dt, cols, psizes, pnames, ptypes, missing_length = compute_dt(meta, opts)
 
         # length attribute required for all parameters when serving binary but
         # is only required for time parameter when serving CSV. This catches
@@ -647,6 +647,21 @@ def hapi(*args, **kwargs):
         # Read the data. toc0 is time to download to file or into buffer;
         # toc is time to parse.
         if opts['format'] == 'binary':
+
+            if opts['method'] != '':
+                warnings.warn("Method argument is ignored when format='binary.")
+
+            # Handle Unicode strings (since HAPI 3.1)
+            dto = []
+            for i in range(len(dt)):
+                dto.append(dt[i])
+                if isinstance(dt[i][1], str) and dt[i][1][0] == 'U' and meta['parameters'][i]['type'] == 'string':
+                    # numpy.frombuffer() requires S instead of U
+                    # because Unicode is variable length.
+                    dt[i] = list(dt[i])
+                    dt[i][1] = dt[i][1].replace('U', 'S')
+                    dt[i] = tuple(dt[i])
+
             # HAPI Binary
             if opts["cache"]:
                 log('Writing %s to %s' % (urlbin, fnamebin.replace(urld + '/', '')), opts)
@@ -665,8 +680,28 @@ def hapi(*args, **kwargs):
                 log('Parsing BytesIO buffer.', opts)
                 tic = time.time()
                 data = np.frombuffer(buff.read(), dtype=dt)
+
+            # Handle Unicode
+            time_name = meta['parameters'][0]['name']
+            datanew = np.ndarray(shape=data[time_name].shape, dtype=dto)
+            for i in range(0, len(dto)):
+                name = meta['parameters'][i]['name']
+                if sys.version_info[0] < 3:
+                    # str() here is needed for Python 2.7. Numpy does not allow
+                    # Unicode names in this version and if a dt is created
+                    # with Unicode, it automatically converts Unicode chars to
+                    # slash encoded ASCII.
+                    name = str(name)
+                if isinstance(dt[i][1], str) and 'U' in dto[i][1]:
+                    # Decode data.
+                    datanew[name] = np.char.decode(data[name])
+                else:
+                    datanew[name] = data[name]
+            data = datanew
+
         else:
             # HAPI CSV
+
             if opts["cache"]:
                 log('Writing %s to %s' % (urlcsv, fnamecsv.replace(urld + '/', '')), opts)
                 tic0 = time.time()
@@ -686,11 +721,13 @@ def hapi(*args, **kwargs):
             if not missing_length:
                 # All string and isotime parameters have a length in metadata.
                 if opts['method'] == 'numpy':
-                    data = np.genfromtxt(fnamecsv, dtype=dt, delimiter=',')
-                if opts['method'] == 'pandas':
+                    data = np.genfromtxt(fnamecsv, dtype=dt, delimiter=',',
+                                            replace_space=' ',
+                                            deletechars='', encoding='utf-8')
+                if opts['method'] == '' or opts['method'] == 'pandas':
                     # Read file into Pandas DataFrame
-                    df = pandas.read_csv(fnamecsv, sep=',', header=None)
-
+                    df = pandas.read_csv(fnamecsv, sep=',', header=None,
+                                            encoding='utf-8')
                     # Allocate output N-D array (It is not possible to pass dtype=dt
                     # as computed to pandas.read_csv; pandas dtype is different
                     # from numpy's dtype.)
@@ -703,7 +740,7 @@ def hapi(*args, **kwargs):
                         data[pnames[i]] = np.squeeze(
                             np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1] + 1)], shape))
             else:
-                data = parse_missing_length(fnamecsv, dt, cols, psizes, pnames, opts)
+                data = parse_missing_length(fnamecsv, dt, cols, psizes, pnames, ptypes, opts)
 
         toc = time.time() - tic
 
@@ -744,8 +781,18 @@ def hapi(*args, **kwargs):
         f.close()
 
         if opts["cache"]:
-            log('Writing %s' % fnamenpy, opts)
-            np.save(fnamenpy, data)
+            can_cache = True
+            if sys.version_info[0:2] == (3, 5):
+                dts = data.dtype
+                for name in dts.names:
+                    if not all(ord(char) < 128 for char in name):
+                        can_cache = False
+            if can_cache:
+                log('Writing %s' % fnamenpy, opts)
+                #print(data.dtype)
+                np.save(fnamenpy, data)
+            else:
+                warning('Cannot cache because a parameter with Unicode not supported by np.save')
 
         meta['x_totalTime'] = time.time() - tic_totalTime
 
@@ -756,7 +803,7 @@ def compute_dt(meta, opts):
 
     # Compute data type variable dt used to read HAPI response into
     # a data structure.
-    pnames, psizes, dt = [], [], []
+    pnames, psizes, ptypes, dt = [], [], [], []
     # Each element of cols is an array with start/end column number of
     # parameter.
 
@@ -771,7 +818,10 @@ def compute_dt(meta, opts):
 
     # Extract sizes and types of parameters.
     for i in range(0, len(meta["parameters"])):
-        ptype = str(meta["parameters"][i]["type"])
+        ptype = meta["parameters"][i]["type"]
+
+        ptypes.append(ptype)
+
         pnames.append(str(meta["parameters"][i]["name"]))
         if 'size' in meta["parameters"][i]:
             psizes.append(meta["parameters"][i]['size'])
@@ -806,7 +856,9 @@ def compute_dt(meta, opts):
         if ptype == 'string' or ptype == 'isotime':
             if 'length' in meta["parameters"][i]:
                 # length is specified for parameter in metadata. Use it.
-                if ptype == 'string' or 'isotime':
+                if ptype == 'string':
+                    dtype = (pnames[i], 'U' + str(meta["parameters"][i]["length"]), psizes[i])
+                if ptype == 'isotime':
                     dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
             else:
                 # A string or isotime parameter did not have a length.
@@ -828,10 +880,10 @@ def compute_dt(meta, opts):
 
         dt.append(dtype)
 
-    return dt, cols, psizes, pnames, missing_length
+    return dt, cols, psizes, pnames, ptypes, missing_length
 
 
-def parse_missing_length(fnamecsv, dt, cols, psizes, pnames, opts):
+def parse_missing_length(fnamecsv, dt, cols, psizes, pnames, ptypes, opts):
 
     # At least one requested string or isotime parameter does not
     # have a length in metadata. More work to do to read.
@@ -839,8 +891,8 @@ def parse_missing_length(fnamecsv, dt, cols, psizes, pnames, opts):
         # If requested method was numpy, use numpynolength method.
 
         # With dtype='None', the data type is determined automatically
-        table = np.genfromtxt(fnamecsv, dtype=None, delimiter=',',
-                              encoding='utf-8')
+        table = np.genfromtxt(fnamecsv, dtype=None, deletechars='',
+                                delimiter=',', encoding='utf-8')
         # table is a 1-D array. Each element is a row in the file.
         # - If the data types are not the same for each column,
         # the elements are tuples with length equal to the number
@@ -886,7 +938,7 @@ def parse_missing_length(fnamecsv, dt, cols, psizes, pnames, opts):
         # If requested method was pandas, use pandasnolength method.
 
         # Read file into Pandas DataFrame
-        df = pandas.read_csv(fnamecsv, sep=',', header=None)
+        df = pandas.read_csv(fnamecsv, sep=',', header=None, encoding='utf-8')
 
         # Allocate output N-D array (It is not possible to pass dtype=dt
         # as computed to pandas.read_csv, so need to create new ND array.)
@@ -908,7 +960,10 @@ def parse_missing_length(fnamecsv, dt, cols, psizes, pnames, opts):
     dt2 = []  # Will have dtypes with strings lengths calculated.
     for i in range(0, len(pnames)):
         if data[pnames[i]].dtype == 'O':
-            dtype = (pnames[i], str(data[pnames[i]].astype('<S').dtype), psizes[i])
+            if ptypes[i] == 'isotime':
+                dtype = (pnames[i], str(data[pnames[i]].astype('<S').dtype), psizes[i])
+            else:
+                dtype = (pnames[i], str(data[pnames[i]].astype('<U').dtype), psizes[i])
         else:
             dtype = dt[i]
 

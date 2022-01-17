@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+# Above line can be removed when Python 2.7 support is dropped.
 import os
 import pytest
 import pickle
@@ -7,15 +9,18 @@ import numpy as np
 
 from deepdiff import DeepDiff
 from hapiclient.hapi import hapi
-from hapiclient.test.readcompare import readcompare
+from hapiclient.test import compare
 
+# To run tests on a specific function, edit the function calls in the
+# if __name__ == '__main__' block and then execute 
+#
+#    python test_hapi.py
+#
+# See comments in test_hapitime2datetime.py for other execution options.
+
+logging = False
 serverbad = 'http://hapi-server.org/servers/TestData/xhapi'
 server = 'http://hapi-server.org/servers/TestData2.0/hapi'
-
-# To run the long benchmark, execute
-#    python test_hapi.py
-
-# See comments in test_hapitime2datetime.py for other execution options.
 
 def writepickle(fname, var):
     print("!!!!!!!!!!!!!!")
@@ -86,7 +91,7 @@ def test_parameter():
 def test_bad_server_url():
     """Correct error when given bad URL"""
     with pytest.raises(Exception):
-        hapi(serverbad, {'logging': True})
+        hapi(serverbad, {'logging': logging})
 
 
 @pytest.mark.short
@@ -109,39 +114,37 @@ def test_reader_short():
     dataset = 'dataset1'
     run = 'short'
     
-    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'usecache': False}
+    opts = {'logging': logging, 'cachedir': '/tmp/hapi-data', 'usecache': False}
 
     opts['cache'] = False
 
     # Read one parameter
     shutil.rmtree(opts['cachedir'], ignore_errors=True)
-    assert readcompare(server, dataset, 'scalar', run, opts)
+    assert compare.read(server, dataset, 'scalar', run, opts)
 
     # Read two parameters
     shutil.rmtree(opts['cachedir'], ignore_errors=True)
-    assert readcompare(server, dataset, 'scalar,vector', run, opts)
+    assert compare.read(server, dataset, 'scalar,vector', run, opts)
 
     # Read all parameters
     shutil.rmtree(opts['cachedir'], ignore_errors=True)
-    assert readcompare(server, dataset, '', run, opts)
+    assert compare.read(server, dataset, '', run, opts)
 
-    #
     # Cache = True (will write files then read)
-    #
     opts['cache'] = True
 
     # Read one parameter
     shutil.rmtree(opts['cachedir'], ignore_errors=True)
-    assert readcompare(server, dataset, 'scalar', run, opts)
+    assert compare.read(server, dataset, 'scalar', run, opts)
 
     # Read two parameters
     shutil.rmtree(opts['cachedir'], ignore_errors=True)
-    assert readcompare(server, dataset, 'scalar,vector', run, opts)
+    assert compare.read(server, dataset, 'scalar,vector', run, opts)
     shutil.rmtree(opts['cachedir'], ignore_errors=True)
 
     # Read all parameters
     shutil.rmtree(opts['cachedir'], ignore_errors=True)
-    assert readcompare(server, dataset, '', run, opts)
+    assert compare.read(server, dataset, '', run, opts)
 
 
 @pytest.mark.short
@@ -152,7 +155,7 @@ def test_cache_short():
     start = '1970-01-01'
     stop  = '1970-01-01T00:00:03'
 
-    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'cache': True}
+    opts = {'logging': logging, 'cachedir': '/tmp/hapi-data', 'cache': True}
 
     opts['usecache'] = False
     shutil.rmtree(opts['cachedir'], ignore_errors=True)
@@ -170,7 +173,7 @@ def test_subset_short():
     dataset = 'dataset1'
     start = '1970-01-01'
     stop  = '1970-01-01T00:00:03'
-    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'cache': True}
+    opts = {'logging': logging, 'cachedir': '/tmp/hapi-data', 'cache': True}
 
     opts['usecache'] = False
     
@@ -219,6 +222,35 @@ def test_subset_short():
     assert ok
 
 
+@pytest.mark.short
+def test_unicode():
+
+    server     = 'http://hapi-server.org/servers/TestData3.1/hapi';
+    #datasets   = ["dataset1", "dataset1-Zα☃"]
+    datasets   = ["dataset1-Zα☃"]
+
+    run = 'short'
+
+    opts = {
+                'logging': logging,
+                'cachedir': '/tmp/hapi-data',
+                'usecache': False,
+                'cache': True
+            }
+
+
+    for dataset in datasets:
+        meta = hapi(server, dataset)
+        for p in meta['parameters']:
+
+            # Read one parameter
+            parameter = p['name']
+            shutil.rmtree(opts['cachedir'], ignore_errors=True)
+
+            assert compare.read(server, dataset, parameter, run, opts.copy())
+            assert compare.cache(server, dataset, parameter, opts.copy())
+
+
 @pytest.mark.long
 def test_reader_long():
     
@@ -226,15 +258,18 @@ def test_reader_long():
     run = 'long'
     
     # Read three parameters
-    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'cache': False, 'usecache': False}
-    assert readcompare(server, dataset, 'scalar,vector,spectra', run, opts)
+    opts = {'logging': logging, 'cachedir': '/tmp/hapi-data', 'cache': False, 'usecache': False}
+    assert compare.read(server, dataset, 'scalar,vector,spectra', run, opts)
 
-    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'cache': True, 'usecache': False}
-    assert readcompare(server, dataset, 'scalar,vector,spectra', run, opts)
+    opts = {'logging': logging, 'cachedir': '/tmp/hapi-data', 'cache': True, 'usecache': False}
+    assert compare.read(server, dataset, 'scalar,vector,spectra', run, opts)
 
-    opts = {'logging': False, 'cachedir': '/tmp/hapi-data', 'cache': False, 'usecache': True}
-    assert readcompare(server, dataset, 'scalar,vector,spectra', run, opts)
+    opts = {'logging': logging, 'cachedir': '/tmp/hapi-data', 'cache': False, 'usecache': True}
+    assert compare.read(server, dataset, 'scalar,vector,spectra', run, opts)
 
 
 if __name__ == '__main__':
-    test_reader_long()        
+    #test_reader_short()
+    test_unicode()
+    #test_reader_long()
+    

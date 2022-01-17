@@ -3,10 +3,10 @@
 #   make repository-test-all # Test on all versions in $(PYTHONVERS)
 #
 # Beta releases:
-#   1. Run make repository-test-all
-#	2. For non-doc/formatting changes, update version in CHANGES.txt.
-#	3. run `make version-update` if version changed in CHANGES.txt.
-#	3. Commit and push
+# 1. Run make repository-test-all
+# 2. For non-doc/formatting changes, update version in CHANGES.txt.
+# 3. run `make version-update` if version changed in CHANGES.txt.
+# 4. Commit and push
 #
 # Making a local package:
 #  1. Update CHANGES.txt to have a new version line
@@ -23,7 +23,7 @@
 #  4. After package is finalized, create new version number in CHANGES.txt ending
 #     with "b0" in setup.py and then run
 #       make version-update
-# 	  git commit -a -m "Update version for next release"
+#       git commit -a -m "Update version for next release"
 #     This will update the version information in the repository to indicate it
 #     is now in a pre-release state.
 #
@@ -32,14 +32,15 @@
 #      make package-test and release-test tests with native Python virtual
 #      environment.
 #   2. Switch to using tox and conda-tox
-#	3. 'pip install --editable . does not install develop dependencies, so
-#	   'python setup.py develop' is used. Won't need figure out when 2. is finished.
+#   3. 'pip install --editable . does not install develop dependencies, so
+#      'python setup.py develop' is used. Won't need figure out when 2. is finished.
 
 URL=https://upload.pypi.org/
 REP=pypi
 
 # Default Python version to use for tests
-PYTHON=python3.7
+#PYTHON=python2.7
+PYTHON=python3.5
 PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
@@ -48,7 +49,7 @@ PYTHONVERS=python3.8 python3.7 python3.6 python3.5 python2.7
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.2.1
+VERSION=0.2.2
 SHELL:= /bin/bash
 
 LONG_TESTS=false

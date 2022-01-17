@@ -4,7 +4,7 @@ import isodate
 from datetime import datetime
 from hapiclient import hapi
 from hapiclient.hapitime import hapitime2datetime, hapitime_reformat
-from hapiclient.test.readcompare import equal
+from hapiclient.test.compare import equal
 
 # See comments in test_hapitime2datetime.py for execution options.
 
