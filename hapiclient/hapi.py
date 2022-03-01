@@ -144,7 +144,7 @@ def hapiopts():
 def hapi(*args, **kwargs):
     """Request data from a HAPI server.
 
-    Version: 0.2.2
+    Version: 0.2.3
 
 
     Examples
@@ -297,12 +297,12 @@ def hapi(*args, **kwargs):
     # Override defaults
     opts = setopts(hapiopts(), kwargs)
 
-    assert (opts['logging'] in [True, False])
-    assert (opts['cache'] in [True, False])
-    assert (opts['usecache'] in [True, False])
-    assert (opts['format'] in ['binary', 'csv'])
+    assert (opts['logging'] in [True, False]), "logging keyword must be True of False"
+    assert (opts['cache'] in [True, False]), "cache keyword must be True of False"
+    assert (opts['usecache'] in [True, False]), "usecache keyword must be True of False"
+    assert (opts['format'] in ['binary', 'csv']), "format keyword must be 'csv' or 'binary'"
     assert (opts['method'] in ['', 'pandas', 'numpy', 'pandasnolength', 'numpynolength'])
-    assert (opts['parallel'] in [True, False])
+    assert (opts['parallel'] in [True, False]), 'parallel keyword must be True or False'
     assert (isinstance(opts['n_parallel'], int) and opts['n_parallel'] > 1)
     assert (opts['n_chunks'] is None or isinstance(opts['n_chunks'], int) and opts['n_chunks'] > 0)
     assert (opts['dt_chunk'] in [None, 'infer', 'PT1H', 'P1D', 'P1M', 'P1Y'])

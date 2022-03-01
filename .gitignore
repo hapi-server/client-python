@@ -11,3 +11,5 @@ MANIFEST
 .ipynb_checkpoints/
 .vscode/
 .idea/
+anaconda3/
+build/

@@ -226,6 +226,10 @@ def hapitime2datetime(Time, **kwargs):
         if not all(list( map(lambda x: type(x) in [np.str_, np.bytes_, str, bytes], Time) )):
             raise ValueError
 
+    allow_missing_Z = False
+    if 'allow_missing_Z' in kwargs and kwargs['allow_missing_Z'] == True:
+        allow_missing_Z = True
+
     opts = kwargs.copy()
 
     if type(Time) == list:
@@ -256,7 +260,8 @@ def hapitime2datetime(Time, **kwargs):
 
     tic = time.time()
 
-    if (Time[0][-1] != "Z"):
+
+    if Time[0][-1] != "Z" and allow_missing_Z == False:
         error("HAPI Times must have trailing Z. First element of input " + \
               "Time array does not have trailing Z.")
 
@@ -297,7 +302,7 @@ def hapitime2datetime(Time, **kwargs):
     try:
         parse_error = True
         for i in range(0, len(Time)):
-            if (Time[i][-1] != "Z"):
+            if Time[i][-1] != "Z" and allow_missing_Z == False:
                 parse_error = False
                 raise
             pythonDateTime[i] = datetime.strptime(Time[i], fmt).replace(tzinfo=tzinfo)

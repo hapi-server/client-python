@@ -86,4 +86,6 @@ v0.2.1:
 v0.2.2:
 	2021-06-16 -- Move import of joblib.
 	2022-01-17 -- Full Unicode support and additional tests.
+v0.2.3:
+	2022-03-01 -- Add allow_missing_Z in hapitime2datetime.
 
