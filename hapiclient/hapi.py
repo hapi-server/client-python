@@ -670,7 +670,10 @@ def hapi(*args, **kwargs):
                 toc0 = time.time() - tic0
                 log('Reading and parsing %s' % fnamebin.replace(urld + '/', ''), opts)
                 tic = time.time()
-                data = np.fromfile(fnamebin, dtype=dt)
+                try:
+                    data = np.fromfile(fnamebin, dtype=dt)
+                except:
+                    error('Could not read response from {}'.format(urlbin))
             else:
                 from io import BytesIO
                 log('Writing %s to buffer' % urlbin.replace(urld + '/', ''), opts)
@@ -679,7 +682,10 @@ def hapi(*args, **kwargs):
                 toc0 = time.time() - tic0
                 log('Parsing BytesIO buffer.', opts)
                 tic = time.time()
-                data = np.frombuffer(buff.read(), dtype=dt)
+                try:
+                    data = np.frombuffer(buff.read(), dtype=dt)
+                except:
+                    error('Could not read response from {}'.format(urlbin))
 
             # Handle Unicode
             time_name = meta['parameters'][0]['name']
