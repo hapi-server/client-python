@@ -940,7 +940,7 @@ def parse_missing_length(fnamecsv, dt, cols, psizes, pnames, ptypes, opts):
 
                 data[pnames[pn]] = tmp
 
-    if opts['method'] == 'pandas' or opts['method'] == 'pandasnolength':
+    if opts['method'] == '' or opts['method'] == 'pandas' or opts['method'] == 'pandasnolength':
         # If requested method was pandas, use pandasnolength method.
 
         # Read file into Pandas DataFrame
