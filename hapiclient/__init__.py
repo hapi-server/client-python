@@ -4,6 +4,9 @@ from hapiclient.hapi import hapi
 # Allow "from hapiclient import hapitime2datetime"
 from hapiclient.hapitime import hapitime2datetime
 
+# Allow "from hapiclient import datetime2hapitime"
+from hapiclient.hapitime import datetime2hapitime
+
 # Allow "from hapiclient import HAPIError"
 from hapiclient.util import HAPIError
 

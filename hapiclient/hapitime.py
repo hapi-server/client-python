@@ -321,3 +321,44 @@ def hapitime2datetime(Time, **kwargs):
         pythonDateTime = np.reshape(pythonDateTime, shape)
 
     return pythonDateTime
+
+
+def datetime2hapitime(dts):
+    """Convert Python datetime object(s) to ISO 8601 string(s)
+
+     Typical usage:
+    
+    ::
+    
+        import datetime
+        dts = [datetime.datetime(2000,1,1),datetime.datetime(2000,1,2)]
+        hapi_times = datetime2hapitime(dts)
+        print(hapi_timies)    
+    
+    Parameter
+    ---------
+    dts:
+        - A Python datetime object
+        - A list of Python datetime object(s)
+
+    Returns
+    -------
+    - A ISO 8601 string (if input is Python datetime object)
+    - A list of ISO 8601 strings (if input is list of Python datetime object)
+    """
+
+    # TODO: Add minimal keyword?
+
+    import datetime
+
+    single = False
+    if isinstance(dts, list) == False:
+        single = True
+        dts = [dts]
+
+    hapitimes = [dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ') for dt in dts]
+
+    if single == True:
+        return hapitimes[0]
+    else:
+        return hapitimes

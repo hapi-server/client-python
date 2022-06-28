@@ -96,6 +96,7 @@ endif
 
 	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_chunking.py
 	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_hapitime2datetime.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_datetime2hapitime.py
 	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_hapitime_reformat.py
 ################################################################################
 
