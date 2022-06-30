@@ -178,6 +178,8 @@ def hapi(*args, **kwargs):
 
             `serverlist` (https://github.com/hapi-server/servers/raw/master/all.txt)
 
+            `format` (binary) binary or csv, csv will force the use of csv requests.
+            
             `parallel` (False) If true, make up to `n_parallel` requests to
                 server in parallel (uses threads)
 
