@@ -26,9 +26,10 @@ def main():
 def testdata():
 
     from hapiclient import hapi
-    
+
     server     = 'http://hapi-server.org/servers/TestData2.0/hapi'
-    dataset    = 'scalar'
+    dataset    = 'dataset1'
+    parameters = 'scalar'
     start      = '1970-01-01T00:00:00'
     stop       = '1970-01-02T00:01:00'
     parameters = 'scalar,vector'
