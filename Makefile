@@ -1,6 +1,6 @@
 # Test hapi() data read functions using repository code:
-#   make repository-test     # Test using $(PYTHON)
-#   make repository-test-all # Test on all versions in $(PYTHONVERS)
+#   make repository-test python=PYTHON # Test using PYTHON (e.g, python3.6)
+#   make repository-test-all 					 # Test on all versions in $(PYTHONVERS) var below
 #
 # Beta releases:
 # 1. Run make repository-test-all
@@ -79,6 +79,21 @@ install: $(CONDA)/envs/$(PYTHON)
 
 test:
 	make repository-test-all
+
+####################################################################
+# tox Notes
+
+# To use tox -e short-test, it seems we need to install and activate
+# each version of python. So using tox locally does not seem to make
+# things much simpler than `make repository-test`, which installs
+# interpreter and runs tests.
+#
+#repository-test-all-tox:
+#	tox -e short-test
+#repository-test-tox: 
+# # Does not work
+#	tox -e py$(subst .,,$(PYTHON_VER)) short-test
+####################################################################
 
 # Test contents in repository using different Python versions
 repository-test-all:
