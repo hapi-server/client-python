@@ -87,6 +87,13 @@ git clone https://github.com/hapi-server/client-python
 cd client-python; pip install -e .
 ```
 
+or, create an isolated Anaconda installation (downloads and installs latested Miniconda3) using
+
+``` bash
+make install PYTHON=python3.6
+# Execute command displayed to activate isolated environment
+```
+
 The command `pip install -e .` creates symlinks so that the local package is
 used instead of an installed package. You may need to execute `pip uninstall hapiclient` to ensure the local package is used. To check the version installed, use `pip list | grep hapiclient`.
 

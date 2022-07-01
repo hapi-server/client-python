@@ -22,6 +22,7 @@ def xprint(msg):
     f.write(msg + "\n")
     f.close()
 
+server = "http://hapi-server.org/servers/TestData2.0/hapi"
 
 def compare(data1, data2, meta1, meta2, opts1, opts2):
     if compare_logging:
@@ -58,7 +59,7 @@ opts0 = {'logging': hapi_logging, 'usecache': False, 'cache': False}
 td = {
         "P1Y": {
                 "__comment": "dataset3 has cadence of P1D",
-                "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
+                "server": server,
                 "dataset": "dataset3",
                 "parameters": "scalar",
                 "start": "1971-01-01T01:50:00Z",
@@ -66,7 +67,7 @@ td = {
         },
         "P1M": {
                 "__comment": "dataset3 has cadence of P1D",
-                "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
+                "server": server,
                 "dataset": "dataset3",
                 "parameters": "scalar",
                 "start": "1971-01-01T01:50:00Z",
@@ -75,7 +76,7 @@ td = {
         "P1D":
             {
                 "__comment": "dataset2 has cadence of P1H",
-                "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
+                "server": server,
                 "dataset": "dataset2",
                 "parameters": "scalar",
                 "start": "1970-01-01T00:00:00.000Z",
@@ -83,7 +84,7 @@ td = {
         },
         "PT1H": {
                 "__comment": "dataset1 has cadence of PT1S",
-                "server": "http://hapi-server.org/servers-dev/TestData2.0/hapi",
+                "server": server,
                 "dataset": "dataset1",
                 "parameters": "scalar",
                 "start": "1970-01-01T00:00:00.000Z",

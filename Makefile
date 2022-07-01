@@ -39,8 +39,7 @@ URL=https://upload.pypi.org/
 REP=pypi
 
 # Default Python version to use for tests
-#PYTHON=python2.7
-PYTHON=python3.5
+PYTHON=python3.6
 PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
@@ -71,32 +70,39 @@ ifeq ($(TRAVIS_OS_NAME),windows)
 endif
 
 ################################################################################
+install: $(CONDA)/envs/$(PYTHON)
+	make condaenv PYTHON=$(PYTHON)
+	$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
+	@printf "\n--------------------------------------------------------------------------------\n"
+	@printf "To use created Anaconda environment, execute\n  $(CONDA_ACTIVATE) $(PYTHON)"
+	@printf "\n--------------------------------------------------------------------------------\n"
+
 test:
 	make repository-test-all
 
-# Test contents in repository using different python versions
+# Test contents in repository using different Python versions
 repository-test-all:
-	rm -rf $(CONDA)
+	@make clean
+	#rm -rf $(CONDA)
 	@ for version in $(PYTHONVERS) ; do \
 		make repository-test PYTHON=$$version ; \
 	done
 
 repository-test:
 	@make clean
-	rm -rf $(CONDA)
+	#rm -rf $(CONDA)
 	make condaenv PYTHON=$(PYTHON)
-
 	$(CONDA_ACTIVATE) $(PYTHON); pip install pytest deepdiff; pip install .
 
 ifeq (LONG_TESTS,true)
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v -m 'long' hapiclient/test/test_hapi.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v -m 'long' hapiclient/test/test_hapi.py
 else
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v -m 'short' hapiclient/test/test_hapi.py	
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v -m 'short' hapiclient/test/test_hapi.py
 endif
 
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_chunking.py
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_hapitime2datetime.py
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_hapitime_reformat.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v hapiclient/test/test_chunking.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v hapiclient/test/test_hapitime2datetime.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v hapiclient/test/test_hapitime_reformat.py
 ################################################################################
 
 ################################################################################
@@ -118,11 +124,11 @@ else
 	make $(CONDA)/envs/$(PYTHON) PYTHON=$(PYTHON)
 endif
 
-$(CONDA)/envs/$(PYTHON): ./anaconda3
+$(CONDA)/envs/$(PYTHON): anaconda3
 	$(CONDA_ACTIVATE); \
 		$(CONDA)/bin/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
 
-./anaconda3: /tmp/$(CONDA_PKG)
+anaconda3: /tmp/$(CONDA_PKG)
 	bash /tmp/$(CONDA_PKG) -b -p $(CONDA)
 
 /tmp/$(CONDA_PKG):
@@ -207,10 +213,7 @@ version-tag:
 
 ################################################################################
 # Install package in local directory (symlinks made to local dir)
-install-local:
-	$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
-
-install:
+install-pip:
 	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple
 	conda list | grep hapiclient
 	pip list | grep hapiclient

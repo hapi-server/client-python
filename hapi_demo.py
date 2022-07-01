@@ -37,6 +37,8 @@ def testdata():
 
     data, meta = hapi(server, dataset, parameters, start, stop, **opts)
 
+    # Plot all parameters
+    hapiplot(data, meta)
 
 def omniweb():
 
@@ -69,6 +71,7 @@ def sscweb():
     parameters = 'X_GSE,Y_GSE,Z_GSE'
     opts       = {'logging': True, 'usecache': True}
     data, meta = hapi(server, dataset, parameters, start, stop, **opts)
+
     hapiplot(data, meta, **opts)
 
 
