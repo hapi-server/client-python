@@ -144,64 +144,65 @@ def hapiopts():
 def hapi(*args, **kwargs):
     """Request data from a HAPI server.
 
-    Version: 0.2.4
+    Version: 0.2.5b
 
 
     Examples
     ----------
-    `Jupyter Notebook <https://colab.research.google.com/drive/11Zy99koiE90JKJ4u_KPTaEBMQFzbfU3P?usp=sharing>_`
+    `Jupyter Notebook <https://colab.research.google.com/drive/11Zy99koiE90JKJ4u_KPTaEBMQFzbfU3P?usp=sharing>`_
 
     Parameters
     ----------
-    server : str
-        A string with the URL to a HAPI compliant server. (A HAPI URL
-        always ends with "/hapi").
-    dataset : str
+    server: str
+        A string with the URL to a HAPI compliant server. (A HAPI URL \
+        always ends with ``/hapi``).
+    dataset: str
         A string specifying a dataset from a `server`
     parameters: str
-        A Comma-separated list of parameters in `dataset`
+        A comma-separated list of parameters in `dataset`
     start: str
         The start time of the requested data
     stop: str
         The end time of the requested data; end times are exclusive - the
         last data record returned by a HAPI server should have a timestamp
         before `start`.
-    options : dict
+    options: dict
+            `logging` (``False``) - Log to console
 
-            `logging` (False) - Log to console
+            `cache` (``True``) - Save responses and processed responses in cachedir
 
-            `cache` (True) - Save responses and processed responses in cachedir
+            `cachedir` (``'./hapi-data'``)
 
-            `cachedir` (./hapi-data)
+            `usecache` (``True``) - Use files in `cachedir` if found
 
-            `usecache` (True) - Use files in `cachedir` if found
+            `serverlist` (``'https://github.com/hapi-server/servers/raw/master/all.txt'``)
 
-            `serverlist` (https://github.com/hapi-server/servers/raw/master/all.txt)
+            `format` (``'binary'``) ``'binary'`` or ``'csv'``; ``'csv``' will force the use of ``format=csv`` in request to server.
 
-            `parallel` (False) If true, make up to `n_parallel` requests to
-                server in parallel (uses threads)
+            `parallel` (``False``) If ``True``, make up to `n_parallel` requests to server \
+                in parallel (uses threads)
 
-            `n_parallel` (5) Maximum number of parallel requests to server.
+            `n_parallel` (``5``) Maximum number of parallel requests to server.\
                 Max allowed is 5.
 
-            `n_chunks` (None) Get data by making `n_chunks` requests by splitting
-                requested time range. `dt_chunk` is ignored if `n_chunks` is
+            `n_chunks` (``None``) Get data by making `n_chunks` requests by splitting \
+                requested time range. `dt_chunk` is ignored if `n_chunks` is \
                 not `None`. Allowed values are integers > 1.
 
-            `dt_chunk` ('infer') For requests that span a time range larger
-                than the default chunk size for a given dataset cadence, the
-                client will split request into chunks if `dt_chunk` is not
+            `dt_chunk` (``'infer'``) For requests that span a time range larger \
+                than the default chunk size for a given dataset cadence, the \
+                client will split request into chunks if `dt_chunk` is not \
                 `None`.
 
-                Allowed values of `dt_chunk` are 'infer', `None`, and an ISO 8601
-                duration that is unambiguous (durations that include Y and M are not
-                allowed). The default chunk size is determined based on the cadence
+                Allowed values of `dt_chunk` are 'infer', `None`, and an ISO 8601 \
+                duration that is unambiguous (durations that include Y and M are not \
+                allowed). The default chunk size is determined based on the cadence \
                 of the dataset requested according to
 
-                    cadence < PT1S              dt_chunk='PT1H'
-                    PT1S <= cadence <= PT1H     dt_chunk='P1D'
-                    cadence > PT1H              dt_chunk='P30D'
-                    cadence >= P1D              dt_chunk='P365D'
+                    * cadence < PT1S              dt_chunk='PT1H'
+                    * PT1S <= cadence <= PT1H     dt_chunk='P1D'
+                    * cadence > PT1H              dt_chunk='P30D'
+                    * cadence >= P1D              dt_chunk='P365D'
 
                 If the dataset does not have a cadence listed in its metadata, an
                 attempt is made to infer the cadence by requesting a small time range
@@ -215,58 +216,72 @@ def hapi(*args, **kwargs):
                 full chunk, and trimming is performed. For example,
 
                     Cadence = PT1M and request for
+
                         start/stop=1999-11-12T00:10:00/stop=1999-11-12T12:09:00
+                        
                         Chunk size is P1D and requested time range < 1/2 of this
                         =>  Default behavior
+
                     Cadence = PT1M and request for
+
                         start/stop=1999-11-12T00:10:00/1999-11-12T12:10:00
+
                         Chunk size is P1D and requested time range >= 1/2 of this
                         =>  One request with start/stop=1999-11-12/1999-11-13
-                            and trim performed
+                        and trim performed
+
                     Cadence = PT1M and request for
+
                         start/stop=1999-11-12T00:10:00/1999-11-13T12:09:00
+
                         Chunk size is P1D and requested time range > than this
                         =>  Two requests:
-                            (1) start/stop=1999-11-12/start=1999-11-13
-                            (2) start/stop=1999-11-13/start=1999-11-14
-                            and trim performed
+
+                        1. start/stop=1999-11-12/start=1999-11-13
+                        2. start/stop=1999-11-13/start=1999-11-14
+
+                        and trim performed
 
 
     Returns
     -------
-    result : various
+    result: varies
         `result` depends on the input parameters.
 
-        servers = hapi() returns a list of available HAPI server URLs from
+        ``servers = hapi()`` returns a list of available HAPI server URLs from
         https://github.com/hapi-server/data-specification/blob/master/all.txt
 
-        dataset = hapi(server) returns a dict of datasets available from a
+        ``dataset = hapi(server)`` returns a dict of datasets available from a
         URL given by the string `server`.  The dictionary structure follows the
-        HAPI JSON structure.
+        `HAPI catalog response JSON structure <https://github.com/hapi-server/data-specification/blob/master/hapi-dev/HAPI-data-access-spec-dev.md#35-catalog>`_.
 
-        parameters = hapi(server, dataset) returns a dictionary of parameters
-        in the string `dataset`. The dictionary structure follows the HAPI JSON
-        structure.
+        ``parameters = hapi(server, dataset)`` returns a dict containing the HAPI info metadata for all parameters
+        in the string `dataset`. The dictionary structure follows the 
+        `HAPI info response JSON structure <https://github.com/hapi-server/data-specification/blob/master/hapi-dev/HAPI-data-access-spec-dev.md#36-info>`_.
 
-        metadata = hapi(server, dataset, parameters) returns metadata
-        associated each parameter in the comma-separated string `parameters`. The
-        dictionary structure follows the HAPI JSON structure.
+        ``meta = hapi(server, dataset, parameters)`` returns a dict containing the  HAPI info metadata
+        for each parameter in the comma-separated string ``parameters``. The
+        dictionary structure follows 
+        `HAPI info response JSON structure <https://github.com/hapi-server/data-specification/blob/master/hapi-dev/HAPI-data-access-spec-dev.md#36-info>`_.
 
-        data = hapi(server, dataset, parameters, start, stop) returns a
-        dictionary with elements corresponding to `parameters`, e.g., if
-        `parameters` = 'scalar,vector' and the number of records in the time
-        range `start` <= t < `stop` returned is N, then
+        ``data, = hapi(server, dataset, parameters, start, stop)`` returns a
+        NumPy array with named fields with field names corresponding to ``parameters``, e.g., if
+        ``parameters = 'scalar,vector'`` and the number of records in the time
+        range ``start`` <= t < ``stop`` returned is N, then
 
-          data['scalar'] is a NumPy array of shape (N)
-          data['vector'] is a NumPy array of shape (N,3)
-          data['Time'] is a NumPy array of byte literals with shape (N).
+          ``data['scalar']`` is a NumPy array of shape (N)
 
-          Byte literal times can be converted to Python datetimes using
+          ``data['vector']`` is a NumPy array of shape (N,3)
 
-          dtarray = hapitime2datetime(data['Time'])
+          ``data['Time']`` is a NumPy array of byte literals with shape (N).
 
-        data, meta = hapi(server, dataset, parameters, start, stop) returns
-        the metadata for parameters in `meta`.
+          Byte literal times can be converted to Python ``datetimes`` using
+
+          ``dtarray = hapitime2datetime(data['Time'])``
+
+        ``data, meta = hapi(server, dataset, parameters, start, stop)`` returns
+        the HAPI info metadata for parameters in `meta` (and should contain the
+        same content as ``meta = hapi(server, dataset, parameters)``).
 
 
     References

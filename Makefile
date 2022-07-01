@@ -1,6 +1,6 @@
 # Test hapi() data read functions using repository code:
-#   make repository-test     # Test using $(PYTHON)
-#   make repository-test-all # Test on all versions in $(PYTHONVERS)
+#   make repository-test python=PYTHON # Test using PYTHON (e.g, python3.6)
+#   make repository-test-all 					 # Test on all versions in $(PYTHONVERS) var below
 #
 # Beta releases:
 # 1. Run make repository-test-all
@@ -39,7 +39,6 @@ URL=https://upload.pypi.org/
 REP=pypi
 
 # Default Python version to use for tests
-#PYTHON=python2.7
 PYTHON=python3.8
 PYTHON_VER=$(subst python,,$(PYTHON))
 
@@ -49,7 +48,7 @@ PYTHONVERS=python3.8 python3.7 python3.6 python3.5 python2.7
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.2.4
+VERSION=0.2.5b
 SHELL:= /bin/bash
 
 LONG_TESTS=false
@@ -74,12 +73,35 @@ ifeq ($(TRAVIS_OS_NAME),windows)
 endif
 
 ################################################################################
+install: $(CONDA)/envs/$(PYTHON)
+	make condaenv PYTHON=$(PYTHON)
+	$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
+	@printf "\n--------------------------------------------------------------------------------\n"
+	@printf "To use created Anaconda environment, execute\n  $(CONDA_ACTIVATE) $(PYTHON)"
+	@printf "\n--------------------------------------------------------------------------------\n"
+
 test:
 	make repository-test-all
 
-# Test contents in repository using different python versions
+####################################################################
+# tox Notes
+
+# To use tox -e short-test, it seems we need to install and activate
+# each version of python. So using tox locally does not seem to make
+# things much simpler than `make repository-test`, which installs
+# interpreter and runs tests.
+#
+#repository-test-all-tox:
+#	tox -e short-test
+#repository-test-tox: 
+# # Does not work
+#	tox -e py$(subst .,,$(PYTHON_VER)) short-test
+####################################################################
+
+# Test contents in repository using different Python versions
 repository-test-all:
-	rm -rf $(CONDA)
+	@make clean
+	#rm -rf $(CONDA)
 	@ for version in $(PYTHONVERS) ; do \
 		make repository-test PYTHON=$$version ; \
 	done
@@ -88,18 +110,17 @@ repository-test:
 	@make clean
 	#rm -rf $(CONDA)
 	make condaenv PYTHON=$(PYTHON)
-
 	$(CONDA_ACTIVATE) $(PYTHON); pip install pytest deepdiff; pip install .
 
 ifeq (LONG_TESTS,true)
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v -m 'long' hapiclient/test/test_hapi.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v -m 'long' hapiclient/test/test_hapi.py
 else
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v -m 'short' hapiclient/test/test_hapi.py	
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v -m 'short' hapiclient/test/test_hapi.py
 endif
 
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_chunking.py
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_hapitime2datetime.py
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_hapitime_reformat.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v hapiclient/test/test_chunking.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v hapiclient/test/test_hapitime2datetime.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v hapiclient/test/test_hapitime_reformat.py
 ################################################################################
 
 ################################################################################
@@ -123,11 +144,15 @@ ifeq ($(OS),Windows_NT)
 	$(CONDA_ACTIVATE); \
 		$(CONDA)/Scripts/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
 else
+	make $(CONDA)/envs/$(PYTHON) PYTHON=$(PYTHON)
+endif
+
+$(CONDA)/envs/$(PYTHON): anaconda3
 	$(CONDA_ACTIVATE); \
 		$(CONDA)/bin/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
 endif
 
-miniconda3: 
+anaconda3: 
 ifeq ($(OS),Windows_NT)
 	# Not working
 	start $(CONDA_PKG_PATH) /S /D=$(CONDA)
@@ -217,10 +242,7 @@ version-tag:
 
 ################################################################################
 # Install package in local directory (symlinks made to local dir)
-install-local:
-	$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
-
-install:
+install-pip:
 	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple
 	conda list | grep hapiclient
 	pip list | grep hapiclient
