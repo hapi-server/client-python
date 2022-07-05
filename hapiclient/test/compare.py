@@ -101,10 +101,8 @@ def closeFloats(a, b):
 
 
 # Create empty file
-logfile = os.path.realpath(__file__)[0:-2] + "log"
+logfile = os.path.splitext(__file__)[0] + ".log"
 with open(logfile, "w") as f: pass
-
-
 def xprint(msg):
     print(msg)
     f = open(logfile, "a")

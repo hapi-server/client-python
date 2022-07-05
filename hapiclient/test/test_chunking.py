@@ -11,10 +11,9 @@ from hapiclient.test.compare import equal
 compare_logging = True
 hapi_logging = False
 
-logfile = os.path.realpath(__file__)[0:-2] + "log"
-with open(logfile, "w") as f:
-    # Create empty file
-    pass
+# Create empty file
+logfile = os.path.splitext(__file__)[0] + ".log"
+with open(logfile, "w") as f: pass
 
 def xprint(msg):
     print(msg)

@@ -269,7 +269,7 @@ def test_reader_long():
 
 
 if __name__ == '__main__':
-    #test_dataset()
-    #test_reader_short()
+    test_dataset()
+    test_reader_short()
     test_unicode()
     #test_reader_long()

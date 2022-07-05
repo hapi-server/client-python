@@ -56,7 +56,7 @@ def test_hapitime_reformat():
         if "T" in dts[i]:
             dts.append("1989-001T" + dts[i].split("T")[1])
 
-    logging = open(os.path.realpath(__file__)[0:-2] + "log", "w")
+    logging = open(os.path.realpath(os.path.splitext(__file__)[0]) + ".log", "a")
 
     # truncating
     for i in range(len(dts)):
@@ -74,8 +74,6 @@ def test_hapitime_reformat():
             given_form = dts[j]
             given_form_modified = hapitime_reformat(form_to_match, given_form, logging=logging)
             assert given_form_modified == form_to_match
-
-    logging.close()
 
 if __name__ == '__main__':
     test_hapitime_reformat()
