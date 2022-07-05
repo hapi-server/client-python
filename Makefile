@@ -39,7 +39,7 @@ URL=https://upload.pypi.org/
 REP=pypi
 
 # Default Python version to use for tests
-PYTHON=python3.6
+PYTHON=python3.8
 PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
@@ -55,10 +55,13 @@ LONG_TESTS=false
 
 CONDA=./anaconda3
 
-# ifeq ($(shell uname -s),MINGW64_NT-10.0-18362)
 ifeq ($(TRAVIS_OS_NAME),windows)
-  # CONDA=/c/tools/anaconda3
 	CONDA=/c/tools/miniconda3
+endif
+
+ifeq ($(OS),Windows_NT)
+	CONDA=C:/Users/weigel/git/client-python/miniconda3
+	TMP=C:/tmp/
 endif
 
 SOURCE_CONDA=source $(CONDA)/etc/profile.d/conda.sh
@@ -123,18 +126,23 @@ endif
 ################################################################################
 # Anaconda install
 CONDA_PKG=Miniconda3-latest-Linux-x86_64.sh
+CONDA_PKG_PATH=/tmp/$(CONDA_PKG)
 ifeq ($(shell uname -s),Darwin)
 	CONDA_PKG=Miniconda3-latest-MacOSX-x86_64.sh
+	CONDA_PKG_PATH=/tmp/$(CONDA_PKG)
+endif
+ifeq ($(OS),Windows_NT)
+	CONDA_PKG=Miniconda3-latest-Windows-x86_64.exe
+	CONDA_PKG_PATH=C:/tmp/$(CONDA_PKG)
 endif
 
-condaenv:
-# ifeq ($(shell uname -s),MINGW64_NT-10.0-18362)
-ifeq ($(TRAVIS_OS_NAME),windows)
-	cp $(CONDA)/Library/bin/libcrypto-* $(CONDA)/DLLs/
-	cp $(CONDA)/Library/bin/libssl-* $(CONDA)/DLLs/
+condaenv: $(CONDA)/envs/$(PYTHON)
+	make $(CONDA)/envs/$(PYTHON)
 
-	# $(CONDA)/Scripts/conda config --set ssl_verify no
-	$(CONDA)/Scripts/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
+$(CONDA)/envs/$(PYTHON): miniconda3
+ifeq ($(OS),Windows_NT)
+	$(CONDA_ACTIVATE); \
+		$(CONDA)/Scripts/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
 else
 	make $(CONDA)/envs/$(PYTHON) PYTHON=$(PYTHON)
 endif
@@ -142,12 +150,18 @@ endif
 $(CONDA)/envs/$(PYTHON): anaconda3
 	$(CONDA_ACTIVATE); \
 		$(CONDA)/bin/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
+endif
 
-anaconda3: /tmp/$(CONDA_PKG)
-	bash /tmp/$(CONDA_PKG) -b -p $(CONDA)
+anaconda3: 
+ifeq ($(OS),Windows_NT)
+	# Not working
+	start $(CONDA_PKG_PATH) /S /D=$(CONDA)
+else	
+	bash $(CONDA_PKG_PATH) -b -p $(CONDA)
+endif
 
-/tmp/$(CONDA_PKG):
-	curl https://repo.anaconda.com/miniconda/$(CONDA_PKG) > /tmp/$(CONDA_PKG)
+$(CONDA_PKG_PATH):
+	curl https://repo.anaconda.com/miniconda/$(CONDA_PKG) > $(CONDA_PKG_PATH)
 ################################################################################
 
 ################################################################################
