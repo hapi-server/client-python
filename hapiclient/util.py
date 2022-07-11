@@ -103,6 +103,15 @@ def pythonshell():
     return shell
 
 
+def unicode_error_message(name):
+    import sys
+    msg = ""
+    if sys.version_info[0:2] == (3, 5):
+        if not all(ord(char) < 128 for char in name):
+            msg = "hapiclient cannot handle Unicode dataset or parameter names (" + str(name.encode('utf-8')) + ") for Python < 3.6 on Windows."
+    return msg
+
+
 def warning_test():
     """For testing warning function."""
 
@@ -143,10 +152,18 @@ def warning(*args):
 
     fname = path.basename(fname)
 
+    def prefix():
+        import platform
+        prefix = "\x1b[31m[0;31mHAPIWarning:\x1b[0m "
+        if platform.system() == 'Windows' and pythonshell() == 'shell':
+            prefix = "HAPIWarning: "        
+
+        return prefix
+
     # Custom warning format function
     def _warning(message, category=UserWarning, filename='', lineno=-1, file=None, line=''):
         if category.__name__ == "HAPIWarning":
-            stderr.write("\x1b[31mWarning in " + fname + "\x1b[0m: " + str(message) + "\n")
+            stderr.write(prefix() + str(message) + "\n")
         else:
             # Use default showwarning function.
             showwarning_default(message, category=UserWarning,
@@ -201,15 +218,22 @@ def error(msg, debug=False):
     fname = path.basename(fname)
     #line = stack()[1][2]
 
+    def prefix():
+        import platform
+        prefix = "\033[0;31mHAPIError:\033[0m "
+        if platform.system() == 'Windows' and pythonshell() == 'shell':
+            prefix = "HAPIError: "        
+
+        return prefix
+
     def exception_handler_ipython(self, exc_tuple=None,
                                   filename=None, tb_offset=None,
                                   exception_only=False,
                                   running_compiled_code=False):
-
-        #import traceback
+        
         exception = sys.exc_info()
         if not debug and exception[0].__name__ == "HAPIError":
-            sys.stderr.write("\033[0;31mHAPIError:\033[0m " + str(exception[1]))
+            sys.stderr.write(prefix() + str(exception[1]))
         else:
             # Use default
             showtraceback_default(self, exc_tuple=None,
@@ -224,7 +248,7 @@ def error(msg, debug=False):
 
     def exception_handler(exception_type, exception, traceback):
         if not debug and exception_type.__name__ == "HAPIError":
-            print("\033[0;31mHAPIError:\033[0m %s" % exception)
+            print("%s%s" % (prefix(), exception))
         else:
             # Use default.
             sys.__excepthook__(exception_type, exception, traceback)

@@ -107,7 +107,7 @@ with open(logfile, "w") as f: pass
 
 def xprint(msg):
     print(msg)
-    f = open(logfile, "a")
+    f = open(logfile, "a", encoding='utf-8')
     f.write(msg + "\n")
     f.close()
 

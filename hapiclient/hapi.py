@@ -14,7 +14,7 @@ from joblib import Parallel, delayed
 
 from hapiclient.hapitime import hapitime2datetime, hapitime_reformat
 from hapiclient.util import setopts, log, warning, error
-from hapiclient.util import urlopen, urlretrieve, jsonparse
+from hapiclient.util import urlopen, urlretrieve, jsonparse, unicode_error_message
 
 
 def subset(meta, params):
@@ -99,12 +99,42 @@ def request2path(*args):
     else:
         cachedirectory = args[5]
 
-    # url subdirectory
+    args = list(args)
+
+    # Replace forbidden characters in directory and filename
+    # Replacements assume that there will be no name collisions,
+    # e.g., one parameter named abc-< and another abc-@lt@.
+    import platform
+    if platform.system() == 'Windows':
+        # List and code from responses in
+        # https://stackoverflow.com/q/1976007
+        reps = (
+                    ('<', '@lt@'),
+                    ('>', '@gt@'),
+                    (':', '@colon@'),
+                    ('"', '@doublequote@'),
+                    ('/', '@forwardslash@'),
+                    ('/', '@backslash@'),
+                    ('\\|', '@pipe@'),
+                    ('\\?', '@questionmark@'),
+                    ('\\*', '@asterisk@')
+                )
+
+        for element in reps:
+            args[1] = re.sub(element[0], element[1], args[1])
+            args[2] = re.sub(element[0], element[1], args[2])
+
+    else:
+        args[1] = re.sub('/','@forwardslash@',args[1])
+        args[2] = re.sub('/','@forwardslash@',args[2])
+
+    # To shorten filenames.
+    args[3] = re.sub(r'-|:|\.|Z', '', args[3])
+    args[4] = re.sub(r'-|:|\.|Z', '', args[4])
+
+    # URL subdirectory
     urldirectory = server2dirname(args[0])
-    fname = '%s_%s_%s_%s' % (re.sub('/', '_', args[1]),
-                             re.sub(',', '-', args[2]),
-                             re.sub(r'-|:|\.|Z', '', args[3]),
-                             re.sub(r'-|:|\.|Z', '', args[4]))
+    fname = '%s_%s_%s_%s' % (args[1], args[2], args[3], args[4])
 
     return os.path.join(cachedirectory, urldirectory, fname)
 
@@ -325,6 +355,14 @@ def hapi(*args, **kwargs):
     from hapiclient import __version__
     log('Running hapi.py version %s' % __version__, opts)
 
+    if nin > 1:
+        if nin > 1:
+            if unicode_error_message(DATASET) != "":
+                error(unicode_error_message(DATASET))
+        if nin > 2:
+            if unicode_error_message(PARAMETERS) != "":
+                error(unicode_error_message(PARAMETERS))
+
     if nin == 0:  # hapi()
         log('Reading %s' % opts['server_list'], opts)
         # decode('utf8') in following needed to make Python 2 and 3 types match.
@@ -425,7 +463,7 @@ def hapi(*args, **kwargs):
 
         if not metaFromCache:
             # No cached metadata loaded so request it from server.
-            log('Reading %s' % urljson.replace(urld + '/', ''), opts)
+            log('Reading %s' % urld, opts)
             res = urlopen(urljson)
             meta = jsonparse(res, urljson)
 
@@ -732,7 +770,7 @@ def hapi(*args, **kwargs):
                 tic = time.time()
             else:
                 from io import StringIO
-                log('Writing %s to buffer' % urlcsv.replace(urld + '/', ''), opts)
+                #log('Writing %s to buffer' % urlcsv.replace(urld + '/', ''), opts)
                 tic0 = time.time()
                 fnamecsv = StringIO(urlopen(urlcsv).read().decode())
                 toc0 = time.time() - tic0
@@ -784,36 +822,18 @@ def hapi(*args, **kwargs):
         else:
             meta.update({"x_dataFile": fnamecsv})
 
-
-        # Create cache directory
-        # Note that this should only technically be
-        # written if cache=True.
-        if not os.path.exists(opts["cachedir"]):
-            os.makedirs(opts["cachedir"])
-        if not os.path.exists(urld):
-            os.makedirs(urld)
-
-        # Write metadata to cache
-        # Note that this should only technically be
-        # written if cache=True.
-        log('Writing %s' % fnamepklx, opts)
-        f = open(fnamepklx, 'wb')
-        pickle.dump(meta, f, protocol=2)
-        f.close()
-
         if opts["cache"]:
-            can_cache = True
-            if sys.version_info[0:2] == (3, 5):
-                dts = data.dtype
-                for name in dts.names:
-                    if not all(ord(char) < 128 for char in name):
-                        can_cache = False
-            if can_cache:
-                log('Writing %s' % fnamenpy, opts)
-                #print(data.dtype)
-                np.save(fnamenpy, data)
-            else:
-                warning('Cannot cache because a parameter with Unicode not supported by np.save')
+            if not os.path.exists(opts["cachedir"]):
+                os.makedirs(opts["cachedir"])
+            if not os.path.exists(urld):
+                os.makedirs(urld)
+
+            log('Writing %s' % fnamepklx, opts)
+            with open(fnamepklx, 'wb') as f:
+                pickle.dump(meta, f, protocol=2)
+
+            log('Writing %s' % fnamenpy, opts)
+            np.save(fnamenpy, data)
 
         meta['x_totalTime'] = time.time() - tic_totalTime
 

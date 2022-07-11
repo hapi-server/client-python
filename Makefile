@@ -39,7 +39,7 @@ URL=https://upload.pypi.org/
 REP=pypi
 
 # Default Python version to use for tests
-PYTHON=python3.8
+PYTHON=python2.7
 PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
@@ -53,19 +53,14 @@ SHELL:= /bin/bash
 
 LONG_TESTS=false
 
-CONDA=./anaconda3
+CONDA=$(PWD)/anaconda3
 
-ifeq ($(TRAVIS_OS_NAME),windows)
-	CONDA=/c/tools/miniconda3
-endif
-
+CONDA_ACTIVATE=source $(CONDA)/etc/profile.d/conda.sh; conda activate
 ifeq ($(OS),Windows_NT)
-	CONDA=C:/Users/weigel/git/client-python/miniconda3
-	TMP=C:/tmp/
+	CONDA=C:/Users/weigel/git/client-python/anaconda3
+	CONDA_ACTIVATE=$(CONDA)/Scripts/activate
+	TMP=tmp/
 endif
-
-SOURCE_CONDA=source $(CONDA)/etc/profile.d/conda.sh
-CONDA_ACTIVATE=$(SOURCE_CONDA); conda activate
 
 # ifeq ($(shell uname -s),MINGW64_NT-10.0-18362)
 ifeq ($(TRAVIS_OS_NAME),windows)
@@ -74,7 +69,6 @@ endif
 
 ################################################################################
 install: $(CONDA)/envs/$(PYTHON)
-	make condaenv PYTHON=$(PYTHON)
 	$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
 	@printf "\n--------------------------------------------------------------------------------\n"
 	@printf "To use created Anaconda environment, execute\n  $(CONDA_ACTIVATE) $(PYTHON)"
@@ -84,12 +78,17 @@ test:
 	make repository-test-all
 
 ####################################################################
-# tox Notes
-
+# Tox notes
+#
+# Ideally local tests would use same commands as .tox.ini and .travis.yml.
+#
 # To use tox -e short-test, it seems we need to install and activate
 # each version of python. So using tox locally does not seem to make
 # things much simpler than `make repository-test`, which installs
 # interpreter and runs tests.
+#
+# However, Travis tests use tox-anaconda and it seems creation of 
+# virtual environment is done automatically.
 #
 #repository-test-all-tox:
 #	tox -e short-test
@@ -136,26 +135,30 @@ ifeq ($(OS),Windows_NT)
 	CONDA_PKG_PATH=C:/tmp/$(CONDA_PKG)
 endif
 
+activate:
+	@echo "On command line enter:"
+	@echo "$(CONDA_ACTIVATE); $(CONDA)/Scripts/conda create -y --name $(PYTHON) python=$(PYTHON_VER)"
+
 condaenv: $(CONDA)/envs/$(PYTHON)
 	make $(CONDA)/envs/$(PYTHON)
 
-$(CONDA)/envs/$(PYTHON): miniconda3
+$(CONDA)/envs/$(PYTHON): $(CONDA)
 ifeq ($(OS),Windows_NT)
 	$(CONDA_ACTIVATE); \
-		$(CONDA)/Scripts/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
+		$(CONDA)/Scripts/conda \
+			create -y --name $(PYTHON) python=$(PYTHON_VER)
 else
-	make $(CONDA)/envs/$(PYTHON) PYTHON=$(PYTHON)
+$(CONDA_ACTIVATE); \
+        $(CONDA)/bin/conda \
+        	create -y --name $(PYTHON) python=$(PYTHON_VER)
 endif
 
-$(CONDA)/envs/$(PYTHON): anaconda3
-	$(CONDA_ACTIVATE); \
-		$(CONDA)/bin/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
-endif
-
-anaconda3: 
+$(CONDA): $(CONDA_PKG_PATH)
 ifeq ($(OS),Windows_NT)
-	# Not working
-	start $(CONDA_PKG_PATH) /S /D=$(CONDA)
+	# Not working; path is not set
+	#start "$(CONDA_PKG_PATH)" /S /D=$(CONDA)
+	echo "!!! Install miniconda3 into $(CONDA) manually by executing 'start $(PWD)/anaconda3'. Then re-execute make command."
+	exit 1
 else	
 	bash $(CONDA_PKG_PATH) -b -p $(CONDA)
 endif
