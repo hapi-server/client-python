@@ -104,6 +104,8 @@ def request2path(*args):
     # Replace forbidden characters in directory and filename
     # Replacements assume that there will be no name collisions,
     # e.g., one parameter named abc-< and another abc-@lt@.
+    # This also introduces an incompatability between caches on Windows
+    # Unix.
     import platform
     if platform.system() == 'Windows':
         # List and code from responses in

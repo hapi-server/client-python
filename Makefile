@@ -108,6 +108,11 @@ repository-test-all:
 repository-test:
 	@make clean
 	#rm -rf $(CONDA)
+ifeq ($(OS),Windows_NT)
+	-@type NUL >> filename # Not tested
+else
+	-@touch $(CONDA) # If dir exists but Makefile was edited, this prevents re-install.
+endif
 	make condaenv PYTHON=$(PYTHON)
 	$(CONDA_ACTIVATE) $(PYTHON); pip install pytest deepdiff; pip install .
 

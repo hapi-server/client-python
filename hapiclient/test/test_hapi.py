@@ -229,11 +229,10 @@ def test_request2path():
     import platform
     if platform.system() == 'Windows':
         p = request2path('http://server/dir1/dir2','xx','abc<>:"/|?*.','2000-01-01T00:00:00.Z','2000-01-01T00:00:00.Z','')
-        print(p)
         assert p == 'server_dir1_dir2\\xx_abc@lt@@gt@@colon@@doublequote@@forwardslash@@pipe@@questionmark@@asterisk@._20000101T000000_20000101T000000'
     else:
         p = request2path('http://server/dir1/dir2','xx/yy','abc/123','2000-01-01T00:00:00.Z','2000-01-01T00:00:00.Z','')
-        assert p == 'server_dir1_dir2\\xx@forwardslash@yy_abc@forwardslash@123_20000101T000000_20000101T000000'
+        assert p == 'server_dir1_dir2/xx@forwardslash@yy_abc@forwardslash@123_20000101T000000_20000101T000000'
 
 
 @pytest.mark.short
