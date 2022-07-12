@@ -41,7 +41,7 @@ URL=https://upload.pypi.org/
 REP=pypi
 
 # Default Python version to use for tests
-PYTHON=python2.7
+PYTHON=python3.8
 PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
@@ -138,7 +138,7 @@ endif
 
 activate:
 	@echo "On command line enter:"
-	@echo "$(CONDA_ACTIVATE) python$(PYTHON)"
+	@echo "$(CONDA_ACTIVATE) $(PYTHON)"
 
 condaenv: $(CONDA)/envs/$(PYTHON)
 	make $(CONDA)/envs/$(PYTHON)
