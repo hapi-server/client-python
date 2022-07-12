@@ -302,14 +302,9 @@ def runall():
 
 
 if __name__ == '__main__':
-<<<<<<< HEAD
-    test_dataset()
-    test_reader_short()
-=======
     #runall()
     #test_dataset()
     #test_reader_short()
->>>>>>> windows-unicode
     test_unicode()
     #test_request2path()
     #test_reader_long()
