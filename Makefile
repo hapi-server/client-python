@@ -1,6 +1,8 @@
 # Test hapi() data read functions using repository code:
 #   make repository-test python=PYTHON # Test using PYTHON (e.g, python3.6)
-#   make repository-test-all 					 # Test on all versions in $(PYTHONVERS) var below
+#   make repository-test-all           # Test on all versions in $(PYTHONVERS) var below
+#
+# On Windows, commands must be executed from Anaconda Powershell Prompt.
 #
 # Beta releases:
 # 1. Run make repository-test-all
@@ -39,7 +41,7 @@ URL=https://upload.pypi.org/
 REP=pypi
 
 # Default Python version to use for tests
-PYTHON=python2.7
+PYTHON=python3.6
 PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
@@ -50,22 +52,17 @@ PYTHONVERS=python3.8 python3.7 python3.6 python3.5 python2.7
 # from CHANGES.txt. Do not edit.
 VERSION=0.2.5b
 SHELL:= /bin/bash
+#SHELL:= /c/Windows/system32/cmd
 
 LONG_TESTS=false
 
 CONDA=$(PWD)/anaconda3
 
-CONDA_ACTIVATE=source $(CONDA)/etc/profile.d/conda.sh; conda activate
 ifeq ($(OS),Windows_NT)
 	CONDA=C:/Users/weigel/git/client-python/anaconda3
-	CONDA_ACTIVATE=$(CONDA)/Scripts/activate
 	TMP=tmp/
 endif
-
-# ifeq ($(shell uname -s),MINGW64_NT-10.0-18362)
-ifeq ($(TRAVIS_OS_NAME),windows)
-	CONDA_ACTIVATE=source $(CONDA)/Scripts/activate; conda activate
-endif
+CONDA_ACTIVATE=source $(CONDA)/etc/profile.d/conda.sh; conda activate
 
 ################################################################################
 install: $(CONDA)/envs/$(PYTHON)
@@ -107,7 +104,6 @@ repository-test-all:
 
 repository-test:
 	@make clean
-	#rm -rf $(CONDA)
 	make condaenv PYTHON=$(PYTHON)
 	$(CONDA_ACTIVATE) $(PYTHON); pip install pytest deepdiff; pip install .
 
@@ -137,7 +133,7 @@ endif
 
 activate:
 	@echo "On command line enter:"
-	@echo "$(CONDA_ACTIVATE); $(CONDA)/Scripts/conda create -y --name $(PYTHON) python=$(PYTHON_VER)"
+	@echo "$(CONDA_ACTIVATE)
 
 condaenv: $(CONDA)/envs/$(PYTHON)
 	make $(CONDA)/envs/$(PYTHON)

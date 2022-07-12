@@ -106,7 +106,7 @@ def pythonshell():
 def unicode_error_message(name):
     import sys
     msg = ""
-    if sys.version_info[0:2] == (3, 5):
+    if sys.version_info[0:2] <= (3, 5):
         if not all(ord(char) < 128 for char in name):
             msg = "hapiclient cannot handle Unicode dataset or parameter names (" + str(name.encode('utf-8')) + ") for Python < 3.6 on Windows."
     return msg
