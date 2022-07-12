@@ -1,6 +1,8 @@
 # Test hapi() data read functions using repository code:
 #   make repository-test python=PYTHON # Test using PYTHON (e.g, python3.6)
-#   make repository-test-all 					 # Test on all versions in $(PYTHONVERS) var below
+#   make repository-test-all           # Test on all versions in $(PYTHONVERS) var below
+#
+# On Windows, commands must be executed from Anaconda Powershell Prompt.
 #
 # Beta releases:
 # 1. Run make repository-test-all
@@ -50,31 +52,20 @@ PYTHONVERS=python3.8 python3.7 python3.6 python3.5 python2.7
 # from CHANGES.txt. Do not edit.
 VERSION=0.2.5b
 SHELL:= /bin/bash
+#SHELL:= /c/Windows/system32/cmd
 
 LONG_TESTS=false
 
-CONDA=./anaconda3
-
-ifeq ($(TRAVIS_OS_NAME),windows)
-	CONDA=/c/tools/miniconda3
-endif
+CONDA=$(PWD)/anaconda3
 
 ifeq ($(OS),Windows_NT)
-	CONDA=C:/Users/weigel/git/client-python/miniconda3
-	TMP=C:/tmp/
+	CONDA=C:/Users/weigel/git/client-python/anaconda3
+	TMP=tmp/
 endif
-
-SOURCE_CONDA=source $(CONDA)/etc/profile.d/conda.sh
-CONDA_ACTIVATE=$(SOURCE_CONDA); conda activate
-
-# ifeq ($(shell uname -s),MINGW64_NT-10.0-18362)
-ifeq ($(TRAVIS_OS_NAME),windows)
-	CONDA_ACTIVATE=source $(CONDA)/Scripts/activate; conda activate
-endif
+CONDA_ACTIVATE=source $(CONDA)/etc/profile.d/conda.sh; conda activate
 
 ################################################################################
 install: $(CONDA)/envs/$(PYTHON)
-	make condaenv PYTHON=$(PYTHON)
 	$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
 	@printf "\n--------------------------------------------------------------------------------\n"
 	@printf "To use created Anaconda environment, execute\n  $(CONDA_ACTIVATE) $(PYTHON)"
@@ -84,12 +75,17 @@ test:
 	make repository-test-all
 
 ####################################################################
-# tox Notes
-
+# Tox notes
+#
+# Ideally local tests would use same commands as .tox.ini and .travis.yml.
+#
 # To use tox -e short-test, it seems we need to install and activate
 # each version of python. So using tox locally does not seem to make
 # things much simpler than `make repository-test`, which installs
 # interpreter and runs tests.
+#
+# However, Travis tests use tox-anaconda and it seems creation of 
+# virtual environment is done automatically.
 #
 #repository-test-all-tox:
 #	tox -e short-test
@@ -108,7 +104,11 @@ repository-test-all:
 
 repository-test:
 	@make clean
-	#rm -rf $(CONDA)
+ifeq ($(OS),Windows_NT)
+	-@type NUL >> filename # Not tested
+else
+	-@touch $(CONDA) # If dir exists but Makefile was edited, this prevents re-install.
+endif
 	make condaenv PYTHON=$(PYTHON)
 	$(CONDA_ACTIVATE) $(PYTHON); pip install pytest deepdiff; pip install .
 
@@ -136,26 +136,30 @@ ifeq ($(OS),Windows_NT)
 	CONDA_PKG_PATH=C:/tmp/$(CONDA_PKG)
 endif
 
+activate:
+	@echo "On command line enter:"
+	@echo "$(CONDA_ACTIVATE) $(PYTHON)"
+
 condaenv: $(CONDA)/envs/$(PYTHON)
 	make $(CONDA)/envs/$(PYTHON)
 
-$(CONDA)/envs/$(PYTHON): miniconda3
+$(CONDA)/envs/$(PYTHON): $(CONDA)
 ifeq ($(OS),Windows_NT)
 	$(CONDA_ACTIVATE); \
-		$(CONDA)/Scripts/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
+		$(CONDA)/Scripts/conda \
+			create -y --name $(PYTHON) python=$(PYTHON_VER)
 else
-	make $(CONDA)/envs/$(PYTHON) PYTHON=$(PYTHON)
+$(CONDA_ACTIVATE); \
+        $(CONDA)/bin/conda \
+        	create -y --name $(PYTHON) python=$(PYTHON_VER)
 endif
 
-$(CONDA)/envs/$(PYTHON): anaconda3
-	$(CONDA_ACTIVATE); \
-		$(CONDA)/bin/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
-endif
-
-anaconda3: 
+$(CONDA): $(CONDA_PKG_PATH)
 ifeq ($(OS),Windows_NT)
-	# Not working
-	start $(CONDA_PKG_PATH) /S /D=$(CONDA)
+	# Not working; path is not set
+	#start "$(CONDA_PKG_PATH)" /S /D=$(CONDA)
+	echo "!!! Install miniconda3 into $(CONDA) manually by executing 'start $(PWD)/anaconda3'. Then re-execute make command."
+	exit 1
 else	
 	bash $(CONDA_PKG_PATH) -b -p $(CONDA)
 endif
