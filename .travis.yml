@@ -3,12 +3,14 @@ jobs:
   include:
     - name: "Python 2.7 on Linux"
       os: linux
+      if: branch = master
       before_install:
         - sudo apt update
         - sudo apt install python2.7 python-pip
         - sudo pip install tox
     - name: "Python 3.8 on Linux"
       os: linux
+      if: branch = master
       dist: xenial
       language: python
       python: 3.8
@@ -18,12 +20,14 @@ jobs:
         - python3 -m pip install tox-travis
     - name: "Python 2.7 on macOS"
       os: osx
+      if: branch = master
       osx_image: xcode11.2
       language: shell
       before_install:
         - sudo pip install tox-travis
     - name: "Python 3.8 on macOS"
       os: osx
+      if: branch = master
       osx_image: xcode11.6  # Python 3.8.0 running on macOS 10.14.6
       language: shell        # 'language: python' is an error on Travis CI macOS
       before_install:
@@ -32,6 +36,7 @@ jobs:
         - sudo pip install tox-travis
     - name: "Python 2.7 on Windows"
       os: windows           # Windows 10.0.17134 N/A Build 17134
+      if: branch = master
       language: shell # 'language: python' errors Travis CI Windows
       before_install:
         - choco install python2
@@ -41,6 +46,7 @@ jobs:
       env: PATH=/c/Python27:/c/Python27/Scripts:$PATH
     - name: "Python 3.8 on Windows"
       os: windows           # Windows 10.0.17134 N/A Build 17134
+      if: branch = master
       language: shell       # 'language: python' is an error on Travis CI Windows
       before_install:
         - choco install python --version 3.8.8

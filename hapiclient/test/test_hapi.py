@@ -304,7 +304,7 @@ def runall():
 if __name__ == '__main__':
     #runall()
     #test_dataset()
-    #test_reader_short()
-    test_unicode()
+    test_reader_short()
+    #test_unicode()
     #test_request2path()
     #test_reader_long()
