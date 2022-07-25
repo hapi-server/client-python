@@ -27,7 +27,8 @@
 #       git commit -a -m "Update version for next release"
 #     This will update the version information in the repository to indicate it
 #     is now in a pre-release state.
-#
+#  5. Manually create a relase at https://github.com/hapi-server/client-python/releases 
+#     (could do this automatically using https://stackoverflow.com/questions/21214562/how-to-release-versions-on-github-through-the-command-line)
 #  Notes:
 #   1. make repository-test tests with Anaconda virtual environment
 #      make package-test and release-test tests with native Python virtual
@@ -49,7 +50,7 @@ PYTHONVERS=python3.8 python3.7 python3.6 python3.5 python2.7
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.2.5
+VERSION=0.2.6b
 SHELL:= /bin/bash
 #SHELL:= /c/Windows/system32/cmd
 
@@ -168,22 +169,6 @@ $(CONDA_PKG_PATH):
 ################################################################################
 
 ################################################################################
-venv-test:
-	cp hapi_demo.py /tmp # TODO: Explain why needed.
-	cp hapi_demo.py /tmp
-	source env-$(PYTHON)/bin/activate && \
-		pip install pytest deepdiff ipython && \
-		pip uninstall -y hapiplot && \
-		pip install --pre hapiplot && \
-		pip uninstall -y hapiclient && \
-		pip install --pre '$(PACKAGE)' \
-			--index-url $(URL)/simple  \
-			--extra-index-url https://pypi.org/simple && \
-		env-$(PYTHON)/bin/pytest -v -m 'short' hapiclient/test/test_hapi.py
-		env-$(PYTHON)/bin/ipython /tmp/hapi_demo.py
-################################################################################
-
-################################################################################
 # Packaging
 package:
 	make clean
@@ -196,6 +181,7 @@ package-test-all:
 	done
 
 env-$(PYTHON):
+	rm -rf env-$(PYTHON)
 	$(CONDA_ACTIVATE) $(PYTHON); \
 		conda install -y virtualenv; \
 		$(PYTHON) -m virtualenv env-$(PYTHON)
@@ -203,8 +189,21 @@ env-$(PYTHON):
 package-test:
 	make package
 	make env-$(PYTHON)
-	make venv-test PACKAGE='dist/hapiclient-$(VERSION).tar.gz'
-################################################################################
+	make package-venv-test PACKAGE='dist/hapiclient-$(VERSION).tar.gz'
+
+package-venv-test:
+	cp hapi_demo.py /tmp # TODO: Explain why needed.
+	cp hapi_demo.py /tmp
+	source env-$(PYTHON)/bin/activate && \
+		pip install pytest deepdiff ipython && \
+		pip uninstall -y hapiplot && \
+		pip install --pre hapiplot && \
+		pip uninstall -y hapiclient && \
+		pip install --pre '$(PACKAGE)' \
+			--index-url $(URL)/simple  \
+			--extra-index-url https://pypi.org/simple && \
+		env-$(PYTHON)/bin/pytest -v -m 'short' hapiclient/test/test_hapi.py
+		env-$(PYTHON)/bin/ipython /tmp/hapi_demo.py
 
 ################################################################################
 # Release a package to pypi.org
@@ -226,10 +225,20 @@ release-test-all:
 	done
 
 release-test:
-	rm -rf env
-	source activate $(PYTHON); pip install virtualenv; $(PYTHON) -m virtualenv env
-	make venv-test PACKAGE='dist/hapiclient-$(VERSION).tar.gz'
-################################################################################
+	make env-$(PYTHON)
+	make release-venv-test PYTHON=$(PYTHON)
+
+release-venv-test:
+	cp hapi_demo.py /tmp # TODO: Explain why needed.
+	cp hapi_demo.py /tmp
+	source env-$(PYTHON)/bin/activate && \
+		pip install pytest deepdiff ipython && \
+		pip uninstall -y hapiplot && \
+		pip install --pre hapiplot && \
+		pip uninstall -y hapiclient && \
+		pip install hapiclient && \
+		env-$(PYTHON)/bin/pytest -v -m 'short' hapiclient/test/test_hapi.py && \
+		env-$(PYTHON)/bin/ipython /tmp/hapi_demo.py
 
 ################################################################################
 # Update version based on content of CHANGES.txt
