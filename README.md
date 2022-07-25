@@ -88,7 +88,7 @@ git clone https://github.com/hapi-server/client-python
 cd client-python; pip install -e .
 ```
 
-or, create an isolated Anaconda installation (downloads and installs latested Miniconda3) using
+or, create an isolated Anaconda installation (downloads and installs latest Miniconda3) using
 
 ``` bash
 make install PYTHON=python3.6

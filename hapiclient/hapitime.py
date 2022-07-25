@@ -35,9 +35,9 @@ def hapitime_reformat(form_to_match, given_form, logging=False):
     Examples
     --------
     ::
-
-        hapitime_format_str('1989Z', '1989-01Z') # 1989Z
-        hapitime_format_str('1989-001T00:00Z', '1999-01-21Z') # 1999-021T00:00Z
+        from hapiclient.hapitime import hapitime_reformat
+        hapitime_reformat('1989Z', '1989-01Z') # 1989Z
+        hapitime_reformat('1989-001T00:00Z', '1999-01-21Z') # 1999-021T00:00Z
 
     """
 
@@ -93,7 +93,15 @@ def hapitime_reformat(form_to_match, given_form, logging=False):
 
 
 def hapitime_format_str(Time):
-    """Determine the time format string for a HAPI time."""
+    """Determine the time format string for a HAPI time.
+    Examples
+    --------
+    ::
+        from hapiclient.hapitime import hapitime_reformat
+        hapitime_format_str(['1989Z']) # %YZ
+        hapitime_format_str(['1989-347Z']) # %Y-%jZ
+        hapitime_format_str(['2002-03-04T05:06Z']) # '%Y-%m-%dT%H:%MZ'
+    """
 
     d = 0
     # Catch case where no trailing Z
@@ -200,10 +208,10 @@ def hapitime2datetime(Time, **kwargs):
     
     ::
     
-        from hapiclient.time import hapitime2datetime
+        from hapiclient.hapitime import hapitime2datetime
         import numpy as np
     
-        hapitime2datetime(np.array([b'1970-01-01T00:00:00.000Z']))
+        hapitime2datetime(np.array([b'1970-01-01T00:00:00.000Z']))  # array([datetime.datetime(1970, 1, 1, 0, 0, tzinfo=<UTC>)], dtype=object)
         hapitime2datetime(np.array(['1970-01-01T00:00:00.000Z']))
     
         hapitime2datetime([b'1970-01-01T00:00:00.000Z'])
