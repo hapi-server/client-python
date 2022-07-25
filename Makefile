@@ -2,8 +2,6 @@
 #   make repository-test python=PYTHON # Test using PYTHON (e.g, python3.6)
 #   make repository-test-all           # Test on all versions in $(PYTHONVERS) var below
 #
-# On Windows, commands must be executed from Anaconda Powershell Prompt.
-#
 # Beta releases:
 # 1. Run make repository-test-all
 # 2. For non-doc/formatting changes, update version in CHANGES.txt.
@@ -16,6 +14,7 @@
 #  3. make package-test-all
 #
 # Upload package to pypi.org
+#  0. Remove the "b" in the version in CHANGES.txt
 #  1. make release
 #  2. Wait ~5 minutes and execute
 #  3. make release-test-all
@@ -50,7 +49,7 @@ PYTHONVERS=python3.8 python3.7 python3.6 python3.5 python2.7
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.2.5b
+VERSION=0.2.5
 SHELL:= /bin/bash
 #SHELL:= /c/Windows/system32/cmd
 

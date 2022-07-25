@@ -91,5 +91,6 @@ v0.2.3:
 v0.2.4:
 	2022-03-07 -- 88b0eb2 try/except on file read
 	2022-03-29 -- 0042abb Fix for method=''. Closes #47.
-v0.2.5b:
+v0.2.5:
 	2022-06-30 -- 10df388 Update docstring for hapi()
+	2022-07-12 -- 460c30b Final Unicode/Windows fixes
