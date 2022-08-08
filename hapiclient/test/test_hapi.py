@@ -290,6 +290,35 @@ def test_reader_long():
     assert compare.read(server, dataset, 'scalar,vector,spectra', run, opts)
 
 
+@pytest.mark.short
+def test_none_stop():
+    import numpy as np
+
+    from hapiclient import hapi
+    from hapiclient import hapitime2datetime
+    from hapiclient import datetime2hapitime
+    from datetime import timedelta
+
+    server     = 'http://hapi-server.org/servers/TestData2.0/hapi'
+    dataset    = 'dataset1'
+    parameters = 'scalar'
+
+    meta = hapi(server, dataset)
+    stop = meta['stopDate']
+    stop_dt = hapitime2datetime(stop)[0]
+
+    start_dt = stop_dt - timedelta(minutes=1)
+    start = datetime2hapitime(start_dt)
+
+    data1, meta1 = hapi(server, dataset, parameters, start, None)
+
+    data2, meta2 = hapi(server, dataset, parameters, start, stop)
+
+    allequal = True
+    for name in data1.dtype.names:
+        assert np.array_equal(data1[name], data2[name])
+
+
 def runall():
     from hapiclient.test import test_hapi
     for i in dir(test_hapi):
@@ -305,6 +334,7 @@ if __name__ == '__main__':
     #runall()
     #test_dataset()
     #test_reader_short()
-    test_unicode()
+    #test_unicode()
     #test_request2path()
     #test_reader_long()
+    test_none_stop()

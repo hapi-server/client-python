@@ -242,12 +242,9 @@ def hapitime2datetime(Time, **kwargs):
 
     if type(Time) == list:
         Time = np.asarray(Time)
-    if type(Time) == str or type(Time) == bytes:
-        Time = np.asarray([Time])
 
     if type(Time) != np.ndarray:
-        error('Problem with time data.' + '\n')
-        return
+        Time = np.asarray([Time])
 
     if Time.size == 0:
         error('Time array is empty.' + '\n')

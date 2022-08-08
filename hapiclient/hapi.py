@@ -194,10 +194,10 @@ def hapi(*args, **kwargs):
         A comma-separated list of parameters in `dataset`
     start: str
         The start time of the requested data
-    stop: str
+    stop: str or None
         The end time of the requested data; end times are exclusive - the
         last data record returned by a HAPI server should have a timestamp
-        before `start`.
+        before `start`. If `None`, `stopDate` is used.
     options: dict
             `logging` (``False``) - Log to console
 
@@ -337,7 +337,7 @@ def hapi(*args, **kwargs):
             START = START + 'Z'
     if nin > 4:
         STOP = args[4]
-        if STOP[-1] != 'Z':
+        if STOP is not None and STOP[-1] != 'Z':
             # TODO: Consider warning.
             STOP = STOP + 'Z'
 
@@ -421,6 +421,12 @@ def hapi(*args, **kwargs):
         fnamepkl = fname_root + '.pkl'
 
         if nin == 5:  # Data requested
+
+            if STOP is None:
+                log('STOP was given as None. Getting stopDate for dataset.', opts)
+                meta = hapi(SERVER, DATASET)
+                STOP = meta['stopDate']
+                log('Using STOP = {STOP}', opts)
 
             tic_totalTime = time.time()
 
