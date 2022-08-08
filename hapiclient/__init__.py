@@ -10,7 +10,7 @@ from hapiclient.hapitime import datetime2hapitime
 # Allow "from hapiclient import HAPIError"
 from hapiclient.util import HAPIError
 
-__version__ = '0.2.4'
+__version__ = '0.2.5'
 
 import sys
 if sys.version_info[0] < 3:

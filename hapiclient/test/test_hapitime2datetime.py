@@ -15,8 +15,9 @@ from hapiclient import hapitime2datetime
 from hapiclient.util import log
 
 # Create empty file
-with open(os.path.realpath(__file__)[0:-2] + "log", "w") as f: pass
-logging = open(os.path.realpath(__file__)[0:-2] + "log", "a")
+logfile = os.path.splitext(__file__)[0] + "log"
+with open(logfile + ".log", "w") as f: pass
+logging = open(logfile + "log", "a")
 
 expected = '1970-01-01T00:00:00.000000Z'
 

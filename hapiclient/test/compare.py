@@ -101,13 +101,16 @@ def closeFloats(a, b):
 
 
 # Create empty file
-logfile = os.path.realpath(__file__)[0:-2] + "log"
+logfile = os.path.splitext(__file__)[0] + ".log"
 with open(logfile, "w") as f: pass
-
-
 def xprint(msg):
     print(msg)
-    f = open(logfile, "a")
+    import sys
+    if sys.version_info[0:2] < (3, 5):
+        f = open(logfile, "a")
+    else:
+        f = open(logfile, "a", encoding="utf-8")
+
     f.write(msg + "\n")
     f.close()
 

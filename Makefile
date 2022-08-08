@@ -1,6 +1,6 @@
 # Test hapi() data read functions using repository code:
-#   make repository-test     # Test using $(PYTHON)
-#   make repository-test-all # Test on all versions in $(PYTHONVERS)
+#   make repository-test python=PYTHON # Test using PYTHON (e.g, python3.6)
+#   make repository-test-all           # Test on all versions in $(PYTHONVERS) var below
 #
 # Beta releases:
 # 1. Run make repository-test-all
@@ -14,6 +14,7 @@
 #  3. make package-test-all
 #
 # Upload package to pypi.org
+#  0. Remove the "b" in the version in CHANGES.txt
 #  1. make release
 #  2. Wait ~5 minutes and execute
 #  3. make release-test-all
@@ -39,8 +40,7 @@ URL=https://upload.pypi.org/
 REP=pypi
 
 # Default Python version to use for tests
-#PYTHON=python2.7
-PYTHON=python3.5
+PYTHON=python3.8
 PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
@@ -49,49 +49,72 @@ PYTHONVERS=python3.8 python3.7 python3.6 python3.5 python2.7
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.2.4
+VERSION=0.2.5
 SHELL:= /bin/bash
+#SHELL:= /c/Windows/system32/cmd
 
 LONG_TESTS=false
 
-CONDA=./anaconda3
+CONDA=$(PWD)/anaconda3
 
-# ifeq ($(shell uname -s),MINGW64_NT-10.0-18362)
-ifeq ($(TRAVIS_OS_NAME),windows)
-  # CONDA=/c/tools/anaconda3
-	CONDA=/c/tools/miniconda3
+ifeq ($(OS),Windows_NT)
+	CONDA=C:/Users/weigel/git/client-python/anaconda3
+	TMP=tmp/
 endif
-
-SOURCE_CONDA=source $(CONDA)/etc/profile.d/conda.sh
-CONDA_ACTIVATE=$(SOURCE_CONDA); conda activate
-
-# ifeq ($(shell uname -s),MINGW64_NT-10.0-18362)
-ifeq ($(TRAVIS_OS_NAME),windows)
-	CONDA_ACTIVATE=source $(CONDA)/Scripts/activate; conda activate
-endif
+CONDA_ACTIVATE=source $(CONDA)/etc/profile.d/conda.sh; conda activate
 
 ################################################################################
+install: $(CONDA)/envs/$(PYTHON)
+	$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
+	@printf "\n--------------------------------------------------------------------------------\n"
+	@printf "To use created Anaconda environment, execute\n  $(CONDA_ACTIVATE) $(PYTHON)"
+	@printf "\n--------------------------------------------------------------------------------\n"
+
 test:
 	make repository-test-all
 
-# Test contents in repository using different python versions
+####################################################################
+# Tox notes
+#
+# Ideally local tests would use same commands as .tox.ini and .travis.yml.
+#
+# To use tox -e short-test, it seems we need to install and activate
+# each version of python. So using tox locally does not seem to make
+# things much simpler than `make repository-test`, which installs
+# interpreter and runs tests.
+#
+# However, Travis tests use tox-anaconda and it seems creation of 
+# virtual environment is done automatically.
+#
+#repository-test-all-tox:
+#	tox -e short-test
+#repository-test-tox: 
+# # Does not work
+#	tox -e py$(subst .,,$(PYTHON_VER)) short-test
+####################################################################
+
+# Test contents in repository using different Python versions
 repository-test-all:
-	rm -rf $(CONDA)
+	@make clean
+	#rm -rf $(CONDA)
 	@ for version in $(PYTHONVERS) ; do \
 		make repository-test PYTHON=$$version ; \
 	done
 
 repository-test:
 	@make clean
-	rm -rf $(CONDA)
+ifeq ($(OS),Windows_NT)
+	-@type NUL >> filename # Not tested
+else
+	-@touch $(CONDA) # If dir exists but Makefile was edited, this prevents re-install.
+endif
 	make condaenv PYTHON=$(PYTHON)
-
 	$(CONDA_ACTIVATE) $(PYTHON); pip install pytest deepdiff; pip install .
 
 ifeq (LONG_TESTS,true)
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v -m 'long' hapiclient/test/test_hapi.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v -m 'long' hapiclient/test/test_hapi.py
 else
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v -m 'short' hapiclient/test/test_hapi.py	
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v -m 'short' hapiclient/test/test_hapi.py
 endif
 
 	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_chunking.py
@@ -103,31 +126,46 @@ endif
 ################################################################################
 # Anaconda install
 CONDA_PKG=Miniconda3-latest-Linux-x86_64.sh
+CONDA_PKG_PATH=/tmp/$(CONDA_PKG)
 ifeq ($(shell uname -s),Darwin)
 	CONDA_PKG=Miniconda3-latest-MacOSX-x86_64.sh
+	CONDA_PKG_PATH=/tmp/$(CONDA_PKG)
+endif
+ifeq ($(OS),Windows_NT)
+	CONDA_PKG=Miniconda3-latest-Windows-x86_64.exe
+	CONDA_PKG_PATH=C:/tmp/$(CONDA_PKG)
 endif
 
-condaenv:
-# ifeq ($(shell uname -s),MINGW64_NT-10.0-18362)
-ifeq ($(TRAVIS_OS_NAME),windows)
-	cp $(CONDA)/Library/bin/libcrypto-* $(CONDA)/DLLs/
-	cp $(CONDA)/Library/bin/libssl-* $(CONDA)/DLLs/
+activate:
+	@echo "On command line enter:"
+	@echo "$(CONDA_ACTIVATE) $(PYTHON)"
 
-	# $(CONDA)/Scripts/conda config --set ssl_verify no
-	$(CONDA)/Scripts/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
-else
-	make $(CONDA)/envs/$(PYTHON) PYTHON=$(PYTHON)
-endif
+condaenv: $(CONDA)/envs/$(PYTHON)
+	make $(CONDA)/envs/$(PYTHON)
 
-$(CONDA)/envs/$(PYTHON): ./anaconda3
+$(CONDA)/envs/$(PYTHON): $(CONDA)
+ifeq ($(OS),Windows_NT)
 	$(CONDA_ACTIVATE); \
-		$(CONDA)/bin/conda create -y --name $(PYTHON) python=$(PYTHON_VER)
+		$(CONDA)/Scripts/conda \
+			create -y --name $(PYTHON) python=$(PYTHON_VER)
+else
+$(CONDA_ACTIVATE); \
+        $(CONDA)/bin/conda \
+        	create -y --name $(PYTHON) python=$(PYTHON_VER)
+endif
 
-./anaconda3: /tmp/$(CONDA_PKG)
-	bash /tmp/$(CONDA_PKG) -b -p $(CONDA)
+$(CONDA): $(CONDA_PKG_PATH)
+ifeq ($(OS),Windows_NT)
+	# Not working; path is not set
+	#start "$(CONDA_PKG_PATH)" /S /D=$(CONDA)
+	echo "!!! Install miniconda3 into $(CONDA) manually by executing 'start $(PWD)/anaconda3'. Then re-execute make command."
+	exit 1
+else	
+	bash $(CONDA_PKG_PATH) -b -p $(CONDA)
+endif
 
-/tmp/$(CONDA_PKG):
-	curl https://repo.anaconda.com/miniconda/$(CONDA_PKG) > /tmp/$(CONDA_PKG)
+$(CONDA_PKG_PATH):
+	curl https://repo.anaconda.com/miniconda/$(CONDA_PKG) > $(CONDA_PKG_PATH)
 ################################################################################
 
 ################################################################################
@@ -208,10 +246,7 @@ version-tag:
 
 ################################################################################
 # Install package in local directory (symlinks made to local dir)
-install-local:
-	$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
-
-install:
+install-pip:
 	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple
 	conda list | grep hapiclient
 	pip list | grep hapiclient

@@ -1,4 +1,5 @@
 [![DOI](https://zenodo.org/badge/93170857.svg)](https://zenodo.org/badge/latestdoi/93170857)
+[![Build Status](https://app.travis-ci.com/hapi-server/client-python.svg?branch=master)](https://app.travis-ci.com/hapi-server/client-python)
 
 **HAPI Client for Python**
 
@@ -85,6 +86,13 @@ The HAPI client data model is intentionally basic. There is an ongoing discussio
 ```bash
 git clone https://github.com/hapi-server/client-python
 cd client-python; pip install -e .
+```
+
+or, create an isolated Anaconda installation (downloads and installs latest Miniconda3) using
+
+``` bash
+make install PYTHON=python3.6
+# Execute command displayed to activate isolated environment
 ```
 
 The command `pip install -e .` creates symlinks so that the local package is

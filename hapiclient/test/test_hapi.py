@@ -221,31 +221,53 @@ def test_subset_short():
     ok = ok and np.array_equal(data['vectorint'], data2['vectorint'])
     assert ok
 
+@pytest.mark.short
+def test_request2path():
+
+    from hapiclient.hapi import request2path;
+
+    import platform
+    if platform.system() == 'Windows':
+        p = request2path('http://server/dir1/dir2','xx','abc<>:"/|?*.','2000-01-01T00:00:00.Z','2000-01-01T00:00:00.Z','')
+        assert p == 'server_dir1_dir2\\xx_abc@lt@@gt@@colon@@doublequote@@forwardslash@@pipe@@questionmark@@asterisk@._20000101T000000_20000101T000000'
+    else:
+        p = request2path('http://server/dir1/dir2','xx/yy','abc/123','2000-01-01T00:00:00.Z','2000-01-01T00:00:00.Z','')
+        assert p == 'server_dir1_dir2/xx@forwardslash@yy_abc@forwardslash@123_20000101T000000_20000101T000000'
+
 
 @pytest.mark.short
 def test_unicode():
 
+    from hapiclient.util import warning, unicode_error_message
+
     server     = 'http://hapi-server.org/servers/TestData3.1/hapi';
     #datasets   = ["dataset1", "dataset1-Zα☃"]
     datasets   = ["dataset1-Zα☃"]
+    #datasets = ["dataset1"]
 
     run = 'short'
 
     opts = {
-                'logging': logging,
+                'logging': True,
                 'cachedir': '/tmp/hapi-data',
                 'usecache': False,
-                'cache': True
+                'cache': False
             }
 
 
+    shutil.rmtree(opts['cachedir'], ignore_errors=True)
     for dataset in datasets:
+        if unicode_error_message(dataset) != "":
+            warning("Skipping "+ str(dataset.encode('utf-8')) + " due to " + unicode_error_message(dataset))
+            continue
         meta = hapi(server, dataset)
         for p in meta['parameters']:
 
             # Read one parameter
-            parameter = p['name']
-            shutil.rmtree(opts['cachedir'], ignore_errors=True)
+            parameter = p['name']        
+            if unicode_error_message(parameter) != "":
+                warning("Skipping "+ str(parameter.encode('utf-8')) + " due to " + unicode_error_message(parameter))
+                continue
 
             assert compare.read(server, dataset, parameter, run, opts.copy())
             assert compare.cache(server, dataset, parameter, opts.copy())
@@ -268,8 +290,21 @@ def test_reader_long():
     assert compare.read(server, dataset, 'scalar,vector,spectra', run, opts)
 
 
+def runall():
+    from hapiclient.test import test_hapi
+    for i in dir(test_hapi):
+        item = getattr(test_hapi,i)
+        if callable(item) and item.__name__.startswith("test_"):
+            if item.__name__ == 'test_reader_long':
+                continue
+            print("Running " + item.__name__)
+            item()
+
+
 if __name__ == '__main__':
+    #runall()
     #test_dataset()
     #test_reader_short()
     test_unicode()
+    #test_request2path()
     #test_reader_long()
