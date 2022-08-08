@@ -118,9 +118,10 @@ else
 	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v -m 'short' hapiclient/test/test_hapi.py
 endif
 
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v hapiclient/test/test_chunking.py
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v hapiclient/test/test_hapitime2datetime.py
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v hapiclient/test/test_hapitime_reformat.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_chunking.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_hapitime2datetime.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_datetime2hapitime.py
+	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_hapitime_reformat.py
 ################################################################################
 
 ################################################################################
