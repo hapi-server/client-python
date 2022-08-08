@@ -326,20 +326,21 @@ def hapitime2datetime(Time, **kwargs):
 def datetime2hapitime(dts):
     """Convert Python datetime object(s) to ISO 8601 string(s)
 
-     Typical usage:
-    
+    Typical usage:
     ::
-    
+
+        from hapiclient import datetime2hapitime
         import datetime
-        dts = [datetime.datetime(2000,1,1),datetime.datetime(2000,1,2)]
+        dts = [datetime.datetime(2000, 1, 1), datetime.datetime(2000, 1, 2)]
         hapi_times = datetime2hapitime(dts)
-        print(hapi_timies)    
-    
+        print(hapi_times) 
+        # ['2000-01-01T00:00:00.000000Z', '2000-01-02T00:00:00.000000Z']
+
     Parameter
     ---------
     dts:
-        - A Python datetime object
-        - A list of Python datetime object(s)
+    - A Python datetime object
+    - A list of Python datetime object(s)
 
     Returns
     -------
@@ -347,18 +348,14 @@ def datetime2hapitime(dts):
     - A list of ISO 8601 strings (if input is list of Python datetime object)
     """
 
-    # TODO: Add minimal keyword?
-
-    import datetime
-
     single = False
     if isinstance(dts, list) == False:
         single = True
         dts = [dts]
 
-    hapitimes = [dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ') for dt in dts]
+    hapi_times = [dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ') for dt in dts]
 
     if single == True:
-        return hapitimes[0]
+        return hapi_times[0]
     else:
-        return hapitimes
+        return hapi_times
