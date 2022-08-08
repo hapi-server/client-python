@@ -2,6 +2,7 @@ hapi-data/
 *.pyc
 tmp/
 misc/tmp/
+.spyproject/
 *~
 .DS_Store
 hapiclient.egg-info/
