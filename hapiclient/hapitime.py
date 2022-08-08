@@ -329,8 +329,6 @@ def hapitime2datetime(Time, **kwargs):
         pythonDateTime = np.reshape(pythonDateTime, shape)
 
     return pythonDateTime
-<<<<<<< HEAD
-=======
 
 
 def datetime2hapitime(dts):
@@ -369,4 +367,3 @@ def datetime2hapitime(dts):
         return hapi_times[0]
     else:
         return hapi_times
->>>>>>> datetime2hapitime
