@@ -95,3 +95,5 @@ v0.2.5:
 	2022-06-30 -- 10df388 Update docstring for hapi()
 	2022-07-12 -- 460c30b Final Unicode/Windows fixes
 v0.2.6b:
+	2022-08-08 -- 508fb20-3f1168c Add datetime2hapitime
+
