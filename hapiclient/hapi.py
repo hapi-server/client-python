@@ -769,6 +769,8 @@ def hapi(*args, **kwargs):
         else:
             # HAPI CSV
 
+            file_empty = False
+
             if opts["cache"]:
                 log('Writing %s to %s' % (urlcsv, fnamecsv.replace(urld + '/', '')), opts)
                 tic0 = time.time()
@@ -776,38 +778,48 @@ def hapi(*args, **kwargs):
                 toc0 = time.time() - tic0
                 log('Reading and parsing %s' % fnamecsv.replace(urld + '/', ''), opts)
                 tic = time.time()
+                if os.path.getsize(fnamecsv) == 0:
+                    file_empty = True
+                    data = np.array([], dtype=dt)
             else:
                 from io import StringIO
-                #log('Writing %s to buffer' % urlcsv.replace(urld + '/', ''), opts)
+                log('Writing %s to buffer' % urlcsv.replace(urld + '/', ''), opts)
                 tic0 = time.time()
                 fnamecsv = StringIO(urlopen(urlcsv).read().decode())
+                fnamecsv.seek(0, os.SEEK_END)
+                if fnamecsv.tell() == 0:
+                    file_empty = True
+                    data = np.array([], dtype=dt)
+                else:
+                    fnamecsv.seek(0)
                 toc0 = time.time() - tic0
                 log('Parsing StringIO buffer.', opts)
                 tic = time.time()
 
-            if not missing_length:
-                # All string and isotime parameters have a length in metadata.
-                if opts['method'] == 'numpy':
-                    data = np.genfromtxt(fnamecsv, dtype=dt, delimiter=',',
-                                            replace_space=' ',
-                                            deletechars='', encoding='utf-8')
-                if opts['method'] == '' or opts['method'] == 'pandas':
-                    # Read file into Pandas DataFrame
-                    df = pandas.read_csv(fnamecsv, sep=',', header=None,
-                                            encoding='utf-8')
-                    # Allocate output N-D array (It is not possible to pass dtype=dt
-                    # as computed to pandas.read_csv; pandas dtype is different
-                    # from numpy's dtype.)
-                    data = np.ndarray(shape=(len(df)), dtype=dt)
-                    # Insert data from dataframe 'df' columns into N-D array 'data'
-                    for i in range(0, len(pnames)):
-                        shape = np.append(len(data), psizes[i])
-                        # In numpy 1.8.2 and Python 2.7, this throws an error
-                        # for no apparent reason. Works as expected in numpy 1.10.4
-                        data[pnames[i]] = np.squeeze(
-                            np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1] + 1)], shape))
-            else:
-                data = parse_missing_length(fnamecsv, dt, cols, psizes, pnames, ptypes, opts)
+            if file_empty == False:
+                if not missing_length:
+                    # All string and isotime parameters have a length in metadata.
+                    if opts['method'] == 'numpy':
+                        data = np.genfromtxt(fnamecsv, dtype=dt, delimiter=',',
+                                                replace_space=' ',
+                                                deletechars='', encoding='utf-8')
+                    if opts['method'] == '' or opts['method'] == 'pandas':
+                        # Read file into Pandas DataFrame
+                        df = pandas.read_csv(fnamecsv, sep=',', header=None,
+                                                encoding='utf-8')
+                        # Allocate output N-D array (It is not possible to pass dtype=dt
+                        # as computed to pandas.read_csv; pandas dtype is different
+                        # from numpy's dtype.)
+                        data = np.ndarray(shape=(len(df)), dtype=dt)
+                        # Insert data from dataframe 'df' columns into N-D array 'data'
+                        for i in range(0, len(pnames)):
+                            shape = np.append(len(data), psizes[i])
+                            # In numpy 1.8.2 and Python 2.7, this throws an error
+                            # for no apparent reason. Works as expected in numpy 1.10.4
+                            data[pnames[i]] = np.squeeze(
+                                np.reshape(df.values[:, np.arange(cols[i][0], cols[i][1] + 1)], shape))
+                else:
+                    data = parse_missing_length(fnamecsv, dt, cols, psizes, pnames, ptypes, opts)
 
         toc = time.time() - tic
 

@@ -97,4 +97,5 @@ v0.2.5:
 v0.2.6b:
 	2022-08-08 -- 508fb20-3f1168c Add datetime2hapitime
 	2022-08-08 -- 8bfef2f Issue #10
+	2022-09-21 -- Issue #62
 

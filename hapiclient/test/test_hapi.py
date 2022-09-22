@@ -336,5 +336,5 @@ if __name__ == '__main__':
     #test_reader_short()
     #test_unicode()
     #test_request2path()
-    #test_reader_long()
-    test_none_stop()
+    test_reader_short()
+    #test_none_stop()

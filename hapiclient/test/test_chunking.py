@@ -51,7 +51,7 @@ def cat(d1, d2):
     return d12
 
 
-opts0 = {'logging': hapi_logging, 'usecache': False, 'cache': False}
+opts0 = {'logging': hapi_logging, 'usecache': False, 'cache': True, 'format': 'csv'}
 
 # Test dict.
 # Key indicates chunk size to use for chunk test
