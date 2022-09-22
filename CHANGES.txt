@@ -98,4 +98,7 @@ v0.2.6b:
 	2022-08-08 -- 508fb20-3f1168c Add datetime2hapitime
 	2022-08-08 -- 8bfef2f Allow start and stop to be None; https://github.com/hapi-server/client-python/issues/10
 	2022-09-21 -- bc70f3c CSV read failure; https://github.com/hapi-server/client-python/issues/62
+	2022-09-22 -- 373fdca Catch other CSV read failures
+v0.2.6b1:
+
 
