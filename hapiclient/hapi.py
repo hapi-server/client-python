@@ -734,7 +734,7 @@ def hapi(*args, **kwargs):
                 try:
                     data = np.fromfile(fnamebin, dtype=dt)
                 except:
-                    error('Could not read response from {}'.format(urlbin))
+                    error('Malformed response? Could not read: {}'.format(urlbin))
             else:
                 from io import BytesIO
                 log('Writing %s to buffer' % urlbin.replace(urld + '/', ''), opts)
@@ -746,7 +746,7 @@ def hapi(*args, **kwargs):
                 try:
                     data = np.frombuffer(buff.read(), dtype=dt)
                 except:
-                    error('Could not read response from {}'.format(urlbin))
+                    error('Malformed response? Could not read: {}'.format(urlbin))
 
             # Handle Unicode
             time_name = meta['parameters'][0]['name']
@@ -800,13 +800,24 @@ def hapi(*args, **kwargs):
                 if not missing_length:
                     # All string and isotime parameters have a length in metadata.
                     if opts['method'] == 'numpy':
-                        data = np.genfromtxt(fnamecsv, dtype=dt, delimiter=',',
-                                                replace_space=' ',
-                                                deletechars='', encoding='utf-8')
+                        try:
+                            data = np.genfromtxt(fnamecsv,
+                                                 dtype=dt,
+                                                 delimiter=',',
+                                                 replace_space=' ',
+                                                 deletechars='',
+                                                 encoding='utf-8')
+                        except:
+                            error('Malformed response? Could not read response: {}'.format(urlcsv))
                     if opts['method'] == '' or opts['method'] == 'pandas':
                         # Read file into Pandas DataFrame
-                        df = pandas.read_csv(fnamecsv, sep=',', header=None,
-                                                encoding='utf-8')
+                        try:
+                            df = pandas.read_csv(fnamecsv,
+                                                 sep=',',
+                                                 header=None,
+                                                 encoding='utf-8')
+                        except:
+                            error('Malformed response? Could not read response: {}'.format(urlcsv))
                         # Allocate output N-D array (It is not possible to pass dtype=dt
                         # as computed to pandas.read_csv; pandas dtype is different
                         # from numpy's dtype.)
