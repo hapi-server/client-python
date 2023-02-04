@@ -46,7 +46,7 @@ PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
 # TODO: Use tox.
-PYTHONVERS=python3.8 python3.7 python3.6 python3.5 python2.7    
+PYTHONVERS=python3.10 python3.9 python3.8 python3.7 python3.6 python3.5 python2.7    
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
@@ -82,9 +82,9 @@ test:
 # To use tox -e short-test, it seems we need to install and activate
 # each version of python. So using tox locally does not seem to make
 # things much simpler than `make repository-test`, which installs
-# interpreter and runs tests.
+# conda and virtual enviornments and runs tests.
 #
-# However, Travis tests use tox-anaconda and it seems creation of 
+# However, Travis tests use tox-travis and it seems creation of
 # virtual environment is done automatically.
 #
 #repository-test-all-tox:
@@ -104,11 +104,6 @@ repository-test-all:
 
 repository-test:
 	@make clean
-ifeq ($(OS),Windows_NT)
-	-@type NUL >> filename # Not tested
-else
-	-@touch $(CONDA) # If dir exists but Makefile was edited, this prevents re-install.
-endif
 	make condaenv PYTHON=$(PYTHON)
 	$(CONDA_ACTIVATE) $(PYTHON); pip install pytest deepdiff; pip install .
 
@@ -141,8 +136,8 @@ activate:
 	@echo "On command line enter:"
 	@echo "$(CONDA_ACTIVATE) $(PYTHON)"
 
-condaenv: $(CONDA)/envs/$(PYTHON)
-	make $(CONDA)/envs/$(PYTHON)
+condaenv:
+	make $(CONDA)/envs/$(PYTHON) PYTHON=$(PYTHON)
 
 $(CONDA)/envs/$(PYTHON): $(CONDA)
 ifeq ($(OS),Windows_NT)
@@ -150,9 +145,9 @@ ifeq ($(OS),Windows_NT)
 		$(CONDA)/Scripts/conda \
 			create -y --name $(PYTHON) python=$(PYTHON_VER)
 else
-$(CONDA_ACTIVATE); \
-        $(CONDA)/bin/conda \
-        	create -y --name $(PYTHON) python=$(PYTHON_VER)
+	$(CONDA_ACTIVATE); \
+		$(CONDA)/bin/conda \
+		create -y --name $(PYTHON) python=$(PYTHON_VER)
 endif
 
 $(CONDA): $(CONDA_PKG_PATH)
@@ -162,8 +157,11 @@ ifeq ($(OS),Windows_NT)
 	echo "!!! Install miniconda3 into $(CONDA) manually by executing 'start $(PWD)/anaconda3'. Then re-execute make command."
 	exit 1
 else	
-	bash $(CONDA_PKG_PATH) -b -p $(CONDA)
+	test -d anaconda3 || bash $(CONDA_PKG_PATH) -b -p $(CONDA)
 endif
+
+/tmp/$(CONDA_PKG):
+	curl https://repo.anaconda.com/miniconda/$(CONDA_PKG) > /tmp/$(CONDA_PKG) 
 
 $(CONDA_PKG_PATH):
 	curl https://repo.anaconda.com/miniconda/$(CONDA_PKG) > $(CONDA_PKG_PATH)

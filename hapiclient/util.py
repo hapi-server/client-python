@@ -154,7 +154,7 @@ def warning(*args):
 
     def prefix():
         import platform
-        prefix = "\x1b[31m[0;31mHAPIWarning:\x1b[0m "
+        prefix = "\x1b[31mHAPIWarning:\x1b[0m "
         if platform.system() == 'Windows' and pythonshell() == 'shell':
             prefix = "HAPIWarning: "        
 

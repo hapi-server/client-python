@@ -748,6 +748,7 @@ def hapi(*args, **kwargs):
                 except:
                     error('Malformed response? Could not read: {}'.format(urlbin))
 
+
             # Handle Unicode
             time_name = meta['parameters'][0]['name']
             datanew = np.ndarray(shape=data[time_name].shape, dtype=dto)
@@ -759,7 +760,7 @@ def hapi(*args, **kwargs):
                     # with Unicode, it automatically converts Unicode chars to
                     # slash encoded ASCII.
                     name = str(name)
-                if isinstance(dt[i][1], str) and 'U' in dto[i][1]:
+                if data[name].size > 0 and isinstance(dt[i][1], str) and 'U' in dto[i][1]:
                     # Decode data.
                     datanew[name] = np.char.decode(data[name])
                 else:
