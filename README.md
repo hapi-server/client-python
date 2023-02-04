@@ -18,9 +18,9 @@ The optional [hapiplot package](https://github.com/hapi-server/plot-python) prov
 To install `hapiplot`, use
 
 ```bash
-pip install hapiplot --upgrade
+python -m pip install hapiplot --upgrade
 # or
-pip install 'git+https://github.com/hapi-server/plot-python' --upgrade
+python -m pip install 'git+https://github.com/hapi-server/plot-python' --upgrade
 ```
 
 See the [Appendix](#appendix) for a fail-safe installation method.
@@ -85,7 +85,7 @@ The HAPI client data model is intentionally basic. There is an ongoing discussio
 
 ```bash
 git clone https://github.com/hapi-server/client-python
-cd client-python; pip install -e .
+cd client-python; python -m pip install -e .
 ```
 
 or, create an isolated Anaconda installation (downloads and installs latest Miniconda3) using
@@ -96,7 +96,7 @@ make install PYTHON=python3.6
 ```
 
 The command `pip install -e .` creates symlinks so that the local package is
-used instead of an installed package. You may need to execute `pip uninstall hapiclient` to ensure the local package is used. To check the version installed, use `pip list | grep hapiclient`.
+used instead of an installed package. You may need to execute `python -m pip uninstall hapiclient` to ensure the local package is used. To check the version installed, use `python -m pip list | grep hapiclient`.
 
 To run tests before a commit, execute
 
@@ -115,26 +115,3 @@ test_reader_short()
 
 Submit bug reports and feature requests on the [repository issue
 tracker](https://github.com/hapi-server/client-python/issues>).
-
-# Appendix
-
-Fail-safe installation
-
-Python command line:
-
-```python
-import os
-print(os.popen("pip install hapiclient").read())
-```
-
-The above executes and displays the output of the operating system
-command `pip install hapiclient` using the shell environment
-associated with that installation of Python.
-
-This method addresses a problem that is sometimes encountered when
-attempting to use `pip` packages in Anaconda. To use a `pip` package
-in Anaconda, one must use the version of `pip` installed with Anaconda
-(it is usually under a subdirectory with the name `anaconda/`) as
-opposed to the one installed with the operating system. To see the
-location of ``pip`` used in a given Python session, enter
-`print(os.popen("which pip").read())`.
