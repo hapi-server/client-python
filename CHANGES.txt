@@ -100,5 +100,5 @@ v0.2.6b:
 	2022-09-21 -- bc70f3c CSV read failure; https://github.com/hapi-server/client-python/issues/62
 	2022-09-22 -- 373fdca Catch other CSV read failures
 v0.2.6b1:
-
+	2023-02-04 -- 2ef7cff Unicode fix; Log string fix
 

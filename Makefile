@@ -45,8 +45,7 @@ PYTHON=python3.8
 PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
-# TODO: Use tox.
-PYTHONVERS=python3.10 python3.9 python3.8 python3.7 python3.6 python3.5 python2.7    
+PYTHONVERS=python3.12 python3.11 python3.10 python3.9 python3.8 python3.7 python3.6 python3.5
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
@@ -156,12 +155,9 @@ ifeq ($(OS),Windows_NT)
 	#start "$(CONDA_PKG_PATH)" /S /D=$(CONDA)
 	echo "!!! Install miniconda3 into $(CONDA) manually by executing 'start $(PWD)/anaconda3'. Then re-execute make command."
 	exit 1
-else	
+else
 	test -d anaconda3 || bash $(CONDA_PKG_PATH) -b -p $(CONDA)
 endif
-
-/tmp/$(CONDA_PKG):
-	curl https://repo.anaconda.com/miniconda/$(CONDA_PKG) > /tmp/$(CONDA_PKG) 
 
 $(CONDA_PKG_PATH):
 	curl https://repo.anaconda.com/miniconda/$(CONDA_PKG) > $(CONDA_PKG_PATH)

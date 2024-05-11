@@ -242,7 +242,7 @@ def test_unicode():
 
     server     = 'http://hapi-server.org/servers/TestData3.1/hapi';
     #datasets   = ["dataset1", "dataset1-Zα☃"]
-    datasets   = ["dataset1-Zα☃"]
+    datasets   = ["dataset1-Aα☃"]
     #datasets = ["dataset1"]
 
     run = 'short'
