@@ -49,7 +49,7 @@ PYTHONVERS=python3.12 python3.11 python3.10 python3.9 python3.8 python3.7 python
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.2.6b1
+VERSION=0.2.6
 SHELL:= /bin/bash
 #SHELL:= /c/Windows/system32/cmd
 

@@ -101,4 +101,6 @@ v0.2.6b:
 	2022-09-22 -- 373fdca Catch other CSV read failures
 v0.2.6b1:
 	2023-02-04 -- 2ef7cff Unicode fix; Log string fix
+	2024-05-11 -- fba4ad3 Testing Updates
+v0.2.6:
 
