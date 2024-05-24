@@ -209,9 +209,8 @@ release:
 
 release-upload:
 	pip install twine
-	echo "rweigel, t1p"
 	twine upload \
-		-r $(REP) dist/hapiclient-$(VERSION).tar.gz \
+		-r $(REP) dist/hapiclient-$(VERSION).tar.gz -u __token__ \
 		&& echo Uploaded to $(subst upload.,,$(URL))/project/hapiclient/
 
 release-test-all:
