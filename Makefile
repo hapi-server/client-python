@@ -1,6 +1,6 @@
 # Test hapi() data read functions using repository code:
 #   make repository-test PYTHON=_PYTHON_ # Test using _PYTHON_ (e.g, python3.6)
-#   make repository-test-all           # Test on all versions in $(PYTHONVERS) var below
+#   make repository-test-all             # Test on all versions in $(PYTHONVERS) var below
 #
 # Beta releases:
 # 1. Run make repository-test-all
@@ -27,7 +27,7 @@
 #       git commit -a -m "Update version for next release"
 #     This will update the version information in the repository to indicate it
 #     is now in a pre-release state.
-#  5. Manually create a relase at https://github.com/hapi-server/client-python/releases 
+#  5. Manually create a release at https://github.com/hapi-server/client-python/releases 
 #     (could do this automatically using https://stackoverflow.com/questions/21214562/how-to-release-versions-on-github-through-the-command-line)
 #  Notes:
 #   1. make repository-test tests with Anaconda virtual environment
@@ -49,7 +49,7 @@ PYTHONVERS=python3.13 python3.12 python3.11 python3.10 python3.9 python3.8 pytho
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.2.6
+VERSION=0.2.7b1
 SHELL:= /bin/bash
 #SHELL:= /c/Windows/system32/cmd
 
