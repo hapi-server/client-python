@@ -1,5 +1,5 @@
 # Test hapi() data read functions using repository code:
-#   make repository-test python=PYTHON # Test using PYTHON (e.g, python3.6)
+#   make repository-test PYTHON=_PYTHON_ # Test using _PYTHON_ (e.g, python3.6)
 #   make repository-test-all           # Test on all versions in $(PYTHONVERS) var below
 #
 # Beta releases:
@@ -45,7 +45,7 @@ PYTHON=python3.8
 PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
-PYTHONVERS=python3.12 python3.11 python3.10 python3.9 python3.8 python3.7 python3.6 python3.5
+PYTHONVERS=python3.13 python3.12 python3.11 python3.10 python3.9 python3.8 python3.7 python3.6 python3.5
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.

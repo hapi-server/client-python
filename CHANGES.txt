@@ -104,3 +104,5 @@ v0.2.6b1:
 	2024-05-11 -- fba4ad3 Testing Updates
 v0.2.6:
 	2023-05-24 -- Use token for PyPi in Makefile
+v0.2.7b1:
+	2025-03-01 -- https://github.com/hapi-server/client-python/issues/76
