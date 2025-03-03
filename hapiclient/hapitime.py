@@ -272,7 +272,8 @@ def hapitime2datetime(Time, **kwargs):
 
     try:
         # This is the fastest conversion option. But it will fail on YYYY-DOY
-        # format and other valid ISO 8601 dates such as 2001-01-01T00:00:03.Z
+        # format and other valid^* ISO 8601 dates such as 2001-01-01T00:00:03.Z
+        # ^*Maybe not: https://github.com/hapi-server/client-python/issues/76
         # When infer_datetime_format is used, a TimeStamp object returned,
         # which is the reason for the to_pydatetime() call. (When format=... is
         # used, a datetime object is returned.)
@@ -281,7 +282,11 @@ def hapitime2datetime(Time, **kwargs):
         # is the reason for the call to tz_convert(tzinfo).
         # TODO: Use hapitime_format_str() and pass this as format=...
         Timeo = Time[0]
-        Time = pandas.to_datetime(Time, infer_datetime_format=True).tz_convert(tzinfo).to_pydatetime()
+        pandas_major_version = int(pandas.__version__.split('.')[0])
+        if pandas_major_version < 2:
+            Time = pandas.to_datetime(Time, infer_datetime_format=True).tz_convert(tzinfo).to_pydatetime()
+        else:
+            Time = pandas.to_datetime(Time).tz_convert(tzinfo).to_pydatetime()
         if reshape:
             Time = np.reshape(Time, shape)
         toc = time.time() - tic
