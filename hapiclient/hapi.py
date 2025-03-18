@@ -250,7 +250,7 @@ def hapi(*args, **kwargs):
                     Cadence = PT1M and request for
 
                         start/stop=1999-11-12T00:10:00/stop=1999-11-12T12:09:00
-                        
+
                         Chunk size is P1D and requested time range < 1/2 of this
                         =>  Default behavior
 
@@ -288,12 +288,12 @@ def hapi(*args, **kwargs):
         `HAPI catalog response JSON structure <https://github.com/hapi-server/data-specification/blob/master/hapi-dev/HAPI-data-access-spec-dev.md#35-catalog>`_.
 
         ``parameters = hapi(server, dataset)`` returns a dict containing the HAPI info metadata for all parameters
-        in the string `dataset`. The dictionary structure follows the 
+        in the string `dataset`. The dictionary structure follows the
         `HAPI info response JSON structure <https://github.com/hapi-server/data-specification/blob/master/hapi-dev/HAPI-data-access-spec-dev.md#36-info>`_.
 
         ``meta = hapi(server, dataset, parameters)`` returns a dict containing the  HAPI info metadata
         for each parameter in the comma-separated string ``parameters``. The
-        dictionary structure follows 
+        dictionary structure follows
         `HAPI info response JSON structure <https://github.com/hapi-server/data-specification/blob/master/hapi-dev/HAPI-data-access-spec-dev.md#36-info>`_.
 
         ``data, = hapi(server, dataset, parameters, start, stop)`` returns a
@@ -1058,3 +1058,64 @@ def parse_missing_length(fnamecsv, dt, cols, psizes, pnames, ptypes, opts):
             # data2[pnames[i]] = np.array(data[pnames[i]],copy=False)
 
     return data2
+
+def _error_if_bad_status(result):
+    """Raises HAPIError if the result is not 1200"""
+    if (result['status']['code'] != 1200):
+        error(result['status']['message'])
+
+def print_hapidump(dump):
+    """Prints the result of a hapidump in human readable format
+
+    Parameters
+    ----------
+    dump: list
+        A list returned by hapidump
+
+    """
+    for dataset in dump:
+        print("id: " + dataset['id'])
+        if ('title' in dataset):
+            print("    " + dataset['title'])
+        print("Available Data:")
+        for parameter in dataset['parameters']:
+            print("    " + parameter['name'])
+        print("---------------")
+
+def hapidump(server):
+    """Reports all data types and parameters available from a HAPI server.
+
+    Version: TBD
+
+    Parameters
+    ----------
+    server: str
+        A string with the URL to a HAPI compliant server. (A HAPI URL \
+        always ends with ``/hapi``).
+
+    Returns
+    -------
+    result:
+        An array containing metadata for all the available datasets and their associated parameters
+
+    References
+    ----------
+        * `HAPI Server Definition <https://github.com/hapi-server/data-specification>`_
+
+    """
+    # Start by querying all the available datasets
+    result = hapi(server)
+    # Verify the request was successful before continuing
+    _error_if_bad_status(result)
+
+    datasets = []
+    # Presumably the request was successful, so extract the catalog.
+    catalog = result['catalog']
+    # Iterate over each dataset and request its parameters
+    for dataset in catalog:
+        result = hapi(server, dataset['id'])
+        _error_if_bad_status(result)
+        dataset['parameters'] = result['parameters']
+    return catalog
+
+
