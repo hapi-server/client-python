@@ -17,7 +17,7 @@ else:
     install_requires.append("kiwisolver<=1.1")
 
 if sys.argv[1] == 'develop':
-    install_requires.append("deepdiff<3.3.0")
+    install_requires.append("deepdiff")
     if sys.version_info < (3, 6):
         install_requires.append("pytest<5.0.0")
     else:
