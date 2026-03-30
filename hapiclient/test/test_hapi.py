@@ -69,6 +69,7 @@ def test_dataset():
         return
     else:
         metatest = readpickle(pklFile)
+    import pdb; pdb.set_trace()
     assert DeepDiff(meta,metatest) == {}
 
 
@@ -332,9 +333,10 @@ def runall():
 
 if __name__ == '__main__':
     #runall()
-    #test_dataset()
+    test_dataset()
+    #test_parameter()
     #test_reader_short()
     #test_unicode()
     #test_request2path()
-    test_reader_short()
+    #test_reader_short()
     #test_none_stop()
