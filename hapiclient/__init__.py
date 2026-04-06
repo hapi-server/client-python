@@ -1,5 +1,6 @@
 # Allow "from hapiclient import hapi"
 from hapiclient.hapi import hapi
+from hapiclient.hapi import hapidump
 
 # Allow "from hapiclient import hapitime2datetime"
 from hapiclient.hapitime import hapitime2datetime
