@@ -105,7 +105,6 @@ def test_chunks():
             import warnings
             warnings.warn("Change server from dev to production for these tests")
 
-
         # Reference result. No splitting will be performed.
         opts1 = cat(opts0, {'dt_chunk': None})
         data1, meta1 = hapi(s, d, p, td[key]['start'], td[key]['stop'], **opts1)

@@ -4,7 +4,7 @@ import shutil
 
 from hapiclient import hapi
 
-debug = False
+debug = True
 
 def comparisonOK(a, b, nolength=False, a_name="First", b_name="Second"):
 
@@ -56,9 +56,21 @@ def comparisonOK(a, b, nolength=False, a_name="First", b_name="Second"):
 def equal(a, b):
     allequal = True
     for name in a.dtype.names:
-        if not np.array_equal(a[name], b[name]):
+        if np.issubdtype(a[name].dtype, np.double) or np.issubdtype(a[name].dtype, np.floating):
+            try:
+                np.testing.assert_array_equal(a[name], b[name])
+            except AssertionError:
+                allequal = False
+            # nan equalities only supported in assert_array_equal before NumPy 1.19.
+            #ok = np.array_equal(a[name], b[name], equal_nan=True)
+        else:
+            ok = np.array_equal(a[name], b[name])
+        if not ok:
             allequal = False
-            if debug: print(name + ' values differ.')
+            if debug:
+                print(name + ' values differ.')
+                print(a[name])
+                print(b[name])
 
     return allequal
 

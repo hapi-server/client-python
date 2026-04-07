@@ -105,5 +105,6 @@ v0.2.6b1:
 v0.2.6:
 	2023-05-24 -- Use token for PyPi in Makefile
 v0.2.7b1:
-	2025-03-01 -- https://github.com/hapi-server/client-python/issues/76
-	2025-03-01 -- https://github.com/hapi-server/client-python/issues/78
+	2025-03-01 -- Unrecognized ISO 8601 time format: '00:00:00.Z' https://github.com/hapi-server/client-python/issues/76
+	2025-03-01 -- 'infer_datetime_format' is deprecated ... https://github.com/hapi-server/client-python/issues/78
+  2026-04-08 -- Improve NaN handling https://github.com/hapi-server/client-python/issues/88
