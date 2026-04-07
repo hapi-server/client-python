@@ -1,0 +1,32 @@
+import datetime
+from hapiclient.hapitime import datetime2hapitime
+
+from util.get_logger import get_logger
+logger = get_logger(__name__)
+
+def test_datetime2hapitime():
+
+    logger.info("test_datetime2hapitime()")
+
+    dt = datetime.datetime(2000,1,1)
+
+    logger.info(f"  Input datetime: {dt}")
+    hapi_time = datetime2hapitime(dt)
+    logger.info(f"  Output HAPI time: {hapi_time}")
+
+    assert hapi_time == '2000-01-01T00:00:00.000000Z'
+
+
+    dts = [datetime.datetime(2000,1,1), datetime.datetime(2000,1,2)]
+
+    logger.info(f"  Input datetimes: {dts}")
+    hapi_times = datetime2hapitime(dts)
+    logger.info(f"  Output HAPI times: {hapi_times}")
+
+    assert hapi_times[0] == '2000-01-01T00:00:00.000000Z'
+    assert hapi_times[1] == '2000-01-02T00:00:00.000000Z'
+
+
+
+if __name__ == '__main__':
+    test_datetime2hapitime()

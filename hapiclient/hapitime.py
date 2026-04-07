@@ -22,9 +22,9 @@ def hapitime_reformat(form_to_match, given_form, logging=False):
     ::
 
         start = hapitime_reformat(data['Time'][0], start)
-    
+
     Then subset using
-    
+
     ::
 
         data = data[data['Time'] >= start]
@@ -69,7 +69,7 @@ def hapitime_reformat(form_to_match, given_form, logging=False):
 
         converted = hapitime_reformat(form_to_match+'Z', given_form+'Z')
         converted = converted.strip('Z')
-        
+
         converted_fractional = '{:0<{}.{}}'.format(given_form_fractional, 
                                                    len(form_to_match_fractional),
                                                    len(form_to_match_fractional))
@@ -77,11 +77,11 @@ def hapitime_reformat(form_to_match, given_form, logging=False):
 
         if 'Z' in format_ref:
             return converted + 'Z'
-        
+
         return converted
 
     converted = dt_given.strftime(format_ref)
-    
+
     if len(converted) > len(form_to_match):
         converted = converted[0:len(form_to_match)-1] + "Z"
 
@@ -220,14 +220,9 @@ def hapitime2datetime(Time, **kwargs):
         hapitime2datetime([b'1970-01-01T00:00:00.000Z'])
         hapitime2datetime('1970-01-01T00:00:00.000Z')
     """
-    from datetime import datetime
+    from datetime import datetime, timezone
 
-    try:
-        # Python 2
-        import pytz
-        tzinfo = pytz.UTC
-    except:
-        tzinfo = datetime.timezone.utc
+    tzinfo = timezone.utc
 
     if type(Time) == list:
         Time = np.asarray(Time)

@@ -45,7 +45,7 @@ PYTHON=python3.8
 PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
-PYTHONVERS=python3.13 python3.12 python3.11 python3.10 python3.9 python3.8 python3.7 python3.6 python3.5
+PYTHONVERS=python3.14 python3.13 python3.12 python3.11 python3.10 python3.9 python3.8 python3.7 python3.6
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
@@ -61,6 +61,8 @@ ifeq ($(OS),Windows_NT)
 	CONDA=C:/Users/weigel/git/client-python/anaconda3
 	TMP=tmp/
 endif
+#TOS1=conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+#TOS2=conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 CONDA_ACTIVATE=source $(CONDA)/etc/profile.d/conda.sh; conda activate
 
 ################################################################################
@@ -81,7 +83,7 @@ test:
 # To use tox -e short-test, it seems we need to install and activate
 # each version of python. So using tox locally does not seem to make
 # things much simpler than `make repository-test`, which installs
-# conda and virtual enviornments and runs tests.
+# conda and virtual envioronments and runs tests.
 #
 # However, Travis tests use tox-travis and it seems creation of
 # virtual environment is done automatically.

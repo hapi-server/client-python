@@ -10,7 +10,7 @@ v0.0.6:
 		2018-10-04 -- Improve dateticks.py
 		2018-10-04 -- Add hapi_demo.ipynb
 		2018-10-04 -- Other documentation improvements
-v0.0.7: 
+v0.0.7:
 		2018-10-06 -- Improve documentation
 		2018-10-06 -- Add reader tests
 		2018-10-23 -- Improve dateticks and tests
@@ -105,5 +105,8 @@ v0.2.6b1:
 v0.2.6:
 	2023-05-24 -- Use token for PyPi in Makefile
 v0.2.7b1:
-	2025-03-01 -- https://github.com/hapi-server/client-python/issues/76
-	2025-03-01 -- https://github.com/hapi-server/client-python/issues/78
+	2025-03-01 -- Unrecognized ISO 8601 time format: '00:00:00.Z' https://github.com/hapi-server/client-python/issues/76
+	2025-03-01 -- 'infer_datetime_format' is deprecated ... https://github.com/hapi-server/client-python/issues/78
+	2026-04-08 -- Improve NaN handling https://github.com/hapi-server/client-python/issues/88
+0.2.7:
+	2026-04-08 -- Support for Python 2.7 dropped. This is last release with support for 3.5 through 3.8.

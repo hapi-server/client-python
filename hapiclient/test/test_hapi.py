@@ -1,5 +1,13 @@
-# -*- coding: utf-8 -*-
-# Above line can be removed when Python 2.7 support is dropped.
+# Run all tests:
+#   pytest -v test_hapi.py
+# Run a single test function:
+#   pytest -v test_hapi.py::test_dataset
+# Run short tests:
+#   pytest -v test_hapi.py -m short
+# Run long tests:
+#   pytest -v test_hapi.py -m long
+# pytest -v hapiclient/test/test_hapi.py -k test_reader_long -m long
+
 import os
 import pytest
 import pickle
@@ -11,12 +19,6 @@ from deepdiff import DeepDiff
 from hapiclient.hapi import hapi
 from hapiclient.test import compare
 
-# To run tests on a specific function, edit the function calls in the
-# if __name__ == '__main__' block and then execute 
-#
-#    python test_hapi.py
-#
-# See comments in test_hapitime2datetime.py for other execution options.
 
 logging = False
 serverbad = 'http://hapi-server.org/servers/TestData/xhapi'
@@ -69,7 +71,7 @@ def test_dataset():
         return
     else:
         metatest = readpickle(pklFile)
-    import pdb; pdb.set_trace()
+
     assert DeepDiff(meta,metatest) == {}
 
 
@@ -111,10 +113,10 @@ def test_bad_parameter():
 
 @pytest.mark.short
 def test_reader_short():
-        
+
     dataset = 'dataset1'
     run = 'short'
-    
+
     opts = {'logging': logging, 'cachedir': '/tmp/hapi-data', 'usecache': False}
 
     opts['cache'] = False
@@ -148,6 +150,60 @@ def test_reader_short():
     assert compare.read(server, dataset, '', run, opts)
 
 
+@pytest.mark.long
+def test_reader_long():
+
+    dataset = 'dataset1'
+    run = 'long'
+
+    # Read three parameters
+    opts = {'logging': logging, 'cachedir': '/tmp/hapi-data', 'cache': False, 'usecache': False}
+    assert compare.read(server, dataset, 'scalar,vector,spectra', run, opts)
+
+    opts = {'logging': logging, 'cachedir': '/tmp/hapi-data', 'cache': True, 'usecache': False}
+    assert compare.read(server, dataset, 'scalar,vector,spectra', run, opts)
+
+    opts = {'logging': logging, 'cachedir': '/tmp/hapi-data', 'cache': False, 'usecache': True}
+    assert compare.read(server, dataset, 'scalar,vector,spectra', run, opts)
+
+
+@pytest.mark.short
+def test_all_test_servers():
+    # Test that all test servers can be accessed and return something for a
+    # request for all parameters for the sample time range.
+    def test_server(version):
+        from hapiclient import hapi
+
+        server  = 'http://hapi-server.org/servers/TestData{}/hapi'.format(version)
+        dataset = 'dataset1'
+        start   = '1970-01-01T00:00:00'
+        stop    = '1970-01-01T00:01:00'
+        opts    = {'logging': False, 'usecache': False}
+
+        # Get catalog with list of datasets
+        catalog = hapi(server)
+        for dataset in catalog['catalog']:
+            id = dataset['id']
+            # Get metadata for dataset to determine sampleStartDate and sampleStopDate
+            info = hapi(server, id)
+
+            # Use sampleStartDate and sampleStopDate from metadata if available.
+            sampleStartDate = info.get('sampleStartDate', start)
+            sampleStopDate = info.get('sampleStopDate', stop)
+
+            # Request all parameters for dataset over time range
+            data, meta = hapi(server, id, '', sampleStartDate, sampleStopDate, **opts)
+
+    # TODO: Get list of test servers from
+    #  https://hapi-server.org/meta/abouts-test.json
+
+    for version in ['2.0', '2.1', '3.0', '3.1', '3.2', '3.3']:
+        try:
+            test_server(version)
+        except Exception as e:
+            pytest.fail("test_server('%s') raised: %s" % (version, e))
+
+
 @pytest.mark.short
 def test_cache_short():
 
@@ -170,14 +226,14 @@ def test_cache_short():
 
 @pytest.mark.short
 def test_subset_short():
-    
+
     dataset = 'dataset1'
     start = '1970-01-01'
     stop  = '1970-01-01T00:00:03'
     opts = {'logging': logging, 'cachedir': '/tmp/hapi-data', 'cache': True}
 
     opts['usecache'] = False
-    
+
     # Request two subsets with empty cache. Common parts should be same.
     shutil.rmtree(opts['cachedir'], ignore_errors=True)
     data, meta  = hapi(server, dataset, 'scalarint', start, stop, **opts)
@@ -195,14 +251,14 @@ def test_subset_short():
 
     shutil.rmtree(opts['cachedir'], ignore_errors=True)
     data2, meta2  = hapi(server, dataset, 'vectorint', start, stop, **opts)
-        
+
     ok = np.array_equal(data['Time'], data2['Time'])
     ok = ok and np.array_equal(data['vectorint'], data2['vectorint'])
     assert ok
 
 
     opts['usecache'] = True
-    
+
     # Request two subsets, with the second request using the cache. Common
     # parts should be same.
     data, meta  = hapi(server, dataset, 'scalarint', start, stop, **opts)
@@ -217,7 +273,7 @@ def test_subset_short():
     shutil.rmtree(opts['cachedir'], ignore_errors=True)
     data, meta  = hapi(server, dataset, '', start, stop, **opts)
     data2, meta2  = hapi(server, dataset, 'vectorint', start, stop, **opts)
-        
+
     ok = np.array_equal(data['Time'], data2['Time'])
     ok = ok and np.array_equal(data['vectorint'], data2['vectorint'])
     assert ok
@@ -225,7 +281,7 @@ def test_subset_short():
 @pytest.mark.short
 def test_request2path():
 
-    from hapiclient.hapi import request2path;
+    from hapiclient.hapi import request2path
 
     import platform
     if platform.system() == 'Windows':
@@ -249,7 +305,7 @@ def test_unicode():
     run = 'short'
 
     opts = {
-                'logging': True,
+                'logging': logging,
                 'cachedir': '/tmp/hapi-data',
                 'usecache': False,
                 'cache': False
@@ -265,30 +321,13 @@ def test_unicode():
         for p in meta['parameters']:
 
             # Read one parameter
-            parameter = p['name']        
+            parameter = p['name']
             if unicode_error_message(parameter) != "":
                 warning("Skipping "+ str(parameter.encode('utf-8')) + " due to " + unicode_error_message(parameter))
                 continue
 
             assert compare.read(server, dataset, parameter, run, opts.copy())
             assert compare.cache(server, dataset, parameter, opts.copy())
-
-
-@pytest.mark.long
-def test_reader_long():
-    
-    dataset = 'dataset1'
-    run = 'long'
-    
-    # Read three parameters
-    opts = {'logging': logging, 'cachedir': '/tmp/hapi-data', 'cache': False, 'usecache': False}
-    assert compare.read(server, dataset, 'scalar,vector,spectra', run, opts)
-
-    opts = {'logging': logging, 'cachedir': '/tmp/hapi-data', 'cache': True, 'usecache': False}
-    assert compare.read(server, dataset, 'scalar,vector,spectra', run, opts)
-
-    opts = {'logging': logging, 'cachedir': '/tmp/hapi-data', 'cache': False, 'usecache': True}
-    assert compare.read(server, dataset, 'scalar,vector,spectra', run, opts)
 
 
 @pytest.mark.short
@@ -315,7 +354,6 @@ def test_none_stop():
 
     data2, meta2 = hapi(server, dataset, parameters, start, stop)
 
-    allequal = True
     for name in data1.dtype.names:
         assert np.array_equal(data1[name], data2[name])
 
@@ -334,9 +372,9 @@ def runall():
 if __name__ == '__main__':
     #runall()
     test_dataset()
-    #test_parameter()
-    #test_reader_short()
-    #test_unicode()
-    #test_request2path()
-    #test_reader_short()
-    #test_none_stop()
+    test_parameter()
+    test_reader_short()
+    test_unicode()
+    test_request2path()
+    test_reader_short()
+    test_none_stop()
