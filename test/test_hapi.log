@@ -1,0 +1,2 @@
+test_reader_short()
+  see util/compare.log for additional logging output

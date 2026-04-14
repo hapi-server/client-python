@@ -5,8 +5,8 @@ from datetime import datetime
 
 from hapiclient import hapi
 from hapiclient.hapitime import hapitime2datetime, hapitime_reformat
-from util.compare import equal
 
+from util.compare import equal
 from util.get_logger import get_logger
 
 logger = get_logger(__name__)

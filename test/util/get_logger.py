@@ -32,7 +32,7 @@ def get_logger(name, log_level=None):
 
   logger.addHandler(stream_handler)
 
-  if logging.getLevelName(log_level) >= logging.INFO:
+  if getattr(logging, log_level, 0) >= logging.INFO:
     file_handler = logging.FileHandler(logfile, mode="w", encoding="utf-8")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)

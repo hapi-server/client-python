@@ -5,21 +5,22 @@ import numpy as np
 
 from hapiclient import hapi
 
-debug = True
+
+from util.get_logger import get_logger
+
+logger = get_logger(__name__)
 
 def comparisonOK(a, b, nolength=False, a_name="First", b_name="Second"):
 
     if a.dtype != b.dtype:
-        if debug:
-            print('---- dts differ.')
+        logger.debug('---- dts differ.')
         unicode_length_mismatch = False
         for i in range(len(a.dtype)):
             if a.dtype[i].str != b.dtype[i].str:
-                if debug:
-                    print("---  {}".format(a_name))
-                    print("---  {}".format(a.dtype[i].str))
-                    print("---  {}".format(b_name))
-                    print("---  {}".format(b.dtype[i].str))
+                logger.debug("---  {}".format(a_name))
+                logger.debug("---  {}".format(a.dtype[i].str))
+                logger.debug("---  {}".format(b_name))
+                logger.debug("---  {}".format(b.dtype[i].str))
                 # When length is given, the HAPI spec states that it should be
                 # the number of bytes required to store any value of the parameter.
                 # Greek characters require two bytes when encoded as UTF-8, so
@@ -37,9 +38,8 @@ def comparisonOK(a, b, nolength=False, a_name="First", b_name="Second"):
         if nolength is True and unicode_length_mismatch is True:
             return True
         else:
-            if debug:
-                print(a.dtype)
-                print(b.dtype)
+            logger.debug(a.dtype)
+            logger.debug(b.dtype)
             return False
 
     if equal(a, b):
@@ -48,9 +48,8 @@ def comparisonOK(a, b, nolength=False, a_name="First", b_name="Second"):
         if closeFloats(a, b) and equalNonFloats(a, b):
             return True
         else:
-            if debug:
-                print(a)
-                print(b)
+            logger.debug(a)
+            logger.debug(b)
             return False
 
 
@@ -68,10 +67,9 @@ def equal(a, b):
             ok = np.array_equal(a[name], b[name])
         if not ok:
             allequal = False
-            if debug:
-                print(name + ' values differ.')
-                print(a[name])
-                print(b[name])
+            logger.debug(name + ' values differ.')
+            logger.debug(a[name])
+            logger.debug(b[name])
 
     return allequal
 
@@ -84,10 +82,9 @@ def equalNonFloats(a, b):
             # https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.scalars.html
             if not np.array_equal(a[name], b[name]):
                 allequal = False
-                if debug: print("'" + name + "' values differ.")
-                #print(a[name])
-                #print(b[name])
-                #if debug: import pdb; pdb.set_trace()
+                logger.debug("'" + name + "' values differ.")
+                logger.debug(a[name])
+                logger.debug(b[name])
 
     return allequal
 
@@ -100,52 +97,37 @@ def closeFloats(a, b):
             # See https://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.scalars.html
             atol = np.finfo(a[name].dtype.str).eps
             if np.allclose(a[name], b[name], rtol=0.0, atol=atol, equal_nan=True):
-                if debug and not np.array_equal(a[name], b[name]):
+                if not np.array_equal(a[name], b[name]):
                     mdiff = np.max(np.abs(a[name] - b[name]))
-                    print('All values in parameter ' + name \
+                    logger.debug('All values in parameter ' + name \
                           + ' equal within absolute tolerance ' \
                           + 'of %.2e; max |diff| = %.2e' % (atol, mdiff))
             else:
                 allclose = False
-                print('All values in parameter ' + name \
+                logger.info('All values in parameter ' + name \
                       + ' not equal within absolute tolerance of %.2e.' % atol)
 
     return allclose
 
 
-# Create empty file
-logfile = os.path.splitext(__file__)[0] + ".log"
-with open(logfile, "w") as f: pass
-def xprint(msg):
-    print(msg)
-    import sys
-    if sys.version_info[0:2] < (3, 5):
-        f = open(logfile, "a")
-    else:
-        f = open(logfile, "a", encoding="utf-8")
-
-    f.write(msg + "\n")
-    f.close()
-
-
-def cache(server, dataset, parameter, opts):
+def cache(server, dataset, parameter, opts, logger=logger):
 
     import sys
 
-    start      = '1970-01-01T00:00:00.000Z';
-    stop       = '1970-01-01T00:00:04.000Z';
+    start      = '1970-01-01T00:00:00.000Z'
+    stop       = '1970-01-01T00:00:04.000Z'
 
     shutil.rmtree(opts['cachedir'], ignore_errors=True)
 
-    opts['format']   = 'binary';
-    opts['cache']    = False;
-    opts['usecache'] = False;
+    opts['format']   = 'binary'
+    opts['cache']    = False
+    opts['usecache'] = False
 
     data0, meta = hapi(server, dataset, parameter, start, stop, **opts)
 
-    opts['format']   = 'binary';
-    opts['cache']    = False;
-    opts['usecache'] = True;
+    opts['format']   = 'binary'
+    opts['cache']    = False
+    opts['usecache'] = True
     data, meta = hapi(server, dataset, parameter, start, stop, **opts)
 
     allpass = True
@@ -156,8 +138,8 @@ def cache(server, dataset, parameter, opts):
         ok = np.array_equal(data0[parameter], data[parameter])
     allpass = allpass and ok
 
-    opts['format'] = 'csv';
-    opts['usecache'] = False;
+    opts['format'] = 'csv'
+    opts['usecache'] = False
     data, meta = hapi(server, dataset, parameter, start, stop, **opts)
 
     if sys.version_info[0] < 3:
@@ -166,8 +148,8 @@ def cache(server, dataset, parameter, opts):
         ok = np.array_equal(data0[parameter], data[parameter])
     allpass = allpass and ok
 
-    opts['format'] = 'csv';
-    opts['usecache'] = True;
+    opts['format'] = 'csv'
+    opts['usecache'] = True
     data, meta = hapi(server, dataset, parameter, start, stop, **opts)
 
     if sys.version_info[0] < 3:
@@ -179,7 +161,7 @@ def cache(server, dataset, parameter, opts):
     return allpass
 
 
-def read(server, dataset, parameters, run, opts):
+def read(server, dataset, parameters, run, opts, logger=logger):
 
     # Note that for this dataset, there are differences in
     # the numeric values that seem not to be due to issues
@@ -198,38 +180,44 @@ def read(server, dataset, parameters, run, opts):
     # Checks that all four read methods give same result.
     # Does not check that an individual read is correct.
     # Do this manually.
-    
-    xprint('\nDataset = {}; Parameter(s) = {}; run = {}. cache = {}; usecache = {}' \
+
+    logger.info("\n  dataset = '{}'; parameters = '{}'; run = '{}'. cache = {}; usecache = {}" \
             .format(dataset, parameters, run, opts['cache'], opts['usecache']))
     if opts['cache']:
-        xprint('_____________________________________________________________')
-        xprint('Method                total      d/l->file  read & parse file')
-        xprint('_____________________________________________________________')
+        logger.info('  ___________________________________________________________')
+        logger.info('  Method                total      file->buff  parse buff')
+        logger.info('  ___________________________________________________________')
     else:
-        xprint('___________________________________________________________')
-        xprint('Method                total      d/l->buff  parse buff')
-        xprint('___________________________________________________________')
+        logger.info('  _____________________________________________________________')
+        logger.info('  Method                total      d/l->file   read & parse file')
+        logger.info('  _____________________________________________________________')
 
 
     opts['format'] = 'binary'
-    opts['method'] = ''
 
+    opts['method'] = ''
     data0, meta  = hapi(server, dataset, parameters, start, stop, **opts)
-    xprint('binary               %8.4f   %8.4f   %8.4f' % \
+    logger.info('  binary               %8.4f   %8.4f   %8.4f' % \
             (meta['x_totalTime'], meta['x_downloadTime'], meta['x_readTime']))
+
+    if opts['usecache']:
+        # Read a second time to get timing for hot OS cache.
+        data0, meta  = hapi(server, dataset, parameters, start, stop, **opts)
+        logger.info('  binary               %8.4f   %8.4f   %8.4f' % \
+                (meta['x_totalTime'], meta['x_downloadTime'], meta['x_readTime']))
 
     opts['format'] = 'csv'
 
     opts['method'] = 'pandas' # Default CSV read method.
     data, meta  = hapi(server, dataset, parameters, start, stop, **opts)
-    xprint('csv; pandas          %8.4f   %8.4f   %8.4f' % \
+    logger.info('  csv; pandas          %8.4f   %8.4f   %8.4f' % \
             (meta['x_totalTime'], meta['x_downloadTime'], meta['x_readTime']))
 
     allpass = allpass and comparisonOK(data0, data, a_name='binary', b_name='pandas')
 
     opts['method'] = 'pandasnolength'
     data, meta  = hapi(server, dataset, parameters, start, stop, **opts)
-    xprint('csv; pandas; no len. %8.4f   %8.4f   %8.4f' % \
+    logger.info('  csv; pandas; no len. %8.4f   %8.4f   %8.4f' % \
             (meta['x_totalTime'], meta['x_downloadTime'], meta['x_readTime']))
 
     allpass = allpass and comparisonOK(data0, data, nolength=True, a_name='binary', b_name='csv; pandas; no len.')
@@ -237,16 +225,18 @@ def read(server, dataset, parameters, run, opts):
 
     opts['method'] = 'numpy'
     data, meta  = hapi(server, dataset, parameters, start, stop, **opts)
-    xprint('csv; numpy           %8.4f   %8.4f   %8.4f' % \
+    logger.info('  csv; numpy           %8.4f   %8.4f   %8.4f' % \
             (meta['x_totalTime'], meta['x_downloadTime'], meta['x_readTime']))
 
     allpass = allpass and comparisonOK(data0, data, a_name='binary', b_name='csv; numpy')
 
     opts['method'] = 'numpynolength'
     data, meta  = hapi(server, dataset, parameters, start, stop, **opts)
-    xprint('csv; numpy; no len.  %8.4f   %8.4f   %8.4f' % \
+    logger.info('  csv; numpy; no len.  %8.4f   %8.4f   %8.4f' % \
             (meta['x_totalTime'], meta['x_downloadTime'], meta['x_readTime']))
 
+
+    logger.info("")
 
     allpass = allpass and comparisonOK(data0, data, nolength=True, a_name='binary', b_name='csv; numpy; no len.')
 

@@ -408,7 +408,7 @@ def hapi(*args, **kwargs):
         # urld = url subdirectory of cachedir to store files from SERVER
         urld = cachedir(opts["cachedir"], SERVER)
 
-        if opts["cachedir"]: log('file directory = %s' % urld, opts)
+        if opts["cachedir"]: log('cache subdirectory = %s' % urld, opts)
 
         urljson = SERVER + '/info?id=' + DATASET
 
@@ -666,14 +666,18 @@ def hapi(*args, **kwargs):
         if opts["usecache"] and os.path.isfile(fnamenpy):
             # Read cached data file.
             log('Reading %s ' % fnamenpy.replace(urld + '/', ''), opts)
+            tic = time.time()
             f = open(fnamenpy, 'rb')
             data = np.load(f)
             f.close()
+            toc = time.time() - tic
             # There is a possibility that the fnamenpy file existed but
             # fnamepklx was not found (b/c removed). In this case, the meta
             # returned will not have all of the "x_" information inserted below.
             # Code that uses this information needs to account for this.
             meta['x_totalTime'] = time.time() - tic_totalTime
+            meta['x_readTime'] = tic - tic_totalTime
+            meta['x_downloadTime'] = 0
             return data, meta
 
         cformats = ['csv', 'binary']  # client formats

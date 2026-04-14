@@ -88,6 +88,9 @@ The HAPI client data model is intentionally basic. There is an ongoing discussio
 As of 2026-04-14, Python 3.8+ is available with tox-env.
 
 ```bash
+git clone https://github.com/hapi-server/client-python
+cd client-python; python -m pip install -e .
+
 # Run tests on all Python versions set by tox.ini `envlist`
 # Tests are located in ./test
 tox
