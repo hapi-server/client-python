@@ -185,10 +185,8 @@ def test_unicode():
     from hapiclient.util import warning, unicode_error_message
 
     logger.info("test_unicode()")
-    server     = 'http://hapi-server.org/servers/TestData3.1/hapi';
-    #datasets   = ["dataset1", "dataset1-Zα☃"]
-    datasets   = ["dataset1-Aα☃"]
-    #datasets = ["dataset1"]
+    server   = 'http://hapi-server.org/servers/TestData3.1/hapi'
+    datasets = ["dataset1-Aα☃"]
 
     run = 'short'
 
@@ -208,7 +206,7 @@ def test_unicode():
                 warning("Skipping "+ str(parameter.encode('utf-8')) + " due to " + unicode_error_message(parameter))
                 continue
 
-            #assert compare.read(server, dataset, parameter, run, opts.copy(), logger=logger)
+            assert compare.read(server, dataset, parameter, run, opts.copy(), logger=logger)
             assert compare.cache(server, dataset, parameter, opts.copy(), logger=logger)
 
 
