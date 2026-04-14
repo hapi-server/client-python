@@ -1,3 +1,4 @@
+# See ../README.md for instructions on running tests.
 import datetime
 from hapiclient.hapitime import datetime2hapitime
 
@@ -25,7 +26,6 @@ def test_datetime2hapitime():
 
     assert hapi_times[0] == '2000-01-01T00:00:00.000000Z'
     assert hapi_times[1] == '2000-01-02T00:00:00.000000Z'
-
 
 
 if __name__ == '__main__':

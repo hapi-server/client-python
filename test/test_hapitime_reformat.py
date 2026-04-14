@@ -1,3 +1,4 @@
+# See ../README.md for instructions on running tests.
 from hapiclient.hapitime import hapitime_reformat
 
 from util.get_logger import get_logger

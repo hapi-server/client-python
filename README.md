@@ -81,12 +81,48 @@ returns the [Numpy N-D array](https://docs.scipy.org/doc/numpy-1.15.1/user/quick
 
 The HAPI client data model is intentionally basic. There is an ongoing discussion of a data model for Heliophysics data among the [PyHC community](https://heliopython.org/). When this data model is complete, a function that converts `data` and `meta` to that data model will be included in the `hapiclient` package.
 
-# Development
+# Development and Testing
+
+## Testing Python versions available with tox-env
+
+As of 2026-04-14, Python 3.8+ is available with tox-env.
+
+```bash
+# Run tests on all Python versions set by tox.ini `envlist`
+# Tests are located in ./test
+tox
+
+# Run a specific test on all Python versions
+tox -- test/test_hapitime_reformat.py
+
+# Run tests on a specific Python version
+tox -e py311
+
+# Run a specific test on a specific Python version
+tox -e py311 -- test/test_hapitime_reformat.py
+
+# Run a specific test on current Python version
+python test/test_hapitime_reformat.py
+
+# Run long-running tests
+tox -e long-test
+
+# Run long-running tests on a specific Python version
+tox -e long-test --override testenv:long-test.basepython=python3.11
+
+# List available managed Python versions
+uv python list --managed-python
+```
+
+## Testing Python versions available with Anaconda
+
+As of 2026-04-14, Python 3.5+ is available with Anaconda.
 
 ```bash
 git clone https://github.com/hapi-server/client-python
 cd client-python; python -m pip install -e .
 ```
+
 
 or, create an isolated Anaconda installation (downloads and installs latest Miniconda3) using
 
@@ -107,11 +143,12 @@ make repository-test
 To run an individual unit test in a Python session, use, e.g.,
 
 ```python
-from hapiclient.test.test_hapi import test_reader_short
-test_reader_short()
+cd test; python test_hapitime_reformat.py
 ```
 
 # Contact
 
 Submit bug reports and feature requests on the [repository issue
 tracker](https://github.com/hapi-server/client-python/issues>).
+
+Before submitting a pull request, please post an issue with the proposed changes for discussion prior to developing the pull request.

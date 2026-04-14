@@ -20,19 +20,28 @@ server = "http://hapi-server.org/servers/TestData2.0/hapi"
 
 
 def _compare(data1, data2, meta1, meta2, opts1, opts2):
-    logger.info('  request:   %s, %s, %s, %s, %s' % \
-            (meta1['x_dataset'], meta1['x_parameters'], meta1['x_time.min'], meta1['x_time.max'], meta1['cadence']))
+
+    def print_times(meta, n):
+        logger.info('  x_totalTime1 = %6.4f s' % (meta['x_totalTime']))
+        logger.debug(f'    x_downloadTime{n} = {meta["x_downloadTime"]}')
+        logger.debug(f'    x_readTime1 = {meta["x_readTime"]}')
+        if 'x_downloadTimes' in meta:
+            logger.debug(f'    x_downloadTimes{n} = {meta["x_downloadTimes"]}')
+        if 'x_readTimes' in meta:
+            logger.debug(f'    x_readTimes{n} = {meta["x_readTimes"]}')
+        if 'trimTime' in meta:
+            logger.debug(f'    x_trimTime{n} = {meta["x_trimTime"]}')
+        if 'catTime' in meta:
+            logger.debug(f'    x_catTime{n} = {meta["x_catTime"]}')
+
+    args = (meta1['x_dataset'], meta1['x_parameters'], meta1['x_time.min'], meta1['x_time.max'], meta1['cadence'])
+    logger.info('  request:   %s, %s, %s, %s, %s' % args)
+
     logger.info('  options 1: %s' % opts1)
     logger.info('  options 2: %s' % opts2)
-    logger.info('  x_totalTime1 = %6.4f s' % (meta1['x_totalTime']))
-    logger.debug(f'    x_downloadTime1 = {meta1["x_downloadTime"]}')
-    logger.debug(f'    x_readTime1 = {meta1["x_readTime"]}')
 
-    logger.info('  x_totalTime2 = %6.4f s' % (meta2['x_totalTime']))
-    logger.debug(f'    x_downloadTimes2 = {meta2["x_downloadTimes"]}')
-    logger.debug(f'    x_readTimes2 = {meta2["x_readTimes"]}')
-    logger.debug(f'    x_trimTime2 = {meta2["x_trimTime"]}')
-    logger.debug(f'    x_catTime2 = {meta2["x_catTime"]}')
+    print_times(meta1, 1)
+    print_times(meta2, 2)
 
     logger.info('')
     assert equal(data1, data2)

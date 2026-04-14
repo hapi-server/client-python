@@ -1,17 +1,4 @@
-# To run all tests in the __name__ == '__main__': block
-#   python test_hapitime2datetime.py
-#
-# To run all functions that start with "test_" in this file.
-#   pytest -s -v test_hapitime2datetime.py
-# To suppress INFO messages, use, e.g.,
-#   pytest -s -v test_hapitime2datetime.py --log-level=ERROR
-#
-# To test a single function on the command line, use, e.g.,
-#   pytest -s -v test_hapitime2datetime.py -k test_parse_string_input
-# or modify the if __name__ == '__main__': block at the end of this file to
-# call only the desired test function(s).
-
-
+# See ../README.md for instructions on running tests.
 from hapiclient import hapitime2datetime
 
 from util.get_logger import get_logger

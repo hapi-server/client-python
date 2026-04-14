@@ -13,6 +13,12 @@ from hapiclient.util import HAPIError
 __version__ = '0.2.7b1'
 
 import sys
+import platform
+
+if sys.version_info < (3, 10) and platform.system() == "Darwin":
+    import warnings
+    warnings.filterwarnings("ignore", message=".*urllib3.*OpenSSL.*")
+
 if sys.version_info[0] < 3:
     # Python 2.7
     reload(sys)

@@ -30,11 +30,12 @@ def get_logger(name, log_level=None):
   stream_handler = logging.StreamHandler(sys.stdout)
   stream_handler.setFormatter(formatter)
 
-  file_handler = logging.FileHandler(logfile, mode="w", encoding="utf-8")
-  file_handler.setFormatter(formatter)
-
   logger.addHandler(stream_handler)
-  logger.addHandler(file_handler)
+
+  if logging.getLevelName(log_level) >= logging.INFO:
+    file_handler = logging.FileHandler(logfile, mode="w", encoding="utf-8")
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
 
   return logger
 
