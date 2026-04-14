@@ -250,7 +250,7 @@ def hapi(*args, **kwargs):
                     Cadence = PT1M and request for
 
                         start/stop=1999-11-12T00:10:00/stop=1999-11-12T12:09:00
-                        
+
                         Chunk size is P1D and requested time range < 1/2 of this
                         =>  Default behavior
 
@@ -812,13 +812,32 @@ def hapi(*args, **kwargs):
                             error('Malformed response? Could not read response: {}'.format(urlcsv))
                     if opts['method'] == '' or opts['method'] == 'pandas':
                         # Read file into Pandas DataFrame
+                        csv_kwargs = {
+                            'sep': ',',
+                            'header': None,
+                            'encoding': 'utf-8',
+                            'skipinitialspace': True,
+                            'keep_default_na': False,
+                            'na_values': ['NaN', 'nan', 'Nan', 'naN', ' "NaN"', ' "nan"', ' "Nan"', ' "naN"', '"NaN"', '"nan"', '"Nan"', '"naN"']
+                        }
+                        """
+                        Note that this does not handle trailing whitespace after
+                        any of the na_values. (There is no skiptrailingspace option).
+                        Stripping trailing whitespace would require adding something
+                        like
+                            def strip_field(x):
+                                # Strip whitespace and normalize NaN values.
+                                x = x.strip()
+                                return np.nan if x.lower() == "nan" else x
+
+                            ncols = cols[-1][1] + 1
+                            csv_kwargs["converters"] = {i: strip_field for i in range(ncols)}
+                        """
                         try:
-                            df = pandas.read_csv(fnamecsv,
-                                                 sep=',',
-                                                 header=None,
-                                                 encoding='utf-8')
+                            df = pandas.read_csv(fnamecsv, **csv_kwargs)
                         except:
                             error('Malformed response? Could not read response: {}'.format(urlcsv))
+
                         # Allocate output N-D array (It is not possible to pass dtype=dt
                         # as computed to pandas.read_csv; pandas dtype is different
                         # from numpy's dtype.)
@@ -865,7 +884,14 @@ def hapi(*args, **kwargs):
                 pickle.dump(meta, f, protocol=2)
 
             log('Writing %s' % fnamenpy, opts)
-            np.save(fnamenpy, data)
+            with warnings.catch_warnings():
+                # Ignore warning that occurs when saving Unicode data.
+                warnings.filterwarnings("ignore",
+                    message=r"Stored array in format 3\.0.*",
+                    category=UserWarning,
+                    module=r"numpy\.lib\.format",
+                )
+                np.save(fnamenpy, data)
 
         meta['x_totalTime'] = time.time() - tic_totalTime
 
@@ -963,9 +989,28 @@ def parse_missing_length(fnamecsv, dt, cols, psizes, pnames, ptypes, opts):
     if opts['method'] == 'numpy' or opts['method'] == 'numpynolength':
         # If requested method was numpy, use numpynolength method.
 
-        # With dtype='None', the data type is determined automatically
-        table = np.genfromtxt(fnamecsv, dtype=None, deletechars='',
-                                delimiter=',', encoding='utf-8')
+        ncols = cols[-1][1] + 1
+
+        def normalize_field(value):
+            if isinstance(value, bytes):
+                value = value.decode('utf-8')
+            value = value.strip()
+            if len(value) >= 2 and value[0] == '"' and value[-1] == '"':
+                value = value[1:-1].strip()
+            if value.lower() == 'nan':
+                return 'nan'
+            return value
+
+        converters = {i: normalize_field for i in range(ncols)}
+
+        table = np.genfromtxt(fnamecsv,
+                              dtype=None,
+                              deletechars='',
+                              replace_space=' ',
+                              delimiter=',',
+                              encoding='utf-8',
+                              converters=converters)
+
         # table is a 1-D array. Each element is a row in the file.
         # - If the data types are not the same for each column,
         # the elements are tuples with length equal to the number
@@ -1010,8 +1055,17 @@ def parse_missing_length(fnamecsv, dt, cols, psizes, pnames, ptypes, opts):
     if opts['method'] == '' or opts['method'] == 'pandas' or opts['method'] == 'pandasnolength':
         # If requested method was pandas, use pandasnolength method.
 
+        # TODO: Duplicate code.
         # Read file into Pandas DataFrame
-        df = pandas.read_csv(fnamecsv, sep=',', header=None, encoding='utf-8')
+        csv_kwargs = {
+            'sep': ',',
+            'header': None,
+            'encoding': 'utf-8',
+            'skipinitialspace': True,
+            'keep_default_na': False,
+            'na_values': ['NaN', 'nan', 'Nan', 'naN', ' "NaN"', ' "nan"', ' "Nan"', ' "naN"', '"NaN"', '"nan"', '"Nan"', '"naN"']
+        }
+        df = pandas.read_csv(fnamecsv, **csv_kwargs)
 
         # Allocate output N-D array (It is not possible to pass dtype=dt
         # as computed to pandas.read_csv, so need to create new ND array.)
