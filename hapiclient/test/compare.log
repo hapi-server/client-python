@@ -1,0 +1,90 @@
+
+Dataset = dataset1; Parameter(s) = scalar; run = short. cache = False; usecache = False
+___________________________________________________________
+Method                total      d/l->buff  parse buff
+___________________________________________________________
+binary                 0.1548     0.1229     0.0004
+csv; pandas            0.2000     0.1644     0.0166
+csv; pandas; no len.   0.1888     0.1641     0.0061
+csv; numpy             0.1809     0.1590     0.0017
+csv; numpy; no len.    0.1929     0.1725     0.0020
+
+Dataset = dataset1; Parameter(s) = scalar,vector; run = short. cache = False; usecache = False
+___________________________________________________________
+Method                total      d/l->buff  parse buff
+___________________________________________________________
+binary                 0.1703     0.1293     0.0002
+csv; pandas            0.1936     0.1694     0.0066
+csv; pandas; no len.   0.1802     0.1545     0.0057
+csv; numpy             0.1839     0.1629     0.0012
+csv; numpy; no len.    0.1489     0.1258     0.0016
+
+Dataset = dataset1; Parameter(s) = ; run = short. cache = False; usecache = False
+___________________________________________________________
+Method                total      d/l->buff  parse buff
+___________________________________________________________
+binary                 0.2016     0.1568     0.0013
+csv; pandas            0.2054     0.1538     0.0274
+csv; pandas; no len.   0.1879     0.1448     0.0257
+csv; numpy             0.1544     0.1323     0.0063
+csv; numpy; no len.    0.1882     0.1580     0.0101
+
+Dataset = dataset1; Parameter(s) = scalar; run = short. cache = True; usecache = False
+_____________________________________________________________
+Method                total      d/l->file  read & parse file
+_____________________________________________________________
+binary                 0.1788     0.1163     0.0110
+csv; pandas            0.1874     0.0966     0.0156
+csv; pandas; no len.   0.1971     0.1236     0.0097
+csv; numpy             0.1892     0.1209     0.0061
+csv; numpy; no len.    0.1884     0.1235     0.0051
+
+Dataset = dataset1; Parameter(s) = scalar,vector; run = short. cache = True; usecache = False
+_____________________________________________________________
+Method                total      d/l->file  read & parse file
+_____________________________________________________________
+binary                 0.2295     0.1647     0.0102
+csv; pandas            0.1900     0.0980     0.0170
+csv; pandas; no len.   0.2089     0.1368     0.0097
+csv; numpy             0.1739     0.1215     0.0071
+csv; numpy; no len.    0.1863     0.1193     0.0058
+
+Dataset = dataset1; Parameter(s) = ; run = short. cache = True; usecache = False
+_____________________________________________________________
+Method                total      d/l->file  read & parse file
+_____________________________________________________________
+binary                 0.2398     0.1726     0.0102
+csv; pandas            0.2350     0.1312     0.0378
+csv; pandas; no len.   0.2157     0.1226     0.0293
+csv; numpy             0.2084     0.1470     0.0114
+csv; numpy; no len.    0.1379     0.0799     0.0135
+
+Dataset = dataset1; Parameter(s) = scalar,vector,spectra; run = long. cache = False; usecache = False
+___________________________________________________________
+Method                total      d/l->buff  parse buff
+___________________________________________________________
+binary                 4.1120     4.0676     0.0107
+csv; pandas            1.6467     1.4163     0.2102
+csv; pandas; no len.   1.8892     1.6304     0.2431
+csv; numpy             2.2088     1.5670     0.6262
+csv; numpy; no len.    3.6609     1.4510     2.1950
+
+Dataset = dataset1; Parameter(s) = scalar,vector,spectra; run = long. cache = True; usecache = False
+_____________________________________________________________
+Method                total      d/l->file  read & parse file
+_____________________________________________________________
+binary                 3.6810     3.6196     0.0259
+csv; pandas            1.8802     1.6261     0.2286
+csv; pandas; no len.   1.6921     1.4040     0.2675
+csv; numpy             2.3263     1.6836     0.6233
+csv; numpy; no len.    3.5179     1.3522     2.1474
+
+Dataset = dataset1; Parameter(s) = scalar,vector,spectra; run = long. cache = False; usecache = True
+___________________________________________________________
+Method                total      d/l->buff  parse buff
+___________________________________________________________
+binary                 0.0192     1.3522     2.1474
+csv; pandas            0.0019     1.3522     2.1474
+csv; pandas; no len.   0.0023     1.3522     2.1474
+csv; numpy             0.0021     1.3522     2.1474
+csv; numpy; no len.    0.0019     1.3522     2.1474

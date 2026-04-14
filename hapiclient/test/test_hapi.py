@@ -71,7 +71,6 @@ def test_dataset():
         return
     else:
         metatest = readpickle(pklFile)
-
     assert DeepDiff(meta,metatest) == {}
 
 
