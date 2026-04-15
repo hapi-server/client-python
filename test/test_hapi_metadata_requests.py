@@ -7,7 +7,6 @@ import logging
 from hapiclient.hapi import hapi
 
 from util.get_logger import get_logger
-
 logger = get_logger(__name__)
 
 kwargs = {

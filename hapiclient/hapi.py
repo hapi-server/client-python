@@ -4,6 +4,7 @@ import sys
 import json
 import time
 import pickle
+import logging as _logging
 import warnings
 from datetime import datetime, timedelta
 
@@ -13,7 +14,7 @@ import numpy as np
 from joblib import Parallel, delayed
 
 from hapiclient.hapitime import hapitime2datetime, hapitime_reformat
-from hapiclient.util import setopts, log, warning, error
+from hapiclient.util import setopts, log, warning, error, configure_logging
 from hapiclient.util import urlopen, urlretrieve, jsonparse, unicode_error_message
 
 
@@ -344,7 +345,11 @@ def hapi(*args, **kwargs):
     # Override defaults
     opts = setopts(hapiopts(), kwargs)
 
-    assert (opts['logging'] in [True, False]), "logging keyword must be True of False"
+    assert (isinstance(opts['logging'], bool) or hasattr(opts['logging'], 'write')), \
+        "logging keyword must be True, False, or a file-like object"
+
+    configure_logging(opts)
+
     assert (opts['cache'] in [True, False]), "cache keyword must be True of False"
     assert (opts['usecache'] in [True, False]), "usecache keyword must be True of False"
     assert (opts['format'] in ['binary', 'csv']), "format keyword must be 'csv' or 'binary'"

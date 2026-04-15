@@ -1,3 +1,7 @@
+import logging as _logging
+_logger = _logging.getLogger("hapiclient")
+
+
 def setopts(defaults, given):
     """Override default keyword dictionary options.
 
@@ -19,34 +23,45 @@ def setopts(defaults, given):
     return defaults
 
 
-def log_test():
+def configure_logging(opts):
+    """Configure the hapiclient logger based on opts['logging'].
 
-    log("Test 1", {"logging": True})
-    log("Test 2", {"logging": False})
+    If the logger has been configured externally (level != NOTSET or handlers
+    present), the logging kwarg is ignored.
+    """
+    if _logger.level != _logging.NOTSET or _logger.handlers:
+        if opts['logging'] is not False:
+            log("Ignoring logging=%s because standard Python logger for 'hapiclient' already configured with log_level != NOTSET.", opts)
+    elif opts['logging'] is True:
+        _logger.setLevel(_logging.INFO)
+        if not _logger.handlers:
+            _handler = _logging.StreamHandler()
+            _handler.setFormatter(_logging.Formatter("%(message)s"))
+            _logger.addHandler(_handler)
+    elif opts['logging'] is False:
+        _logger.setLevel(_logging.WARNING)
 
 
 def log(msg, opts):
-    """Print message to console or file."""
+    """Log message using the 'hapiclient' logger.
 
-    import os
+    If opts['logging'] is a file-like object with a .write() method,
+    the message is written to that object. Otherwise, the message is
+    logged at INFO level via the 'hapiclient' logger. The logger's
+    level and handlers determine whether the message is emitted.
+    """
+
     import sys
 
-    if not 'logging' in opts:
-        opts = opts.copy()
-        opts['logging'] = False
-
     pre = sys._getframe(1).f_code.co_name + '(): '
-    if isinstance(opts['logging'], bool) and opts['logging']:
-        if pythonshell() == 'jupyter-notebook':
-            # Don't show full path information.
-            msg = msg.replace(opts['cachedir'] + os.path.sep, '')
-            msg = msg.replace(opts['cachedir'], '')
-        print(pre + msg)
-    elif hasattr(opts['logging'], 'write'):
+
+    # Legacy file-like object support
+    if hasattr(opts.get('logging'), 'write'):
         opts['logging'].write(pre + msg + "\n")
         opts['logging'].flush()
-    else:
-        pass # TODO: error
+        return
+
+    _logger.info(pre + msg)
 
 
 def jsonparse(res, url):

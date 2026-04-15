@@ -12,18 +12,19 @@
 # For more extensive demos and examples, see
 # https://colab.research.google.com/drive/11Zy99koiE90JKJ4u_KPTaEBMQFzbfU3P?usp=sharing
 
-def main():
+def main(plot):
 
     demos = [omniweb, sscweb, cdaweb, cassini, lisird]
+    #demos = [testdata]
 
     for demo in demos:
         try:
-            demo()
+            demo(plot)
         except Exception as e:
             print("\033[0;31mError:\033[0m " + str(e))
 
 
-def testdata():
+def testdata(plot):
 
     from hapiclient import hapi
 
@@ -40,7 +41,7 @@ def testdata():
     # Plot all parameters
     hapiplot(data, meta)
 
-def omniweb():
+def omniweb(plot):
 
     from hapiclient import hapi
 
@@ -58,11 +59,11 @@ def omniweb():
     hapiplot(data, meta)
 
 
-def sscweb():
+def sscweb(plot):
 
     from hapiclient import hapi
     from hapiplot import hapiplot
-    
+
     # SSCWeb data
     server     = 'http://hapi-server.org/servers/SSCWeb/hapi'
     dataset    = 'ace'
@@ -75,7 +76,7 @@ def sscweb():
     hapiplot(data, meta, **opts)
 
 
-def cdaweb():
+def cdaweb(plot):
 
     from hapiclient import hapi
     from hapiplot import hapiplot
@@ -114,7 +115,7 @@ def cdaweb():
     print('')
 
 
-def cassini():
+def cassini(plot):
 
     from hapiclient import hapi
     from hapiplot import hapiplot
@@ -127,12 +128,12 @@ def cassini():
     opts       = {'usecache': True, 'logging': True}
 
     data, meta = hapi(server, dataset, parameters, start, stop, **opts)
-    
+
     popts = {'logging': False, 'logy': True, 'logz': True}
     hapiplot(data, meta, **popts)
 
 
-def lisird():
+def lisird(plot):
 
     from hapiclient import hapi
     from hapiplot import hapiplot
@@ -150,8 +151,10 @@ def lisird():
 
 
 if __name__ == '__main__':
+    plot = True
     try:
         from hapiplot import hapiplot
     except:
+        plot = False
         print('Package hapiplot is not installed. Will not plot results.')
-    main()
+    main(plot)
