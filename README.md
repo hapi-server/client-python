@@ -91,30 +91,26 @@ As of 2026-04-14, Python 3.8+ is available with tox-env.
 git clone https://github.com/hapi-server/client-python
 cd client-python; python -m pip install -e .
 
-# Run tests on all Python versions set by tox.ini `envlist`
-# Tests are located in ./test
-tox
+# Run a specific test on current Python version
+python test/test_hapi_data_requests.py
 
-# Run a specific test on all Python versions
-tox -- test/test_hapitime_reformat.py
+# Run a specific test on a specific Python version with all logging
+tox -e py311 -- test/test_hapi_data_requests.py
+
+# Run a specific test on all Python versions set by tox.ini `envlist`
+tox -- test/test_hapi_data_requests.py
+
+# Run all tests in ./test
+tox
 
 # Run all tests on a specific Python version
 tox -e py311
-
-# Run a specific test on a specific Python version with all logging
-tox -e py311 -- test/test_hapitime_reformat.py
-
-# Run a specific test on current Python version
-python test/test_hapitime_reformat.py
 
 # Run long-running tests
 tox -e long-test
 
 # Run long-running tests on a specific Python version
 tox -e long-test --override testenv:long-test.basepython=python3.11
-
-# List available managed Python versions
-uv python list --managed-python
 ```
 
 ## Testing Python versions available with Anaconda
