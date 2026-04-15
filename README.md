@@ -98,10 +98,10 @@ tox
 # Run a specific test on all Python versions
 tox -- test/test_hapitime_reformat.py
 
-# Run tests on a specific Python version
+# Run all tests on a specific Python version
 tox -e py311
 
-# Run a specific test on a specific Python version
+# Run a specific test on a specific Python version with all logging
 tox -e py311 -- test/test_hapitime_reformat.py
 
 # Run a specific test on current Python version

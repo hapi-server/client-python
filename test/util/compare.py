@@ -53,9 +53,13 @@ def comparisonOK(a, b, nolength=False, a_name="First", b_name="Second"):
             return False
 
 
-def equal(a, b):
+def equal(a, b, names=None):
     allequal = True
-    for name in a.dtype.names:
+
+    if names is None:
+        names = a.dtype.names
+
+    for name in names:
         if np.issubdtype(a[name].dtype, np.double) or np.issubdtype(a[name].dtype, np.floating):
             try:
                 np.testing.assert_array_equal(a[name], b[name])
@@ -65,6 +69,7 @@ def equal(a, b):
             #ok = np.array_equal(a[name], b[name], equal_nan=True)
         else:
             ok = np.array_equal(a[name], b[name])
+
         if not ok:
             allequal = False
             logger.debug(name + ' values differ.')

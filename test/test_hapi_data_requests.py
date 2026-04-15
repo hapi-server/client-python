@@ -3,14 +3,11 @@ import pytest
 import shutil
 import logging
 
-import numpy as np
-
 from hapiclient.hapi import hapi
 
 from util import compare
 
 from util.get_logger import get_logger
-
 logger = get_logger(__name__)
 
 kwargs = {
@@ -110,7 +107,7 @@ def test_cache_short():
     opts['usecache'] = True
     data2, meta2  = hapi(server, dataset, 'scalarint,vectorint', start, stop, **opts)
 
-    assert np.array_equal(data, data2)
+    assert compare.equal(data, data2)
 
 
 def test_subset_short():
@@ -129,8 +126,8 @@ def test_subset_short():
     shutil.rmtree(opts['cachedir'], ignore_errors=True)
     data2, meta2  = hapi(server, dataset, 'scalarint,vectorint', start, stop, **opts)
 
-    ok = np.array_equal(data['Time'], data2['Time'])
-    ok = ok and np.array_equal(data['scalarint'], data2['scalarint'])
+    ok = compare.equal(data, data2, names=['Time'])
+    ok = ok and compare.equal(data, data2, names=['scalarint'])
     assert ok
 
     # Request all parameters and single parameter. Common parameter should be same.
@@ -140,8 +137,8 @@ def test_subset_short():
     shutil.rmtree(opts['cachedir'], ignore_errors=True)
     data2, meta2  = hapi(server, dataset, 'vectorint', start, stop, **opts)
 
-    ok = np.array_equal(data['Time'], data2['Time'])
-    ok = ok and np.array_equal(data['vectorint'], data2['vectorint'])
+    ok = compare.equal(data, data2, names=['Time'])
+    ok = ok and compare.equal(data, data2, names=['vectorint'])
     assert ok
 
 
@@ -152,8 +149,8 @@ def test_subset_short():
     data, meta  = hapi(server, dataset, 'scalarint', start, stop, **opts)
     data2, meta2  = hapi(server, dataset, 'scalarint,vectorint', start, stop, **opts)
 
-    ok = np.array_equal(data['Time'], data2['Time'])
-    ok = ok and np.array_equal(data['scalarint'], data2['scalarint'])
+    ok = compare.equal(data, data2, names=['Time'])
+    ok = ok and compare.equal(data, data2, names=['scalarint'])
     assert ok
 
     # Request all parameters and single parameter, with the single parameter
@@ -162,8 +159,8 @@ def test_subset_short():
     data, meta  = hapi(server, dataset, '', start, stop, **opts)
     data2, meta2  = hapi(server, dataset, 'vectorint', start, stop, **opts)
 
-    ok = np.array_equal(data['Time'], data2['Time'])
-    ok = ok and np.array_equal(data['vectorint'], data2['vectorint'])
+    ok = compare.equal(data, data2, names=['Time'])
+    ok = ok and compare.equal(data, data2, names=['vectorint'])
     assert ok
 
 
@@ -211,7 +208,12 @@ def test_unicode():
 
 
 if __name__ == '__main__':
+    #test_subset_short()
+    #exit()
     test_reader_timing_short()
     test_reader_timing_long()
-    test_unicode()
+    test_all_test_servers()
+    test_subset_short()
+    test_cache_short()
     test_request2path()
+    test_unicode()

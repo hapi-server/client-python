@@ -4,32 +4,32 @@ test_reader_timing_short()
   _____________________________________________________________
   Method                total      d/l->file   read & parse file
   _____________________________________________________________
-  binary                 0.4097     0.1226     0.0001
-  csv; pandas            0.2227     0.1624     0.0327
-  csv; pandas; no len.   0.1412     0.1189     0.0010
-  csv; numpy             0.1525     0.1336     0.0001
-  csv; numpy; no len.    0.1548     0.1347     0.0007
+  binary                 0.4573     0.1264     0.0000
+  csv; pandas            0.2148     0.1513     0.0306
+  csv; pandas; no len.   0.1315     0.0976     0.0018
+  csv; numpy             0.2068     0.1774     0.0004
+  csv; numpy; no len.    0.2031     0.1745     0.0005
 
 
   dataset = 'dataset1'; parameters = 'scalar'; run = 'short'. cache = True; usecache = False
   ___________________________________________________________
   Method                total      file->buff  parse buff
   ___________________________________________________________
-  binary                 0.1968     0.1303     0.0077
-  csv; pandas            0.1666     0.1005     0.0092
-  csv; pandas; no len.   0.1683     0.1219     0.0068
-  csv; numpy             0.1549     0.0886     0.0045
-  csv; numpy; no len.    0.1868     0.1089     0.0054
+  binary                 0.2025     0.1536     0.0017
+  csv; pandas            0.1957     0.1673     0.0031
+  csv; pandas; no len.   0.1984     0.1732     0.0013
+  csv; numpy             0.2008     0.1776     0.0007
+  csv; numpy; no len.    0.1594     0.1327     0.0026
 
 
   dataset = 'dataset1'; parameters = 'scalar'; run = 'short'. cache = False; usecache = True
   _____________________________________________________________
   Method                total      d/l->file   read & parse file
   _____________________________________________________________
-  binary                 0.0182     0.0000     0.0167
-  binary                 0.0005     0.0000     0.0002
-  csv; pandas            0.0004     0.0000     0.0002
-  csv; pandas; no len.   0.0004     0.0000     0.0002
+  binary                 0.0040     0.0000     0.0035
+  binary                 0.0003     0.0000     0.0002
+  csv; pandas            0.0003     0.0000     0.0001
+  csv; pandas; no len.   0.0004     0.0000     0.0001
   csv; numpy             0.0005     0.0000     0.0002
   csv; numpy; no len.    0.0005     0.0000     0.0002
 
@@ -39,31 +39,31 @@ test_reader_timing_long()
   _____________________________________________________________
   Method                total      d/l->file   read & parse file
   _____________________________________________________________
-  binary                 1.0369     0.9913     0.0018
-  csv; pandas            0.8577     0.7056     0.0533
-  csv; pandas; no len.   0.7593     0.6729     0.0659
-  csv; numpy             0.8155     0.6970     0.0989
-  csv; numpy; no len.    0.8929     0.6990     0.1726
+  binary                 1.5944     1.5488     0.0008
+  csv; pandas            2.1189     2.0545     0.0428
+  csv; pandas; no len.   1.0810     0.9996     0.0498
+  csv; numpy             2.8961     2.7931     0.0798
+  csv; numpy; no len.    1.1588     0.9816     0.1564
 
 
   dataset = 'dataset1'; parameters = 'scalar'; run = 'long'. cache = True; usecache = False
   ___________________________________________________________
   Method                total      file->buff  parse buff
   ___________________________________________________________
-  binary                 1.1206     0.9824     0.0053
-  csv; pandas            0.8168     0.7282     0.0600
-  csv; pandas; no len.   0.9049     0.8011     0.0774
-  csv; numpy             0.9528     0.8583     0.0717
-  csv; numpy; no len.    1.0460     0.8426     0.1768
+  binary                 1.0614     1.0037     0.0097
+  csv; pandas            2.1319     2.0364     0.0672
+  csv; pandas; no len.   3.0840     0.8588     0.0738
+  csv; numpy             1.2164     1.0676     0.1072
+  csv; numpy; no len.    1.1575     0.9052     0.1910
 
 
   dataset = 'dataset1'; parameters = 'scalar'; run = 'long'. cache = False; usecache = True
   _____________________________________________________________
   Method                total      d/l->file   read & parse file
   _____________________________________________________________
-  binary                 0.0188     0.0000     0.0126
-  binary                 0.0003     0.0000     0.0001
-  csv; pandas            0.0003     0.0000     0.0000
+  binary                 0.0232     0.0000     0.0130
+  binary                 0.0004     0.0000     0.0001
+  csv; pandas            0.0003     0.0000     0.0001
   csv; pandas; no len.   0.0003     0.0000     0.0001
   csv; numpy             0.0003     0.0000     0.0001
   csv; numpy; no len.    0.0003     0.0000     0.0001
@@ -74,64 +74,64 @@ test_unicode()
   _____________________________________________________________
   Method                total      d/l->file   read & parse file
   _____________________________________________________________
-  binary                 0.1676     0.1237     0.0000
-  csv; pandas            0.1995     0.1751     0.0020
-  csv; pandas; no len.   0.1471     0.1188     0.0015
-  csv; numpy             0.1263     0.1065     0.0004
-  csv; numpy; no len.    0.1665     0.1425     0.0002
+  binary                 0.1398     0.0937     0.0001
+  csv; pandas            0.1438     0.1101     0.0005
+  csv; pandas; no len.   0.1001     0.0757     0.0007
+  csv; numpy             0.1590     0.1361     0.0004
+  csv; numpy; no len.    0.1461     0.1173     0.0002
 
 
   dataset = 'dataset1-Aα☃'; parameters = 'unicodescalar-1-byte (A)'; run = 'short'. cache = False; usecache = False
   _____________________________________________________________
   Method                total      d/l->file   read & parse file
   _____________________________________________________________
-  binary                 0.1275     0.0798     0.0002
-  csv; pandas            0.1101     0.0822     0.0027
-  csv; pandas; no len.   0.1060     0.0768     0.0027
-  csv; numpy             0.1143     0.0887     0.0013
-  csv; numpy; no len.    0.0998     0.0754     0.0002
+  binary                 0.1512     0.1000     0.0002
+  csv; pandas            0.1158     0.0810     0.0026
+  csv; pandas; no len.   0.1836     0.1202     0.0005
+  csv; numpy             0.1122     0.0873     0.0001
+  csv; numpy; no len.    0.1121     0.0847     0.0005
 
 
   dataset = 'dataset1-Aα☃'; parameters = 'unicodescalar-2-byte (α)'; run = 'short'. cache = False; usecache = False
   _____________________________________________________________
   Method                total      d/l->file   read & parse file
   _____________________________________________________________
-  binary                 0.1806     0.1056     0.0002
-  csv; pandas            0.1829     0.1565     0.0013
-  csv; pandas; no len.   0.2295     0.1515     0.0025
-  csv; numpy             0.1601     0.1313     0.0006
-  csv; numpy; no len.    0.1473     0.1144     0.0008
+  binary                 0.1472     0.0797     0.0001
+  csv; pandas            0.1080     0.0802     0.0004
+  csv; pandas; no len.   0.1502     0.1241     0.0006
+  csv; numpy             0.1443     0.1142     0.0005
+  csv; numpy; no len.    0.1236     0.0948     0.0010
 
 
   dataset = 'dataset1-Aα☃'; parameters = 'unicodescalar-3-byte (☃)'; run = 'short'. cache = False; usecache = False
   _____________________________________________________________
   Method                total      d/l->file   read & parse file
   _____________________________________________________________
-  binary                 0.1377     0.0969     0.0001
-  csv; pandas            0.1137     0.0898     0.0025
-  csv; pandas; no len.   0.1174     0.0781     0.0025
-  csv; numpy             0.1038     0.0781     0.0005
-  csv; numpy; no len.    0.1582     0.1313     0.0010
+  binary                 0.1693     0.1132     0.0000
+  csv; pandas            0.1255     0.0919     0.0007
+  csv; pandas; no len.   0.1494     0.1200     0.0023
+  csv; numpy             0.1921     0.1653     0.0002
+  csv; numpy; no len.    0.1690     0.0803     0.0002
 
 
   dataset = 'dataset1-Aα☃'; parameters = 'unicodescalar-4-byte (👍)'; run = 'short'. cache = False; usecache = False
   _____________________________________________________________
   Method                total      d/l->file   read & parse file
   _____________________________________________________________
-  binary                 0.1240     0.0749     0.0001
-  csv; pandas            0.1475     0.1191     0.0012
-  csv; pandas; no len.   0.1353     0.1115     0.0013
-  csv; numpy             0.1424     0.1197     0.0002
-  csv; numpy; no len.    0.1373     0.1022     0.0001
+  binary                 0.1241     0.0769     0.0000
+  csv; pandas            0.1104     0.0845     0.0009
+  csv; pandas; no len.   0.2047     0.1304     0.0009
+  csv; numpy             0.0979     0.0740     0.0001
+  csv; numpy; no len.    0.1610     0.1330     0.0002
 
 
   dataset = 'dataset1-Aα☃'; parameters = 'unicodevector (A;α;☃;👍)'; run = 'short'. cache = False; usecache = False
   _____________________________________________________________
   Method                total      d/l->file   read & parse file
   _____________________________________________________________
-  binary                 0.1754     0.1306     0.0001
-  csv; pandas            0.1497     0.1167     0.0026
-  csv; pandas; no len.   0.1521     0.1300     0.0011
-  csv; numpy             0.1439     0.1164     0.0005
-  csv; numpy; no len.    0.0964     0.0742     0.0004
+  binary                 5.3368     0.1296     0.0003
+  csv; pandas            0.1568     0.1195     0.0028
+  csv; pandas; no len.   0.1389     0.1073     0.0005
+  csv; numpy             0.1843     0.1591     0.0002
+  csv; numpy; no len.    0.1569     0.1295     0.0005
 
