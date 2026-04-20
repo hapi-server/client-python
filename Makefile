@@ -55,11 +55,10 @@ SHELL:= /bin/bash
 
 LONG_TESTS=false
 
-CONDA=$(PWD)/anaconda3
+CONDA=$(CURDIR)/anaconda3
 
 ifeq ($(OS),Windows_NT)
-	CONDA=C:/Users/weigel/git/client-python/anaconda3
-	TMP=tmp/
+	CONDA=$(CURDIR)/anaconda3
 endif
 #TOS1=conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
 #TOS2=conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
@@ -122,16 +121,29 @@ endif
 
 ################################################################################
 # Anaconda install
+UNAME_S:=$(shell uname -s)
+UNAME_M:=$(shell uname -m)
+
+ifeq ($(UNAME_S),Linux)
 CONDA_PKG=Miniconda3-latest-Linux-x86_64.sh
-CONDA_PKG_PATH=/tmp/$(CONDA_PKG)
-ifeq ($(shell uname -s),Darwin)
-	CONDA_PKG=Miniconda3-latest-MacOSX-x86_64.sh
-	CONDA_PKG_PATH=/tmp/$(CONDA_PKG)
+ifeq ($(UNAME_M),aarch64)
+	CONDA_PKG=Miniconda3-latest-Linux-aarch64.sh
 endif
+endif
+
+ifeq ($(UNAME_S),Darwin)
+CONDA_PKG=Miniconda3-latest-MacOSX-x86_64.sh
+ifeq ($(UNAME_M),arm64)
+	CONDA_PKG=Miniconda3-latest-MacOSX-arm64.sh
+endif
+endif
+
 ifeq ($(OS),Windows_NT)
 	CONDA_PKG=Miniconda3-latest-Windows-x86_64.exe
 	CONDA_PKG_PATH=C:/tmp/$(CONDA_PKG)
 endif
+
+CONDA_PKG_PATH=/tmp/$(CONDA_PKG)
 
 activate:
 	@echo "On command line enter:"
@@ -155,7 +167,7 @@ $(CONDA): $(CONDA_PKG_PATH)
 ifeq ($(OS),Windows_NT)
 	# Not working; path is not set
 	#start "$(CONDA_PKG_PATH)" /S /D=$(CONDA)
-	echo "!!! Install miniconda3 into $(CONDA) manually by executing 'start $(PWD)/anaconda3'. Then re-execute make command."
+	echo "!!! Install miniconda3 into $(CONDA) manually by executing 'start $(CURDIR)/anaconda3'. Then re-execute make command."
 	exit 1
 else
 	test -d anaconda3 || bash $(CONDA_PKG_PATH) -b -p $(CONDA)
