@@ -35,7 +35,8 @@ def configure_logging(opts):
     elif opts['logging'] is True:
         _logger.setLevel(_logging.INFO)
         if not _logger.handlers:
-            _handler = _logging.StreamHandler()
+            import sys
+            _handler = _logging.StreamHandler(sys.stdout)
             _handler.setFormatter(_logging.Formatter("%(message)s"))
             _logger.addHandler(_handler)
     elif opts['logging'] is False:

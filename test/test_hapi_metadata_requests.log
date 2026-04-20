@@ -1,8 +1,0 @@
-test_hapi()
-test_catalog1()
-test_catalog2()
-test_dataset()
-test_parameter()
-test_bad_server_url()
-test_bad_dataset_id()
-test_bad_parameter_name()

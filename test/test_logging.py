@@ -25,13 +25,14 @@ class TestLoggingKeywordTrue:
   def teardown_method(self):
     _reset_logger()
 
-  def test_logs_to_stderr(self, capsys):
+  def test_logs_to_stdout(self, capsys):
     data, meta = hapi(server, dataset, parameters, start, stop, logging=True)
     captured = capsys.readouterr()
-    assert 'Running hapi.py version' in captured.err
+    assert 'Running hapi.py version' in captured.out
 
-  def test_adds_stream_handler(self):
+  def test_adds_stream_handler(self, capsys):
     data, meta = hapi(server, dataset, parameters, start, stop, logging=True)
+    capsys.readouterr()  # discard output
     logger = logging.getLogger("hapiclient")
     assert any(isinstance(h, logging.StreamHandler) for h in logger.handlers)
 

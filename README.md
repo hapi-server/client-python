@@ -91,11 +91,15 @@ As of 2026-04-14, Python 3.8+ is available with tox-env.
 git clone https://github.com/hapi-server/client-python
 cd client-python; python -m pip install -e .
 
-# Run a specific test on current Python version
+# Run a specific test on current Python version (default is log_level=INFO
+# for hapiclient logger and test logger when executed this way).
 python test/test_hapi_data_requests.py
 
 # Run a specific test on a specific Python version with all logging
 tox -e py311 -- test/test_hapi_data_requests.py
+# Set log level for test logger
+tox -e py311 -- test/test_hapi_data_requests.py --log-level=INFO
+
 
 # Run a specific test on all Python versions set by tox.ini `envlist`
 tox -- test/test_hapi_data_requests.py

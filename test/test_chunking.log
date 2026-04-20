@@ -1,0 +1,165 @@
+test_chunks()
+  request:   dataset3, scalar, 1971-01-01T01:50:00Z, 1975-08-03T06:50:00Z, P1D
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv'}
+  x_totalTime1 = 0.2598 s
+  x_totalTime1 = 0.1224 s
+
+  request:   dataset3, scalar, 1971-01-01T01:50:00Z, 1975-08-03T06:50:00Z, P1D
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'n_chunks': 2}
+  x_totalTime1 = 0.2598 s
+  x_totalTime1 = 0.2667 s
+
+  request:   dataset3, scalar, 1971-01-01T01:50:00Z, 1975-08-03T06:50:00Z, P1D
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': 'P1Y'}
+  x_totalTime1 = 0.2598 s
+  x_totalTime1 = 0.8196 s
+
+  request:   dataset3, scalar, 1971-01-01T01:50:00Z, 1971-08-03T06:50:00Z, P1D
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv'}
+  x_totalTime1 = 0.1430 s
+  x_totalTime1 = 0.1499 s
+
+  request:   dataset3, scalar, 1971-01-01T01:50:00Z, 1971-08-03T06:50:00Z, P1D
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'n_chunks': 2}
+  x_totalTime1 = 0.1430 s
+  x_totalTime1 = 0.3283 s
+
+  request:   dataset3, scalar, 1971-01-01T01:50:00Z, 1971-08-03T06:50:00Z, P1D
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': 'P1M'}
+  x_totalTime1 = 0.1430 s
+  x_totalTime1 = 1.2702 s
+
+  request:   dataset2, scalar, 1970-01-01T00:00:00.000Z, 1970-01-10T00:00:00.000Z, PT1H
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv'}
+  x_totalTime1 = 0.1460 s
+  x_totalTime1 = 0.1566 s
+
+  request:   dataset2, scalar, 1970-01-01T00:00:00.000Z, 1970-01-10T00:00:00.000Z, PT1H
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'n_chunks': 2}
+  x_totalTime1 = 0.1460 s
+  x_totalTime1 = 0.3184 s
+
+  request:   dataset2, scalar, 1970-01-01T00:00:00.000Z, 1970-01-10T00:00:00.000Z, PT1H
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': 'P1D'}
+  x_totalTime1 = 0.1460 s
+  x_totalTime1 = 1.4543 s
+
+  request:   dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv'}
+  x_totalTime1 = 0.3211 s
+  x_totalTime1 = 0.3698 s
+
+  request:   dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'n_chunks': 2}
+  x_totalTime1 = 0.3211 s
+  x_totalTime1 = 0.4028 s
+
+  request:   dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': 'PT1H'}
+  x_totalTime1 = 0.3211 s
+  x_totalTime1 = 1.1375 s
+
+test_parallel()
+  request:   dataset3, scalar, 1971-01-01T01:50:00Z, 1975-08-03T06:50:00Z, P1D
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'parallel': True, 'n_chunks': 2}
+  x_totalTime1 = 0.1834 s
+  x_totalTime1 = 0.3047 s
+
+  request:   dataset3, scalar, 1971-01-01T01:50:00Z, 1975-08-03T06:50:00Z, P1D
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'parallel': True, 'dt_chunk': 'P1Y'}
+  x_totalTime1 = 0.1834 s
+  x_totalTime1 = 0.7431 s
+
+  request:   dataset3, scalar, 1971-01-01T01:50:00Z, 1971-08-03T06:50:00Z, P1D
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'parallel': True, 'n_chunks': 2}
+  x_totalTime1 = 0.1516 s
+  x_totalTime1 = 0.2994 s
+
+  request:   dataset3, scalar, 1971-01-01T01:50:00Z, 1971-08-03T06:50:00Z, P1D
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'parallel': True, 'dt_chunk': 'P1M'}
+  x_totalTime1 = 0.1516 s
+  x_totalTime1 = 1.2088 s
+
+  request:   dataset2, scalar, 1970-01-01T00:00:00.000Z, 1970-01-10T00:00:00.000Z, PT1H
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'parallel': True, 'n_chunks': 2}
+  x_totalTime1 = 0.1725 s
+  x_totalTime1 = 0.3212 s
+
+  request:   dataset2, scalar, 1970-01-01T00:00:00.000Z, 1970-01-10T00:00:00.000Z, PT1H
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'parallel': True, 'dt_chunk': 'P1D'}
+  x_totalTime1 = 0.1725 s
+  x_totalTime1 = 1.4816 s
+
+  request:   dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'parallel': True, 'n_chunks': 2}
+  x_totalTime1 = 0.2658 s
+  x_totalTime1 = 0.4236 s
+
+  request:   dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'parallel': True, 'dt_chunk': 'PT1H'}
+  x_totalTime1 = 0.2658 s
+  x_totalTime1 = 1.3661 s
+
+test_chunk_threshold()
+  request:   dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T08:00:00Z, PT1S
+  options 1: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': None}
+  options 2: {'logging': False, 'usecache': False, 'cache': False, 'format': 'csv', 'dt_chunk': 'infer'}
+  x_totalTime1 = 0.2559 s
+  x_totalTime1 = 0.3482 s
+
+  request:   dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
+  options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
+  options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
+  x_totalTime1 = 0.3597 s
+  x_totalTime1 = 0.3573 s
+
+  request:   dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
+  options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
+  options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
+  x_totalTime1 = 0.3597 s
+  x_totalTime1 = 0.3034 s
+
+  request:   dataset1, scalar, 1970-01-01T00:00:00.000Z, 1970-01-01T05:00:00.000Z, PT1S
+  options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
+  options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
+  x_totalTime1 = 0.3597 s
+  x_totalTime1 = 0.4018 s
+
+  request:   ace, X_GSM, 2000-01-01T00:00:00.000Z, 2000-01-02T00:00:00.000Z, PT720S
+  options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
+  options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
+  x_totalTime1 = 1.1882 s
+  x_totalTime1 = 2.3337 s
+
+  request:   ace, X_GSM, 2000-01-01T00:00:00.000Z, 2000-01-02T00:00:00.000Z, PT720S
+  options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
+  options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
+  x_totalTime1 = 1.1882 s
+  x_totalTime1 = 2.5549 s
+
+  request:   ace, X_GSM, 2000-01-01T00:00:00.000Z, 2000-01-02T00:00:00.000Z, PT720S
+  options 1: {'usecache': False, 'cache': False, 'dt_chunk': None}
+  options 2: {'usecache': False, 'cache': False, 'dt_chunk': 'infer'}
+  x_totalTime1 = 1.1882 s
+  x_totalTime1 = 2.3144 s
+
