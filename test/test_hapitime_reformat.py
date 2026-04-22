@@ -58,24 +58,24 @@ def test_hapitime_reformat():
   logger.info("  Truncating")
   for i in range(len(dts)):
     form_to_match = dts[i]
-    logger.info(f"    Form to match: {form_to_match}")
+    logger.info("    Form to match: {}".format(form_to_match))
     for j in range(i + 1, len(dts)):
       given_form = dts[j]
       given_form_modified = hapitime_reformat(form_to_match, given_form)
-      logger.info(f"      Given:       {given_form}")
-      logger.info(f"      Reformatted: {given_form_modified}")
+      logger.info("      Given:       {}".format(given_form))
+      logger.info("      Reformatted: {}".format(given_form_modified))
       assert given_form_modified == form_to_match
 
   logger.info("  Padding")
   dts = list(reversed(dts))
   for i in range(len(dts)):
     form_to_match = dts[i]
-    logger.info(f"    Form to match: {form_to_match}")
+    logger.info("    Form to match: {}".format(form_to_match))
     for j in range(i + 1, len(dts)):
       given_form = dts[j]
       given_form_modified = hapitime_reformat(form_to_match, given_form)
-      logger.info(f"      Given:       {given_form}")
-      logger.info(f"      Reformatted: {given_form_modified}")
+      logger.info("      Given:       {}".format(given_form))
+      logger.info("      Reformatted: {}".format(given_form_modified))
       assert given_form_modified == form_to_match
 
 

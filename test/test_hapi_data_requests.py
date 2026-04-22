@@ -57,11 +57,13 @@ def test_reader_timing_long():
 
 
 def test_all_test_servers():
+
     # Test that all test servers can be accessed and return something for a
     # request for all parameters for the sample time range.
     def test_server(version):
         from hapiclient import hapi
-
+        from hapiclient.util import warning, unicode_error_message
+        
         server  = 'http://hapi-server.org/servers/TestData{}/hapi'.format(version)
         dataset = 'dataset1'
         start   = '1970-01-01T00:00:00'
@@ -70,6 +72,11 @@ def test_all_test_servers():
         # Get catalog with list of datasets
         catalog = hapi(server)
         for dataset in catalog['catalog']:
+            
+            if unicode_error_message(dataset['id']) != "":
+                logger.warning("Skipping "+ str(dataset['id'].encode('utf-8')) + " due to " + unicode_error_message(dataset))
+                continue
+
             id = dataset['id']
             # Get metadata for dataset to determine sampleStartDate and sampleStopDate
             info = hapi(server, id)
@@ -210,10 +217,10 @@ def test_unicode():
 if __name__ == '__main__':
     #test_subset_short()
     #exit()
-    test_reader_timing_short()
-    test_reader_timing_long()
+    #test_reader_timing_short()
+    #test_reader_timing_long()
     test_all_test_servers()
-    test_subset_short()
-    test_cache_short()
-    test_request2path()
-    test_unicode()
+    #test_subset_short()
+    #test_cache_short()
+    #test_request2path()
+    #test_unicode()

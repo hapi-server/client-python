@@ -23,16 +23,16 @@ def _compare(data1, data2, meta1, meta2, opts1, opts2):
 
     def print_times(meta, n):
         logger.info('  x_totalTime1 = %6.4f s' % (meta['x_totalTime']))
-        logger.debug(f'    x_downloadTime{n} = {meta["x_downloadTime"]}')
-        logger.debug(f'    x_readTime1 = {meta["x_readTime"]}')
+        logger.debug('    x_downloadTime{} = {}'.format(n, meta["x_downloadTime"]))
+        logger.debug('    x_readTime{} = {}'.format(n, meta["x_readTime"]))
         if 'x_downloadTimes' in meta:
-            logger.debug(f'    x_downloadTimes{n} = {meta["x_downloadTimes"]}')
+            logger.debug('    x_downloadTimes{} = {}'.format(n, meta["x_downloadTimes"]))
         if 'x_readTimes' in meta:
-            logger.debug(f'    x_readTimes{n} = {meta["x_readTimes"]}')
+            logger.debug('    x_readTimes{} = {}'.format(n, meta["x_readTimes"]))
         if 'trimTime' in meta:
-            logger.debug(f'    x_trimTime{n} = {meta["x_trimTime"]}')
+            logger.debug('    x_trimTime{} = {}'.format(n, meta["x_trimTime"]))
         if 'catTime' in meta:
-            logger.debug(f'    x_catTime{n} = {meta["x_catTime"]}')
+            logger.debug('    x_catTime{} = {}'.format(n, meta["x_catTime"]))
 
     args = (meta1['x_dataset'], meta1['x_parameters'], meta1['x_time.min'], meta1['x_time.max'], meta1['cadence'])
     logger.info('  request:   %s, %s, %s, %s, %s' % args)
