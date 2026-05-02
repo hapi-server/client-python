@@ -50,7 +50,7 @@ PYTHONVERS=python3.14 python3.13 python3.12 python3.11 python3.10 python3.9 pyth
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.2.8b0
+VERSION=0.2.8b1
 SHELL:= /bin/bash
 
 LONG_TESTS=false

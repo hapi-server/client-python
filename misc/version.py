@@ -23,16 +23,27 @@ fin.close()
 version = version.rstrip()
 print("Using version = " + version)
 
-fnames = ["Makefile", "setup.py", "hapiclient/hapi.py", "hapiclient/__init__.py"]
-regexes = ["VERSION=(.*)", "version=(.*)", "Version: (.*)", "__version__ = (.*)"]
-replaces = ["VERSION=" + version, "version='" + version + "',", "Version: " + version, "__version__ = '" + version + "'"]
-for i in range(len(fnames)):
+fnames = {
+	"Makefile": r"^(VERSION=)(.*)$",
+	"setup.py": r"^(\s*version=')(.*)(',\s*)$",
+	"hapiclient/hapi.py": r"^(\s*Version: )(.*)$",
+	"hapiclient/__init__.py": r"^(__version__ = ')(.*)('$)",
+	".zenodo.json": r'^(\s*"version": ")(.*)(",?\s*)$'
+}
+
+def replace_version(match):
+	prefix = match.group(1)
+	suffix = match.group(3) if match.lastindex == 3 else ''
+	return prefix + version + suffix
+
+
+for fname, regex in fnames.items():
 	updated = False
 	lines = ''
-	fin = open(fnames[i])
-	print("Scanning " + fnames[i])
+	fin = open(fname)
+	print("Scanning " + fname)
 	for lineo in fin:
-		line1 = re.sub(regexes[i], replaces[i], lineo)
+		line1 = re.sub(regex, replace_version, lineo)
 		if lineo != line1:
 			print("Original: " + lineo.rstrip())
 			print("Modified: " + line1.rstrip())
@@ -44,10 +55,10 @@ for i in range(len(fnames)):
 		print("  Version in file was already up-to-date.")
 		continue
 
-	with open(fnames[i] + ".tmp", "w") as fout:
+	with open(fname + ".tmp", "w") as fout:
 		fout.write(lines)
-	print("Wrote " + fnames[i] + ".tmp")
+	print("Wrote " + fname + ".tmp")
 
 	if overwrite:
-		os.rename(fnames[i] + ".tmp", fnames[i])
-		print("  Renamed " + fnames[i] + ".tmp" + " to " + fnames[i])
+		os.rename(fname + ".tmp", fname)
+		print("  Renamed " + fname + ".tmp" + " to " + fname)

@@ -2,7 +2,7 @@
     "description": "Python client for HAPI", 
     "license": "other-open", 
     "title": "hapi-server/client-python:", 
-    "version": "v0.2.1", 
+    "version": "0.2.8b1", 
     "upload_type": "software", 
     "publication_date": "2021-10-06", 
     "creators": [
@@ -13,11 +13,6 @@
     ], 
     "access_right": "open", 
     "related_identifiers": [
-        {
-            "scheme": "url", 
-            "identifier": "https://github.com/hapi-server/client-python/tree/v0.2.1", 
-            "relation": "isSupplementTo"
-        }, 
         {
             "scheme": "doi", 
             "identifier": "10.5281/zenodo.5553155", 
