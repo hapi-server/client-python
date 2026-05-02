@@ -1,9 +1,13 @@
-# Test hapi() data read functions using repository code:
+# Test in Conda virtual environments (to be deprecated):
 #   make repository-test PYTHON=_PYTHON_ # Test using _PYTHON_ (e.g, python3.6)
 #   make repository-test-all             # Test on all versions in $(PYTHONVERS) var below
 #
+# Test using tox (See also README.md for additional instructions):
+#   tox
+#
 # Beta releases:
-# 1. Run make repository-test-all
+# 1. tox
+# 2. make repository-test-all # (To be deprecated)
 # 2. For non-doc/formatting changes, update version in CHANGES.txt.
 # 3. run `make version-update` if version changed in CHANGES.txt.
 # 4. Commit and push
@@ -51,7 +55,6 @@ PYTHONVERS=python3.14 python3.13 python3.12 python3.11 python3.10 python3.9 pyth
 # from CHANGES.txt. Do not edit.
 VERSION=0.2.7b1
 SHELL:= /bin/bash
-#SHELL:= /c/Windows/system32/cmd
 
 LONG_TESTS=false
 
@@ -79,26 +82,6 @@ install: $(CONDA)/envs/$(PYTHON)
 
 test:
 	make repository-test-all
-
-####################################################################
-# Tox notes
-#
-# Ideally local tests would use same commands as .tox.ini and .travis.yml.
-#
-# To use tox -e short-test, it seems we need to install and activate
-# each version of python. So using tox locally does not seem to make
-# things much simpler than `make repository-test`, which installs
-# conda and virtual envioronments and runs tests.
-#
-# However, Travis tests use tox-travis and it seems creation of
-# virtual environment is done automatically.
-#
-#repository-test-all-tox:
-#	tox -e short-test
-#repository-test-tox: 
-# # Does not work
-#	tox -e py$(subst .,,$(PYTHON_VER)) short-test
-####################################################################
 
 # Test contents in repository using different Python versions
 repository-test-all:
