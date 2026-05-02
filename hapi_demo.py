@@ -3,7 +3,7 @@
 # from command line.
 
 # Note:
-# In IPython, enter 
+# In IPython, enter
 #    %matplotlib qt
 # on command line to open plots in new window. Enter
 #    %matplotlib inline
@@ -14,7 +14,7 @@
 
 def main(plot):
 
-    demos = [omniweb, sscweb, cdaweb, cassini, lisird]
+    demos = [omniweb, sscweb, cdaweb, lisird]
     #demos = [testdata]
 
     for demo in demos:
@@ -40,6 +40,7 @@ def testdata(plot):
 
     # Plot all parameters
     hapiplot(data, meta)
+
 
 def omniweb(plot):
 
@@ -87,7 +88,7 @@ def cdaweb(plot):
     start      = '2001-01-01T05:00:00'
     stop       = '2001-01-01T10:00:00'
     parameters = 'Magnitude,BGSEc'
-    opts       = {'logging': True, 'usecache': True}    
+    opts       = {'logging': True, 'usecache': True}
     data, meta = hapi(server, dataset, parameters, start, stop, **opts)
     hapiplot(data, meta, **opts)
 
@@ -110,39 +111,17 @@ def cdaweb(plot):
     print('  %d. %s' % (len(meta['catalog']), meta['catalog'][-1]['id']))
     print('')
 
-    # List all servers
-    servers = hapi(logging=True)  # servers is an array of URLs
-    print('')
-
-
-def cassini(plot):
-
-    from hapiclient import hapi
-    from hapiplot import hapiplot
-
-    server     = 'http://datashop.elasticbeanstalk.com/hapi';
-    dataset    = 'CHEMS_PHA_BOX_FLUXES_FULL_TIME_RES';
-    parameters = 'HPlus_BEST_T1';
-    start      = '2004-07-01T04:00:00Z';
-    stop       = '2004-07-01T06:00:00Z';
-    opts       = {'usecache': True, 'logging': True}
-
-    data, meta = hapi(server, dataset, parameters, start, stop, **opts)
-
-    popts = {'logging': False, 'logy': True, 'logz': True}
-    hapiplot(data, meta, **popts)
-
 
 def lisird(plot):
 
     from hapiclient import hapi
     from hapiplot import hapiplot
 
-    server     = 'http://lasp.colorado.edu/lisird/hapi';
-    dataset    = 'sme_ssi';
-    parameters = 'irradiance'; 
-    start      = '1981-10-09T00:00:00.000Z';
-    stop       = '1981-10-14T00:00:00.000Z';
+    server     = 'http://lasp.colorado.edu/lisird/hapi'
+    dataset    = 'sme_ssi'
+    parameters = 'irradiance'
+    start      = '1981-10-09T00:00:00.000Z'
+    stop       = '1981-10-14T00:00:00.000Z'
 
     opts       = {'usecache': True, 'logging': True}
     data, meta = hapi(server, dataset, parameters, start, stop, **opts)

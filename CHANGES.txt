@@ -110,4 +110,5 @@ v0.2.7b1:
 	2026-04-08 -- Improve NaN handling https://github.com/hapi-server/client-python/issues/88
 	2026-05-02 -- Logging and testing https://github.com/hapi-server/client-python/issues/89
 v0.2.7:
-	2026--05-02-- Support for Python 2.7 dropped. This is last release with support for 3.5 through 3.8.
+	2026-05-02 -- Support for Python 2.7 dropped. This is last release with support for 3.5 through 3.8.
+v0.2.8b0:

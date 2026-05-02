@@ -20,26 +20,23 @@
 # Upload package to pypi.org
 #  0. Remove the "b" in the version in CHANGES.txt
 #  1. make release
-#  2. Wait ~5 minutes and execute
-#  3. make release-test-all
+#  2. Manually create a release at https://github.com/hapi-server/client-python/releases 
+#     (could do this automatically using https://stackoverflow.com/questions/21214562/how-to-release-versions-on-github-through-the-command-line)
+#  3. Wait ~5 minutes and execute
+#  4. make release-test-all
 #     (Will fail until new version is available at pypi.org for pip install.
 #      Sometimes takes ~5 minutes even though web page is immediately
 #      updated.)
-#  4. After package is finalized, create new version number in CHANGES.txt ending
+#  5. After package is finalized, create new version number in CHANGES.txt ending
 #     with "b0" in setup.py and then run
 #       make version-update
 #       git commit -a -m "Update version for next release"
 #     This will update the version information in the repository to indicate it
 #     is now in a pre-release state.
-#  5. Manually create a release at https://github.com/hapi-server/client-python/releases 
-#     (could do this automatically using https://stackoverflow.com/questions/21214562/how-to-release-versions-on-github-through-the-command-line)
 #  Notes:
 #   1. make repository-test tests with Anaconda virtual environment
 #      make package-test and release-test tests with native Python virtual
 #      environment.
-#   2. Switch to using tox and conda-tox
-#   3. 'pip install --editable . does not install develop dependencies, so
-#      'python setup.py develop' is used. Won't need figure out when 2. is finished.
 
 URL=https://upload.pypi.org/
 REP=pypi
@@ -53,7 +50,7 @@ PYTHONVERS=python3.14 python3.13 python3.12 python3.11 python3.10 python3.9 pyth
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.2.7
+VERSION=0.2.8b0
 SHELL:= /bin/bash
 
 LONG_TESTS=false
