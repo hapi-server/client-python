@@ -12,13 +12,8 @@ method = 3
 if method == 1:
   data, meta = hapi(server, dataset, parameters, start, stop, logging=True)
 
-# 2. Log to a file-like object using logging keyword (legacy)
+# 2. Log to console using Python's standard logging module
 if method == 2:
-  with open("hapi_logging_demo.log", "w") as f:
-    data, meta = hapi(server, dataset, parameters, start, stop, logging=f)
-
-# 3. Log to console using Python's standard logging module
-if method == 3:
   import logging
   logger = logging.getLogger("hapiclient")
   logger.setLevel(logging.INFO)
@@ -29,8 +24,8 @@ if method == 3:
   logger.addHandler(handler)
   data, meta = hapi(server, dataset, parameters, start, stop)
 
-# 4. Log to a file using Python's standard logging module
-if method == 4:
+# 3. Log to a file using Python's standard logging module
+if method == 3:
   import logging
   logger = logging.getLogger("hapiclient")
   logger.setLevel(logging.INFO)

@@ -39,6 +39,7 @@ start      = '2003-09-01T00:00:00'
 stop       = '2003-12-01T00:00:00'
 parameters = 'DST1800'
 opts       = {'logging': True}
+# See misc/hapi_logging_demo.py for example of using conventional Python logging.
 
 # Get data
 data, meta = hapi(server, dataset, parameters, start, stop, **opts)
@@ -122,7 +123,6 @@ git clone https://github.com/hapi-server/client-python
 cd client-python; python -m pip install -e .
 ```
 
-
 or, create an isolated Anaconda installation (downloads and installs latest Miniconda3) using
 
 ``` bash
@@ -141,7 +141,7 @@ make repository-test
 
 To run an individual unit test in a Python session, use, e.g.,
 
-```python
+```bash
 cd test; python test_hapitime_reformat.py
 ```
 
