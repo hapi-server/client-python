@@ -1,3 +1,7 @@
+import logging as _logging
+_logger = _logging.getLogger("hapiclient")
+
+
 def setopts(defaults, given):
     """Override default keyword dictionary options.
 
@@ -19,34 +23,50 @@ def setopts(defaults, given):
     return defaults
 
 
-def log_test():
+_INTERNAL_HANDLER_ATTR = "_hapiclient_internal_handler"
+_INTERNAL_LEVEL_ATTR = "_hapiclient_internal_level"
+def configure_logging(opts):
+    """Configure the hapiclient logger based on opts['logging'].
 
-    log("Test 1", {"logging": True})
-    log("Test 2", {"logging": False})
+    If the hapiclient logger has been configured externally (level != NOTSET
+    or handlers present), the logging kwarg.
+    """
+    has_user_level = _logger.level != _logging.NOTSET and \
+                     _logger.level != getattr(_logger, _INTERNAL_LEVEL_ATTR, None)
+    has_user_handlers = any(
+        not getattr(handler, _INTERNAL_HANDLER_ATTR, False)
+        for handler in _logger.handlers
+    )
+
+    if opts['logging']:
+        _logger.setLevel(_logging.INFO)
+        setattr(_logger, _INTERNAL_LEVEL_ATTR, _logging.INFO)
+        _logger.propagate = False
+        if not _logger.handlers:
+            import sys
+            _handler = _logging.StreamHandler(sys.stdout)
+            _handler.setFormatter(_logging.Formatter("%(message)s"))
+            setattr(_handler, _INTERNAL_HANDLER_ATTR, True)
+            _logger.addHandler(_handler)
+    else:
+        if has_user_level or has_user_handlers:
+            if has_user_handlers:
+                log("Ignoring logging=%s because standard Python logger for 'hapiclient' already configured with handlers." % opts['logging'], opts)
+            else:
+                log("Ignoring logging=%s because standard Python logger for 'hapiclient' already configured with log_level != NOTSET." % opts['logging'], opts)
+        else:
+            _logger.setLevel(_logging.WARNING)
+            setattr(_logger, _INTERNAL_LEVEL_ATTR, _logging.WARNING)
 
 
 def log(msg, opts):
-    """Print message to console or file."""
+    """Log message using the 'hapiclient' logger."""
 
-    import os
     import sys
 
-    if not 'logging' in opts:
-        opts = opts.copy()
-        opts['logging'] = False
-
     pre = sys._getframe(1).f_code.co_name + '(): '
-    if isinstance(opts['logging'], bool) and opts['logging']:
-        if pythonshell() == 'jupyter-notebook':
-            # Don't show full path information.
-            msg = msg.replace(opts['cachedir'] + os.path.sep, '')
-            msg = msg.replace(opts['cachedir'], '')
-        print(pre + msg)
-    elif hasattr(opts['logging'], 'write'):
-        opts['logging'].write(pre + msg + "\n")
-        opts['logging'].flush()
-    else:
-        pass # TODO: error
+
+    _logger.info(pre + msg)
 
 
 def jsonparse(res, url):
@@ -107,6 +127,7 @@ def unicode_error_message(name):
     import sys
     msg = ""
     if sys.version_info[0:2] <= (3, 5):
+        name = str(name)
         if not all(ord(char) < 128 for char in name):
             msg = "hapiclient cannot handle Unicode dataset or parameter names (" + str(name.encode('utf-8')) + ") for Python < 3.6 on Windows."
     return msg

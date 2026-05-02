@@ -1,16 +1,19 @@
 import sys
 from setuptools import setup, find_packages
 
-install_requires = ["isodate>=0.6.0","urllib3","joblib"]
+install_requires = ["urllib3", "joblib"]
 
 if sys.version_info >= (3, 6):
+    install_requires.append("isodate>=0.6.0")
     install_requires.append('pandas>=0.23')
     install_requires.append('numpy>=1.14.3')
 elif sys.version_info < (3, 6) and sys.version_info > (3, ):
+    install_requires.append("isodate>=0.6.0,<0.7.0")
     install_requires.append("pandas<1.0")
     install_requires.append("numpy<1.17")
     install_requires.append("kiwisolver<=1.2")
 else:
+    install_requires.append("isodate>=0.6.0,<0.7.0")
     install_requires.append("pandas>=0.23,<0.25")
     install_requires.append("numpy<1.17")
     install_requires.append("pyparsing<3")

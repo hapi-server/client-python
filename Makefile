@@ -1,9 +1,13 @@
-# Test hapi() data read functions using repository code:
+# Test in Conda virtual environments (to be deprecated):
 #   make repository-test PYTHON=_PYTHON_ # Test using _PYTHON_ (e.g, python3.6)
 #   make repository-test-all             # Test on all versions in $(PYTHONVERS) var below
 #
+# Test using tox (See also README.md for additional instructions):
+#   tox
+#
 # Beta releases:
-# 1. Run make repository-test-all
+# 1. tox
+# 2. make repository-test-all # (To be deprecated)
 # 2. For non-doc/formatting changes, update version in CHANGES.txt.
 # 3. run `make version-update` if version changed in CHANGES.txt.
 # 4. Commit and push
@@ -45,23 +49,29 @@ PYTHON=python3.8
 PYTHON_VER=$(subst python,,$(PYTHON))
 
 # Python versions to test
-PYTHONVERS=python3.13 python3.12 python3.11 python3.10 python3.9 python3.8 python3.7 python3.6 python3.5
+PYTHONVERS=python3.14 python3.13 python3.12 python3.11 python3.10 python3.9 python3.8 python3.7 python3.6
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
 VERSION=0.2.7b1
 SHELL:= /bin/bash
-#SHELL:= /c/Windows/system32/cmd
 
 LONG_TESTS=false
 
-CONDA=$(PWD)/anaconda3
+CONDA=$(CURDIR)/anaconda3
 
 ifeq ($(OS),Windows_NT)
-	CONDA=C:/Users/weigel/git/client-python/anaconda3
-	TMP=tmp/
+	CONDA=$(CURDIR)/anaconda3
 endif
+#TOS1=conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+#TOS2=conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 CONDA_ACTIVATE=source $(CONDA)/etc/profile.d/conda.sh; conda activate
+
+ifeq ($(OS),Windows_NT)
+	CONDA_RUN=$(CONDA)/Scripts/conda.exe run -n $(PYTHON)
+else
+	CONDA_RUN=$(CONDA_ACTIVATE) $(PYTHON);
+endif
 
 ################################################################################
 install: $(CONDA)/envs/$(PYTHON)
@@ -72,26 +82,6 @@ install: $(CONDA)/envs/$(PYTHON)
 
 test:
 	make repository-test-all
-
-####################################################################
-# Tox notes
-#
-# Ideally local tests would use same commands as .tox.ini and .travis.yml.
-#
-# To use tox -e short-test, it seems we need to install and activate
-# each version of python. So using tox locally does not seem to make
-# things much simpler than `make repository-test`, which installs
-# conda and virtual enviornments and runs tests.
-#
-# However, Travis tests use tox-travis and it seems creation of
-# virtual environment is done automatically.
-#
-#repository-test-all-tox:
-#	tox -e short-test
-#repository-test-tox: 
-# # Does not work
-#	tox -e py$(subst .,,$(PYTHON_VER)) short-test
-####################################################################
 
 # Test contents in repository using different Python versions
 repository-test-all:
@@ -104,31 +94,40 @@ repository-test-all:
 repository-test:
 	@make clean
 	make condaenv PYTHON=$(PYTHON)
-	$(CONDA_ACTIVATE) $(PYTHON); pip install pytest deepdiff; pip install .
+	$(CONDA_RUN) pip install pytest deepdiff
+	$(CONDA_RUN) pip install .
 
-ifeq (LONG_TESTS,true)
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v -m 'long' hapiclient/test/test_hapi.py
+ifeq ($(LONG_TESTS),true)
+	$(CONDA_RUN) python -m pytest -m "long" test
 else
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest --tb=short -v -m 'short' hapiclient/test/test_hapi.py
+	$(CONDA_RUN) python -m pytest -m "not long" test
 endif
-
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_chunking.py
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_hapitime2datetime.py
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_datetime2hapitime.py
-	$(CONDA_ACTIVATE) $(PYTHON); python -m pytest -v hapiclient/test/test_hapitime_reformat.py
 ################################################################################
 
 ################################################################################
 # Anaconda install
-CONDA_PKG=Miniconda3-latest-Linux-x86_64.sh
-CONDA_PKG_PATH=/tmp/$(CONDA_PKG)
-ifeq ($(shell uname -s),Darwin)
-	CONDA_PKG=Miniconda3-latest-MacOSX-x86_64.sh
-	CONDA_PKG_PATH=/tmp/$(CONDA_PKG)
-endif
 ifeq ($(OS),Windows_NT)
-	CONDA_PKG=Miniconda3-latest-Windows-x86_64.exe
-	CONDA_PKG_PATH=C:/tmp/$(CONDA_PKG)
+CONDA_PKG=Miniconda3-latest-Windows-x86_64.exe
+CONDA_PKG_PATH=C:/tmp/$(CONDA_PKG)
+else
+UNAME_S:=$(shell uname -s)
+UNAME_M:=$(shell uname -m)
+
+ifeq ($(UNAME_S),Linux)
+CONDA_PKG=Miniconda3-latest-Linux-x86_64.sh
+ifeq ($(UNAME_M),aarch64)
+CONDA_PKG=Miniconda3-latest-Linux-aarch64.sh
+endif
+endif
+
+ifeq ($(UNAME_S),Darwin)
+CONDA_PKG=Miniconda3-latest-MacOSX-x86_64.sh
+ifeq ($(UNAME_M),arm64)
+CONDA_PKG=Miniconda3-latest-MacOSX-arm64.sh
+endif
+endif
+
+CONDA_PKG_PATH=/tmp/$(CONDA_PKG)
 endif
 
 activate:
@@ -136,31 +135,45 @@ activate:
 	@echo "$(CONDA_ACTIVATE) $(PYTHON)"
 
 condaenv:
-	make $(CONDA)/envs/$(PYTHON) PYTHON=$(PYTHON)
+	$(MAKE) $(CONDA)/envs/$(PYTHON) PYTHON=$(PYTHON)
 
 $(CONDA)/envs/$(PYTHON): $(CONDA)
 ifeq ($(OS),Windows_NT)
-	$(CONDA_ACTIVATE); \
-		$(CONDA)/Scripts/conda \
-			create -y --name $(PYTHON) python=$(PYTHON_VER)
+	$(CONDA)/Scripts/conda.exe tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+	$(CONDA)/Scripts/conda.exe tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+	$(CONDA)/Scripts/conda.exe tos accept --override-channels --channel https://repo.anaconda.com/pkgs/msys2
+	$(CONDA)/Scripts/conda.exe create -y --name $(PYTHON) python=$(PYTHON_VER)
 else
 	$(CONDA_ACTIVATE); \
+		$(CONDA)/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main; \
+		$(CONDA)/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r; \
 		$(CONDA)/bin/conda \
 		create -y --name $(PYTHON) python=$(PYTHON_VER)
 endif
 
-$(CONDA): $(CONDA_PKG_PATH)
 ifeq ($(OS),Windows_NT)
-	# Not working; path is not set
-	#start "$(CONDA_PKG_PATH)" /S /D=$(CONDA)
-	echo "!!! Install miniconda3 into $(CONDA) manually by executing 'start $(PWD)/anaconda3'. Then re-execute make command."
-	exit 1
+$(CONDA):
+	@powershell -NoProfile -Command "$$ErrorActionPreference='Stop'; \
+		$$pkg = '$(CONDA_PKG)'; \
+		if ([string]::IsNullOrWhiteSpace($$pkg)) { $$pkg = 'Miniconda3-latest-Windows-x86_64.exe' }; \
+		$$tempDir = [System.IO.Path]::GetTempPath(); \
+		if ([string]::IsNullOrWhiteSpace($$tempDir)) { $$tempDir = 'C:\\Windows\\Temp' }; \
+		New-Item -ItemType Directory -Force -Path $$tempDir | Out-Null; \
+		$$installer = Join-Path $$tempDir $$pkg; \
+		$$url = 'https://repo.anaconda.com/miniconda/' + $$pkg; \
+		$$condaExe = Join-Path '$(CONDA)' 'Scripts/conda.exe'; \
+		if (Test-Path $$condaExe) { exit 0 }; \
+		if (!(Test-Path $$installer)) { Invoke-WebRequest -Uri $$url -OutFile $$installer }; \
+		$$target = [System.IO.Path]::GetFullPath('$(CONDA)').Replace('/','\\'); \
+		Start-Process -FilePath $$installer -ArgumentList '/InstallationType=JustMe','/RegisterPython=0','/AddToPath=0','/S',('/D=' + $$target) -Wait -NoNewWindow; \
+		if (!(Test-Path $$condaExe)) { throw 'Miniconda install failed.' }"
 else
+$(CONDA): $(CONDA_PKG_PATH)
 	test -d anaconda3 || bash $(CONDA_PKG_PATH) -b -p $(CONDA)
-endif
 
 $(CONDA_PKG_PATH):
-	curl https://repo.anaconda.com/miniconda/$(CONDA_PKG) > $(CONDA_PKG_PATH)
+	curl -L -o $(CONDA_PKG_PATH) https://repo.anaconda.com/miniconda/$(CONDA_PKG)
+endif
 ################################################################################
 
 ################################################################################
@@ -265,11 +278,18 @@ test-clean:
 ################################################################################
 
 clean:
-	- @find . -name __pycache__ | xargs rm -rf {}
-	- @find . -name *.pyc | xargs rm -rf {}
-	- @find . -name *.DS_Store | xargs rm -rf {}
-	- @find . -type d -name __pycache__ | xargs rm -rf {}
-	- @find . -name *.pyc | xargs rm -rf {}
+
+ifeq ($(OS),Windows_NT)
+	- @powershell -NoProfile -Command "Get-ChildItem -Path . -Recurse -Directory -Filter '__pycache__' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue"
+	- @powershell -NoProfile -Command "Get-ChildItem -Path . -Recurse -File -Include '*.pyc','*.DS_Store' -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue"
+	- @powershell -NoProfile -Command "Remove-Item -Path '*~' -Force -ErrorAction SilentlyContinue"
+	- @powershell -NoProfile -Command "Remove-Item -Path '#*#' -Force -ErrorAction SilentlyContinue"
+	- @powershell -NoProfile -Command "Remove-Item -Path 'env','dist','.pytest_cache','hapiclient.egg-info' -Recurse -Force -ErrorAction SilentlyContinue"
+	- @powershell -NoProfile -Command "Remove-Item -Path '/c/tools/miniconda3/envs/python3.6/Scripts/wheel.exe*','/c/tools/miniconda3/envs/python3.6/vcruntime140.dll.*' -Force -ErrorAction SilentlyContinue"
+else
+	- @find . -type d -name __pycache__ -exec rm -rf {} +
+	- @find . -type f -name '*.pyc' -exec rm -f {} +
+	- @find . -type f -name '*.DS_Store' -exec rm -f {} +
 	- @rm -f *~
 	- @rm -f \#*\#
 	- @rm -rf env
@@ -277,5 +297,4 @@ clean:
 	- @rm -f MANIFEST
 	- @rm -rf .pytest_cache/
 	- @rm -rf hapiclient.egg-info/
-	- @rm -rf /c/tools/miniconda3/envs/python3.6/Scripts/wheel.exe*
-	- @rm -rf /c/tools/miniconda3/envs/python3.6/vcruntime140.dll.*
+endif

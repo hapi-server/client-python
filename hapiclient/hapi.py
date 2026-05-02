@@ -4,6 +4,7 @@ import sys
 import json
 import time
 import pickle
+import logging as _logging
 import warnings
 from datetime import datetime, timedelta
 
@@ -13,7 +14,7 @@ import numpy as np
 from joblib import Parallel, delayed
 
 from hapiclient.hapitime import hapitime2datetime, hapitime_reformat
-from hapiclient.util import setopts, log, warning, error
+from hapiclient.util import setopts, log, warning, error, configure_logging
 from hapiclient.util import urlopen, urlretrieve, jsonparse, unicode_error_message
 
 
@@ -344,7 +345,11 @@ def hapi(*args, **kwargs):
     # Override defaults
     opts = setopts(hapiopts(), kwargs)
 
-    assert (opts['logging'] in [True, False]), "logging keyword must be True of False"
+    assert (isinstance(opts['logging'], bool) or hasattr(opts['logging'], 'write')), \
+        "logging keyword must be True, False, or a file-like object"
+
+    configure_logging(opts)
+
     assert (opts['cache'] in [True, False]), "cache keyword must be True of False"
     assert (opts['usecache'] in [True, False]), "usecache keyword must be True of False"
     assert (opts['format'] in ['binary', 'csv']), "format keyword must be 'csv' or 'binary'"
@@ -408,7 +413,7 @@ def hapi(*args, **kwargs):
         # urld = url subdirectory of cachedir to store files from SERVER
         urld = cachedir(opts["cachedir"], SERVER)
 
-        if opts["cachedir"]: log('file directory = %s' % urld, opts)
+        if opts["cachedir"]: log('cache subdirectory = %s' % urld, opts)
 
         urljson = SERVER + '/info?id=' + DATASET
 
@@ -558,10 +563,13 @@ def hapi(*args, **kwargs):
 
             backend = 'sequential'
             if opts['parallel']:
+                # Note that this does not often lead to significant speed-up.
+                # Needs further testing and optimization.
                 backend = 'threading'
-                # multiprocessing was not tested. It may work, but will
-                # need a speed comparison with threading.
-                # backend = 'multiprocessing'
+                # multiprocessing not working.
+                #backend = 'multiprocessing'
+                # loky works, but not speed-up.
+                #backend = 'loky'
 
             log('backend = {}'.format(backend), opts)
 
@@ -663,14 +671,18 @@ def hapi(*args, **kwargs):
         if opts["usecache"] and os.path.isfile(fnamenpy):
             # Read cached data file.
             log('Reading %s ' % fnamenpy.replace(urld + '/', ''), opts)
+            tic = time.time()
             f = open(fnamenpy, 'rb')
             data = np.load(f)
             f.close()
+            toc = time.time() - tic
             # There is a possibility that the fnamenpy file existed but
             # fnamepklx was not found (b/c removed). In this case, the meta
             # returned will not have all of the "x_" information inserted below.
             # Code that uses this information needs to account for this.
             meta['x_totalTime'] = time.time() - tic_totalTime
+            meta['x_readTime'] = tic - tic_totalTime
+            meta['x_downloadTime'] = 0
             return data, meta
 
         cformats = ['csv', 'binary']  # client formats
