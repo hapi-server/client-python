@@ -1,14 +1,12 @@
-import os
 import shutil
 
 import numpy as np
 
 from hapiclient import hapi
 
-
 from util.get_logger import get_logger
-
 logger = get_logger(__name__)
+
 
 def comparisonOK(a, b, nolength=False, a_name="First", b_name="Second"):
 

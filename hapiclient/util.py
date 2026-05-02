@@ -23,44 +23,48 @@ def setopts(defaults, given):
     return defaults
 
 
+_INTERNAL_HANDLER_ATTR = "_hapiclient_internal_handler"
+_INTERNAL_LEVEL_ATTR = "_hapiclient_internal_level"
 def configure_logging(opts):
     """Configure the hapiclient logger based on opts['logging'].
 
-    If the logger has been configured externally (level != NOTSET or handlers
-    present), the logging kwarg is ignored.
+    If the hapiclient logger has been configured externally (level != NOTSET
+    or handlers present), the logging kwarg.
     """
-    if _logger.level != _logging.NOTSET or _logger.handlers:
-        if opts['logging'] is not False:
-            log("Ignoring logging=%s because standard Python logger for 'hapiclient' already configured with log_level != NOTSET.", opts)
-    elif opts['logging'] is True:
+    has_user_level = _logger.level != _logging.NOTSET and \
+                     _logger.level != getattr(_logger, _INTERNAL_LEVEL_ATTR, None)
+    has_user_handlers = any(
+        not getattr(handler, _INTERNAL_HANDLER_ATTR, False)
+        for handler in _logger.handlers
+    )
+
+    if opts['logging']:
         _logger.setLevel(_logging.INFO)
+        setattr(_logger, _INTERNAL_LEVEL_ATTR, _logging.INFO)
+        _logger.propagate = False
         if not _logger.handlers:
             import sys
             _handler = _logging.StreamHandler(sys.stdout)
             _handler.setFormatter(_logging.Formatter("%(message)s"))
+            setattr(_handler, _INTERNAL_HANDLER_ATTR, True)
             _logger.addHandler(_handler)
-    elif opts['logging'] is False:
-        _logger.setLevel(_logging.WARNING)
+    else:
+        if has_user_level or has_user_handlers:
+            if has_user_handlers:
+                log("Ignoring logging=%s because standard Python logger for 'hapiclient' already configured with handlers." % opts['logging'], opts)
+            else:
+                log("Ignoring logging=%s because standard Python logger for 'hapiclient' already configured with log_level != NOTSET." % opts['logging'], opts)
+        else:
+            _logger.setLevel(_logging.WARNING)
+            setattr(_logger, _INTERNAL_LEVEL_ATTR, _logging.WARNING)
 
 
 def log(msg, opts):
-    """Log message using the 'hapiclient' logger.
-
-    If opts['logging'] is a file-like object with a .write() method,
-    the message is written to that object. Otherwise, the message is
-    logged at INFO level via the 'hapiclient' logger. The logger's
-    level and handlers determine whether the message is emitted.
-    """
+    """Log message using the 'hapiclient' logger."""
 
     import sys
 
     pre = sys._getframe(1).f_code.co_name + '(): '
-
-    # Legacy file-like object support
-    if hasattr(opts.get('logging'), 'write'):
-        opts['logging'].write(pre + msg + "\n")
-        opts['logging'].flush()
-        return
 
     _logger.info(pre + msg)
 

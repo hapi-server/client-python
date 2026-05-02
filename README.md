@@ -100,15 +100,11 @@ tox -e py311 -- test/test_hapi_data_requests.py
 # Set log level for test logger
 tox -e py311 -- test/test_hapi_data_requests.py --log-level=INFO
 
-
 # Run a specific test on all Python versions set by tox.ini `envlist`
 tox -- test/test_hapi_data_requests.py
 
 # Run all tests in ./test
 tox
-
-# Run all tests on a specific Python version
-tox -e py311
 
 # Run long-running tests
 tox -e long-test

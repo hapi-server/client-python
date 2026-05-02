@@ -14,6 +14,8 @@ def _reset_logger():
   logger = logging.getLogger("hapiclient")
   logger.handlers.clear()
   logger.setLevel(logging.NOTSET)
+  if hasattr(logger, "_hapiclient_internal_level"):
+    delattr(logger, "_hapiclient_internal_level")
 
 
 class TestLoggingKeywordTrue:
@@ -36,33 +38,20 @@ class TestLoggingKeywordTrue:
     logger = logging.getLogger("hapiclient")
     assert any(isinstance(h, logging.StreamHandler) for h in logger.handlers)
 
-  def test_sets_info_level(self):
+  def test_sets_info_level(self, capsys):
     data, meta = hapi(server, dataset, parameters, start, stop, logging=True)
+    capsys.readouterr()  # discard output
     logger = logging.getLogger("hapiclient")
     assert logger.level == logging.INFO
 
+  def test_repeated_logging_true_is_not_treated_as_external(self, capsys):
+    hapi(server, dataset, parameters, start, stop, logging=True)
+    capsys.readouterr()
 
-class TestLoggingKeywordFileObject:
-  """Method 2: logging=file_object writes to a file-like object."""
+    hapi(server, dataset, parameters, start, stop, logging=True)
+    captured = capsys.readouterr()
 
-  def setup_method(self):
-    _reset_logger()
-
-  def teardown_method(self):
-    _reset_logger()
-
-  def test_logs_to_file_object(self):
-    buf = io.StringIO()
-    data, meta = hapi(server, dataset, parameters, start, stop, logging=buf)
-    output = buf.getvalue()
-    assert 'Running hapi.py version' in output
-
-  def test_logs_to_real_file(self, tmp_path):
-    logfile = tmp_path / "hapiclient.log"
-    with open(logfile, "w") as f:
-      data, meta = hapi(server, dataset, parameters, start, stop, logging=f)
-    content = logfile.read_text()
-    assert 'Running hapi.py version' in content
+    assert 'Ignoring logging=' not in captured.out
 
 
 class TestStandardLoggingConsole:
