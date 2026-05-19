@@ -115,3 +115,4 @@ v0.2.8b0:
 	2026-05-02 -- Documentation
 v0.2.8b1:
 	2026-05-02 -- Versioning updates
+	2026-05-19 -- Better response error messages

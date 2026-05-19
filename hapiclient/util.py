@@ -330,30 +330,29 @@ def urlopen(url):
 
     c = " If problem persists, a contact email for the server may be listed "
     c = c + "at http://hapi-server.org/servers/"
-    msg = '';
+    msg = ''
     try:
         http = urllib3.PoolManager()
         res = http.request('GET', url, preload_content=False, retries=2)
         if res.status != 200:
+            msgo = "Problem with " + url + \
+                   ". Server responded with non-200 HTTP status (" + \
+                   str(res.status) + ") "
             try:
                 jres = load(res)
-            except Exception as e:
-                msg = "Problem with " + url + \
-                        ". Server responded with non-200 HTTP status (" \
-                        + str(res.status) + \
-                        ") and an invalid JSON in response body." + c
-
-            if msg == '' and 'status' in jres:
-                if 'message' in jres['status']:
-                    msg = '%s\n' % (jres['status']['message'])
+            except Exception:
+                msg = msgo + "and invalid JSON in response body." + c
 
             if msg == '':
-                msg = "Problem with " + url + \
-                      ". Server responded with non-200 HTTP status (" + \
-                      str(res.status) + \
-                      ") but no JSON without HAPI error message in response body." + c
+                if 'status' in jres:
+                    if 'message' in jres['status']:
+                        msg = msgo + 'and error message: %s\n' % (jres['status']['message'])
+                    else:
+                        msg = msgo + "and no error message in status element of response body." + c
+                else:
+                    msg = msgo + "and JSON without HAPI status in response body." + c
 
-            raise HAPIError
+            raise HAPIError(msg)
 
     except HAPIError:
         error(msg)
