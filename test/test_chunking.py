@@ -11,7 +11,7 @@ from util.get_logger import get_logger
 
 logger = get_logger(__name__)
 
-hapi_logging = False
+hapi_logging = True
 if logging.getLevelName(logger.level) == 'DEBUG':
     hapi_logging = True
 

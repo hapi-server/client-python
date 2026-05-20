@@ -61,7 +61,7 @@ def test_all_test_servers():
     # request for all parameters for the sample time range.
     def test_server(version):
         from hapiclient import hapi
-        from hapiclient.util import warning, unicode_error_message
+        from hapiclient.util import unicode_error_message
 
         server  = 'http://hapi-server.org/servers/TestData{}/hapi'.format(version)
         dataset = 'dataset1'
@@ -172,7 +172,7 @@ def test_subset_short():
 
 def test_request2path():
 
-    from hapiclient.hapi import request2path
+    from hapiclient.cache import request2path
 
     import platform
     if platform.system() == 'Windows':

@@ -34,7 +34,10 @@ def _readjson(fname):
 def test_hapi():
     """Test that a call with no parameters returns something."""
     logger.info("test_hapi()")
-    assert hapi(**kwargs) is not None
+    servers = hapi(**kwargs)
+    assert servers is not None
+    assert isinstance(servers, list)
+    assert len(servers) > 0
 
 
 def test_catalog1():
@@ -63,6 +66,8 @@ def test_dataset():
         return
     else:
         metatest = _readjson(jsonFile)
+    del meta['x_server']
+    del meta['x_dataset']
     assert DeepDiff(meta, metatest) == {}
 
 
@@ -79,6 +84,8 @@ def test_parameter():
         return
     else:
         metatest = _readjson(jsonFile)
+    del meta['x_server']
+    del meta['x_dataset']
     assert DeepDiff(meta,metatest) == {}
 
 

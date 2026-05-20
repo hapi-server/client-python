@@ -59,14 +59,14 @@ def configure_logging(opts):
             setattr(_logger, _INTERNAL_LEVEL_ATTR, _logging.WARNING)
 
 
-def log(msg, opts):
+def log(msg, opts=None):
     """Log message using the 'hapiclient' logger."""
 
     import sys
 
     pre = sys._getframe(1).f_code.co_name + '(): '
 
-    _logger.info(pre + msg)
+    _logger.info("hapiclient." + pre + msg)
 
 
 def jsonparse(res, url):
@@ -121,6 +121,23 @@ def pythonshell():
         pass
 
     return shell
+
+def unicode_check(DATASET, PARAMETERS):
+  if unicode_error_message(DATASET) != "":
+    error(unicode_error_message(DATASET))
+  if unicode_error_message(PARAMETERS) != "":
+    error(unicode_error_message(PARAMETERS))
+
+
+def fix_parameters(PARAMETERS):
+    if PARAMETERS is None:
+        return None
+    import re
+    if re.search(r', ', PARAMETERS):
+        msg = "Removing spaces after commas in given parameter list of '"
+        warning(msg + PARAMETERS + "'")
+        PARAMETERS = re.sub(r',\s+', ',', PARAMETERS)
+    return PARAMETERS
 
 
 def unicode_error_message(name):
@@ -471,3 +488,71 @@ def urlquote(url):
         return quote(url)
     import urllib.parse
     return urllib.parse.quote(url)
+
+
+def subset(meta, params):
+    """Extract subset of parameters from meta object returned by hapi().
+
+    ``metar = subset(meta, parameters)`` modifies ``meta["parameters"]`` array
+    so that it only contains elements for the time variable and the parameters
+    in the comma-separated string ``parameters``.
+    """
+
+    if params == '':
+        return meta
+
+    p = params.split(',')
+    pm = []  # Parameter names in metadata
+    for i in range(0, len(meta['parameters'])):
+        pm.append(meta['parameters'][i]['name'])
+
+    # Check for parameters requested that are not in metadata
+    for i in range(0, len(p)):
+        if p[i] not in pm:
+            error('Parameter %s is not in meta' % p[i] + '\n')
+            return
+
+    pa = [meta['parameters'][0]]  # First parameter is always the time parameter
+
+    params_reordered = []  # Re-ordered params
+    # If time parameter explicity requested, put it first in params_reordered.
+    if meta['parameters'][0]['name'] in p:
+        params_reordered = [meta['parameters'][0]['name']]
+
+    # Create subset of parameter metadata
+    for i in range(1, len(pm)):
+        if pm[i] in p:
+            pa.append(meta['parameters'][i])
+            params_reordered.append(pm[i])
+    meta['parameters'] = pa
+
+    params_reordered_str = ','.join(params_reordered)
+
+    if not params == params_reordered_str:
+        msg = "\n  " + "Order requested: " + params
+        msg = msg + "\n  " + "Order required: " + params_reordered_str
+        error('Order of requested parameters does not match order of ' \
+              'parameters in server info metadata.' + msg + '\n')
+
+    return meta
+
+
+def query_name(meta, name):
+    """Return the HAPI query parameter name for dataset/start/stop based on server version."""
+    if name == 'dataset':
+        hapi_version = str(meta.get('HAPI', ''))
+        if hapi_version.startswith('3'):
+            return 'dataset'
+        return 'id'
+    elif name == 'start':
+        hapi_version = str(meta.get('HAPI', ''))
+        if hapi_version.startswith('3'):
+            return 'start'
+        return 'time.min'
+    elif name == 'stop':
+        hapi_version = str(meta.get('HAPI', ''))
+        if hapi_version.startswith('3'):
+            return 'stop'
+        return 'time.max'
+    else:
+        error('Unknown query name: {}'.format(name))

@@ -25,7 +25,7 @@ def comparisonOK(a, b, nolength=False, a_name="First", b_name="Second"):
                 # length=2 if the parameter values are all single Greek character.
                 # However, when NumPy is used to determine the data type of a
                 # single UTF-8 encoded character because length is not given,
-                # it uses "U1" (see hapi.py/parse_missing_length() and search
+                # it uses "U1" (see hapi.py/_parse_missing_length() and search
                 # for ".astype('<S').dtype")
                 if a.dtype[i].str.startswith("<U") and b.dtype[i].str.startswith("<U"):
                     unicode_length_mismatch = True

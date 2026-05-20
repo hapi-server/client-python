@@ -116,3 +116,5 @@ v0.2.8b0:
 v0.2.8b1:
 	2026-05-02 -- Versioning updates
 	2026-05-19 -- Better response error messages
+v0.2.8b2:
+	2026-05-20 -- Refactor
