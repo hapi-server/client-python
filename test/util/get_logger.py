@@ -20,7 +20,6 @@ def get_logger(name):
   logger.setLevel(log_level)
   logger.propagate = False
   logger.handlers = []
-  effective_log_level = logger.getEffectiveLevel()
 
   formatter = logging.Formatter("%(message)s")
 
@@ -28,7 +27,7 @@ def get_logger(name):
   stream_handler.setFormatter(formatter)
   logger.addHandler(stream_handler)
 
-  if effective_log_level >= logging.INFO:
+  if log_level >= logging.INFO:
     file_handler = logging.FileHandler(logfile, mode="w", encoding="utf-8")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)

@@ -3,8 +3,8 @@ def data(SERVER, DATASET, PARAMETERS, START, STOP, opts):
   import os
   import time
   from datetime import datetime
-  from hapiclient.util import log, warning, error, urlopen, jsonparse, subset, unicode_check, fix_parameters
-  from hapiclient.cache import cachedir, data_cache_read_metax, data_cache_read_npy, data_cache_write, _missing_length
+  from hapiclient.util import log, warning, error, urlopen, subset, unicode_check, fix_parameters, missing_length
+  from hapiclient.cache import cachedir, data_cache_read_metax, data_cache_read_npy, data_cache_write
   from hapiclient.get import get_binary, get_csv
   from hapiclient.info import info
 
@@ -13,13 +13,13 @@ def data(SERVER, DATASET, PARAMETERS, START, STOP, opts):
 
   urld = cachedir(opts["cachedir"], SERVER)
   if opts['usecache'] or opts['cache']:
-    log('cache subdirectory = %s' % urld, opts)
+    log('cache subdirectory = %s' % urld)
 
   if STOP is None:
-    log('STOP was given as None. Getting stopDate for dataset.', opts)
+    log('STOP was given as None. Getting stopDate for dataset.')
     meta = info(SERVER, DATASET, None, opts)
     STOP = meta['stopDate']
-    log('Using STOP = {STOP}', opts)
+    log('Using STOP = {STOP}')
 
   tic_totalTime = time.time()
 
@@ -65,9 +65,7 @@ def data(SERVER, DATASET, PARAMETERS, START, STOP, opts):
 
   # See if server supports binary
   if opts['format'] != 'csv':
-    log('Reading %s' % (SERVER + '/capabilities'), opts)
-    res = urlopen(SERVER + '/capabilities')
-    caps = jsonparse(res, SERVER + '/capabilities')
+    caps = urlopen(SERVER + '/capabilities', parse_json=True)
     sformats = caps["outputFormats"]  # Server formats
     if opts['format'] not in sformats:
       warning("hapi", 'Requested transport format "%s" not avaiable '
@@ -77,15 +75,13 @@ def data(SERVER, DATASET, PARAMETERS, START, STOP, opts):
     if 'binary' not in sformats:
       opts['format'] = 'csv'
 
-  missing_length = _missing_length(meta, opts)
-
   # length attribute required for all parameters when serving binary but
   # is only required for time parameter when serving CSV. This catches
   # case where server provides binary but is missing a length attribute
   # in one or more string parameters that were requested. In this case,
   # there is not enough information to parse binary.
-  if opts['format'] == 'binary' and missing_length:
-    warning('Requesting CSV instead of binary because of problem with server metadata.')
+  if opts['format'] == 'binary' and missing_length(meta, opts):
+    warning('Requesting CSV instead of binary because a string or isotime parameter is missing a length attribute.')
     opts['format'] = 'csv'
 
   # Read the data. toc0 is time to download to file or into buffer;
@@ -214,7 +210,7 @@ def _get_chunks(SERVER, DATASET, PARAMETERS, START, STOP, opts, tic_totalTime):
     # loky works, but not speed-up.
     #backend = 'loky'
 
-  log('backend = {}'.format(backend), opts)
+  log('backend = {}'.format(backend))
 
   verbose = 0
   if opts.get('logging'):

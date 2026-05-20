@@ -6,17 +6,13 @@ import warnings
 import pandas
 import numpy as np
 
-from hapiclient.util import log, error, urlopen, urlretrieve, query_name
-from hapiclient.cache import (
-    cachedir, data_cache_paths,
-    _compute_dt, _missing_length,
-)
+from hapiclient.util import log, error, urlopen, urlretrieve, query_name, missing_length
+from hapiclient.cache import data_cache_paths, _compute_dt
 
 
 def get_binary(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
 
-  _, fnamebin, _, _ = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts)
-  urld = cachedir(opts["cachedir"], SERVER)
+  fnamebin = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])['bin']
 
   urlcsv = (SERVER + '/data?' + query_name(meta, 'dataset') + '=' + DATASET
             + '&parameters=' + PARAMETERS
@@ -30,20 +26,19 @@ def get_binary(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
     warnings.warn("Method argument is ignored when format='binary.")
 
   if opts["cache"]:
-    log('Writing %s to %s' % (urlbin, fnamebin.replace(urld + '/', '')), opts)
     tic0 = time.time()
     urlretrieve(urlbin, fnamebin)
     toc0 = time.time() - tic0
-    log('Reading and parsing %s' % fnamebin.replace(urld + '/', ''), opts)
+    log('Reading and parsing %s' % os.path.basename(fnamebin))
     tic = time.time()
     data = _parse_binary(fnamebin, dt, meta, opts, urlbin)
   else:
     from io import BytesIO
-    log('Writing %s to buffer' % urlbin.replace(urld + '/', ''), opts)
+    log('Writing %s to buffer' % urlbin)
     tic0 = time.time()
     buff = BytesIO(urlopen(urlbin).read())
     toc0 = time.time() - tic0
-    log('Parsing BytesIO buffer.', opts)
+    log('Parsing BytesIO buffer.')
     tic = time.time()
     data = _parse_binary(buff, dt, meta, opts, urlbin)
 
@@ -94,8 +89,7 @@ def _parse_binary(source, dt, meta, opts, urlbin):
 
 def get_csv(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
   # HAPI CSV
-  fnamecsv, _, _, _ = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts)
-  urld = cachedir(opts["cachedir"], SERVER)
+  fnamecsv = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])['csv']
 
   urlcsv = (SERVER + '/data?' + query_name(meta, 'dataset') + '=' + DATASET
             + '&parameters=' + PARAMETERS
@@ -103,23 +97,21 @@ def get_csv(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
             + '&' + query_name(meta, 'stop') + '=' + STOP)
 
   dt, cols, psizes, pnames, ptypes = _compute_dt(meta, opts)
-  missing_length = _missing_length(meta, opts)
 
   file_empty = False
 
   if opts["cache"]:
-    log('Writing %s to %s' % (urlcsv, fnamecsv.replace(urld + '/', '')), opts)
     tic0 = time.time()
     urlretrieve(urlcsv, fnamecsv)
     toc0 = time.time() - tic0
-    log('Reading and parsing %s' % fnamecsv.replace(urld + '/', ''), opts)
+    log('Reading and parsing %s' % os.path.basename(fnamecsv))
     tic = time.time()
     if os.path.getsize(fnamecsv) == 0:
       file_empty = True
       data = np.array([], dtype=dt)
   else:
     from io import StringIO
-    log('Writing %s to buffer' % urlcsv.replace(urld + '/', ''), opts)
+    log('Writing %s to buffer' % urlcsv)
     tic0 = time.time()
     fnamecsv = StringIO(urlopen(urlcsv).read().decode())
     fnamecsv.seek(0, os.SEEK_END)
@@ -129,14 +121,14 @@ def get_csv(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
     else:
       fnamecsv.seek(0)
     toc0 = time.time() - tic0
-    log('Parsing StringIO buffer.', opts)
+    log('Parsing StringIO buffer.')
     tic = time.time()
 
   if not file_empty:
-    if not missing_length:
-      data = _parse_csv(fnamecsv, dt, cols, psizes, pnames, ptypes, opts, urlcsv)
-    else:
+    if missing_length(meta, opts):
       data = _parse_csv_missing_length(fnamecsv, dt, cols, psizes, pnames, ptypes, opts, urlcsv)
+    else:
+      data = _parse_csv(fnamecsv, dt, cols, psizes, pnames, ptypes, opts, urlcsv)
 
   toc = time.time() - tic
 

@@ -51,15 +51,15 @@ def configure_logging(opts):
     else:
         if has_user_level or has_user_handlers:
             if has_user_handlers:
-                log("Ignoring logging=%s because standard Python logger for 'hapiclient' already configured with handlers." % opts['logging'], opts)
+                log("Ignoring logging=%s because standard Python logger for 'hapiclient' already configured with handlers." % opts['logging'])
             else:
-                log("Ignoring logging=%s because standard Python logger for 'hapiclient' already configured with log_level != NOTSET." % opts['logging'], opts)
+                log("Ignoring logging=%s because standard Python logger for 'hapiclient' already configured with log_level != NOTSET." % opts['logging'])
         else:
             _logger.setLevel(_logging.WARNING)
             setattr(_logger, _INTERNAL_LEVEL_ATTR, _logging.WARNING)
 
 
-def log(msg, opts=None):
+def log(msg):
     """Log message using the 'hapiclient' logger."""
 
     import sys
@@ -121,6 +121,7 @@ def pythonshell():
         pass
 
     return shell
+
 
 def unicode_check(DATASET, PARAMETERS):
   if unicode_error_message(DATASET) != "":
@@ -315,28 +316,17 @@ def error(msg, debug=False):
     raise HAPIError(msg)
 
 
-def head(url):
-    """HTTP HEAD request on URL."""
+def urlopen(url, parse_json=False):
+    """Wrapper to request.get() in urllib3
+    res = urlopen(url) returns the response object from urllib3.
+
+    res = urlopen(url, parse_json=True) return response from url as a Python dict
+    by parsing JSON. If JSON cannot be parsed, an error is raised.
+    """
 
     import urllib3
-    http = urllib3.PoolManager()
-    try:
-        res = http.request('HEAD', url, retries=2)
-        if res.status != 200:
-            raise Exception('Head request failed on ' + url)
-        return res.headers
-    except Exception as e:
-        raise e
 
-    return res.headers
-
-
-def urlopen(url):
-    """Wrapper to request.get() in urllib3"""
-
-    import sys
-    import urllib3
-    from json import load
+    log('Opening %s' % url)
 
     # https://stackoverflow.com/a/2020083
     def get_full_class_name(obj):
@@ -356,7 +346,8 @@ def urlopen(url):
                    ". Server responded with non-200 HTTP status (" + \
                    str(res.status) + ") "
             try:
-                jres = load(res)
+                from json import loads
+                jres = loads(res.read().decode('utf-8'))
             except Exception:
                 msg = msgo + "and invalid JSON in response body." + c
 
@@ -388,106 +379,41 @@ def urlopen(url):
     except urllib3.exceptions.HTTPError as e:
         error('Exception ' + get_full_class_name(e) + " for: " + url)
     except Exception as e:
-        print(type(sys.exc_info()[1]).__name__ + ': ' \
-              + str(e) + ' for URL: ' + url)
+        import sys
+        print(type(sys.exc_info()[1]).__name__ + ': ' + str(e) + ' for URL: ' + url)
+
+    if parse_json:
+        log('Parsing and returning JSON from %s' % url)
+        from json import loads
+        try:
+            return loads(res.read().decode('utf-8'))
+        except Exception:
+            error('Could not parse JSON from %s' % url)
 
     return res
 
 
-def urlretrieve(url, fname, check_last_modified=False, **kwargs):
+def urlretrieve(url, fname):
     """Download URL to file
 
-    urlretrieve(url, fname, check_last_modified=False, **kwargs)
-
-    If check_last_modified=True, `fname` is found, URL returns Last-Modfied
-    header, and `fname` timestamp is after Last-Modfied timestamp, the URL
-    is not downloaded.
+    res = urlretrieve(url, fname)
     """
 
+    import os
     import shutil
-    from os import path, utime, makedirs
-    from time import mktime, strptime
 
-    if check_last_modified:
-        if modified(url, fname, **kwargs):
-            log('Downloading ' + url + ' to ' + fname, kwargs)
-            res = urlretrieve(url, fname, check_last_modified=False)
-            if "Last-Modified" in res.headers:
-                # Change access and modfied time to match that on server.
-                # TODO: Won't need if using file.head in modified().
-                urlLastModified = mktime(strptime(res.headers["Last-Modified"],
-                                                  "%a, %d %b %Y %H:%M:%S GMT"))
-                utime(fname, (urlLastModified, urlLastModified))
-        else:
-            log('Local version of ' + fname + ' is up-to-date; using it.', kwargs)
-
-    dirname = path.dirname(fname)
-    if not path.exists(dirname):
-        makedirs(dirname)
+    dirname = os.path.dirname(fname)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
 
     with open(fname, 'wb') as out:
         res = urlopen(url)
+        log('Writing')
+        log('%s' % url)
+        log('to')
+        log('%s' % os.path.basename(fname))
         shutil.copyfileobj(res, out)
         return res
-
-
-def modified(url, fname, **kwargs):
-    """Check if timestamp on file is later than Last-Modifed in HEAD request"""
-
-    from os import stat, path
-    from time import mktime, strptime
-
-    debug = False
-
-    if not path.exists(fname):
-        return True
-
-    # HEAD request on url
-    log('Making head request on ' + url, kwargs)
-    headers = head(url)
-
-    # TODO: Write headers to file.head
-    if debug:
-        print("Header:\n--\n")
-        print(headers)
-        print("--")
-
-    # TODO: Get this from file.head if found
-    fileLastModified = stat(fname).st_mtime
-    if "Last-Modified" in headers:
-        urlLastModified = mktime(strptime(headers["Last-Modified"],
-                                          "%a, %d %b %Y %H:%M:%S GMT"))
-
-        if debug:
-            print("File Last Modified = %s" % fileLastModified)
-            print("URL Last Modified = %s" % urlLastModified)
-
-        if urlLastModified > fileLastModified:
-            return True
-        return False
-    else:
-        if debug:
-            print("No Last-Modified header. Will re-download")
-        # TODO: Read file.head and compare etag
-        return True
-
-
-def urlquote(url):
-    """Python 2/3 urlquote compatability function.
-
-    If Python 3, returns
-    urllib.parse.quote(url)
-
-    If Python 2, returns
-    urllib.quote(url)
-    """
-
-    import sys
-    if sys.version_info[0] == 2:
-        from urllib import quote
-        return quote(url)
-    import urllib.parse
-    return urllib.parse.quote(url)
 
 
 def subset(meta, params):
@@ -556,3 +482,22 @@ def query_name(meta, name):
         return 'time.max'
     else:
         error('Unknown query name: {}'.format(name))
+
+
+def missing_length(meta, opts):
+    """Return True if any string or isotime parameter is missing length attribute in metadata.
+
+    missing_length = True will be set if HAPI String or ISOTime
+    parameter has no length attribute in metadata (length attribute is
+    required for both in binary but only for primary time column in CSV).
+    When missing_length=True the CSV read gets more complicated.
+    """
+    if opts['format'] == 'csv':
+        if opts['method'] == 'numpynolength' or opts['method'] == 'pandasnolength':
+            return True
+
+    for param in meta['parameters']:
+        if param['type'] in ['string', 'isotime'] and 'length' not in param:
+            return True
+
+    return False

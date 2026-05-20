@@ -8,7 +8,7 @@ import numpy as np
 
 from hapiclient.util import error, log
 
-def hapitime_reformat(form_to_match, given_form, logging=False):
+def hapitime_reformat(form_to_match, given_form):
     """Reformat a given HAPI time to match format of another HAPI time.
 
     ``hapitime_reformat(match, given)`` truncates or pads ``given`` so that it has
@@ -40,9 +40,6 @@ def hapitime_reformat(form_to_match, given_form, logging=False):
         hapitime_reformat('1989-001T00:00Z', '1999-01-21Z') # 1999-021T00:00Z
 
     """
-
-    log('ref:       {}'.format(form_to_match), {'logging': logging})
-    log('given:     {}'.format(given_form), {'logging': logging})
 
     if 'T' in given_form:
         dt_given = isodate.parse_datetime(given_form)
@@ -84,10 +81,6 @@ def hapitime_reformat(form_to_match, given_form, logging=False):
 
     if len(converted) > len(form_to_match):
         converted = converted[0:len(form_to_match)-1] + "Z"
-
-    log('converted: {}'.format(converted), {'logging': logging})
-    log('ref fmt:   {}'.format(format_ref), {'logging': logging})
-    log('----', {'logging': logging})
 
     return converted
 
@@ -169,21 +162,21 @@ def hapitime2datetime(Time, **kwargs):
     A HAPI-compliant server represents time as an ISO 8601 string
     (with several constraints - see the `HAPI specification
     <https://github.com/hapi-server/data-specification/blob/master/hapi-dev/HAPI-data-access-spec-dev.md#representation-of-time>`_)
-    
+
     `hapi()` reads these time strings into a NumPy array of Python byte literals.
     This function converts these byte literals to Python datetime objects.
-    
+
     Typical usage:
-    
+
     ::
-    
+
         data = hapi(...) # Get data
         DateTimes = hapitime2datetime(data['Time']) # Convert
-    
-    
+
+
     All HAPI time strings must have a trailing Z. This function only checks the
     first element in Time array for compliance.
-    
+
     Parameter
     ---------
     Time:
@@ -193,30 +186,30 @@ def hapitime2datetime(Time, **kwargs):
         - A list of HAPI timestamp strings
         - A HAPI timestamp byte literal
         - A HAPI timestamp strings
-    
+
     Returns
     -------
     A NumPy array Python of datetime objects with length = len(Time)
-    
+
     Examples
     --------
     All of the following return
-    
+
     ::
-    
+
         array([datetime.datetime(1970, 1, 1, 0, 0, tzinfo=<UTC>)], dtype=object)
-    
+
     ::
-    
+
         from hapiclient.hapitime import hapitime2datetime
         import numpy as np
-    
+
         hapitime2datetime(np.array([b'1970-01-01T00:00:00.000Z']))  # array([datetime.datetime(1970, 1, 1, 0, 0, tzinfo=<UTC>)], dtype=object)
         hapitime2datetime(np.array(['1970-01-01T00:00:00.000Z']))
-    
+
         hapitime2datetime([b'1970-01-01T00:00:00.000Z'])
         hapitime2datetime(['1970-01-01T00:00:00.000Z'])
-    
+
         hapitime2datetime([b'1970-01-01T00:00:00.000Z'])
         hapitime2datetime('1970-01-01T00:00:00.000Z')
     """
@@ -224,21 +217,12 @@ def hapitime2datetime(Time, **kwargs):
 
     tzinfo = timezone.utc
 
-    if type(Time) == list:
+    if isinstance(Time, list):
         Time = np.asarray(Time)
-        if not all(list( map(lambda x: type(x) in [np.str_, np.bytes_, str, bytes], Time) )):
+        if not all(isinstance(x, (np.str_, np.bytes_, str, bytes)) for x in Time):
             raise ValueError
 
-    allow_missing_Z = False
-    if 'allow_missing_Z' in kwargs and kwargs['allow_missing_Z'] == True:
-        allow_missing_Z = True
-
-    opts = kwargs.copy()
-
-    if type(Time) == list:
-        Time = np.asarray(Time)
-
-    if type(Time) != np.ndarray:
+    if not isinstance(Time, np.ndarray):
         Time = np.asarray([Time])
 
     if Time.size == 0:
@@ -251,17 +235,19 @@ def hapitime2datetime(Time, **kwargs):
         shape = Time.shape
         Time = Time.flatten()
 
-    if type(Time[0]) == np.bytes_:
+    if isinstance(Time[0], np.bytes_):
         try:
             Time = Time.astype('U')
-        except:
-            error('Problem with time data. First value: ' + str(Time[0]) + '\n')
+        except Exception as e:
+            error('Problem with time data. First value: ' + str(Time[0]) + '\n' + 'Error message: ' + str(e))
             return
 
     tic = time.time()
 
 
-    if Time[0][-1] != "Z" and allow_missing_Z == False:
+    allow_missing_Z = kwargs.get('allow_missing_Z', False)
+
+    if Time[0][-1] != "Z" and not allow_missing_Z:
         error("HAPI Times must have trailing Z. First element of input " + \
               "Time array does not have trailing Z.")
 
@@ -285,10 +271,10 @@ def hapitime2datetime(Time, **kwargs):
         if reshape:
             Time = np.reshape(Time, shape)
         toc = time.time() - tic
-        log("Pandas processing time = %.4fs, first time = %s" % (toc, Timeo), opts)
+        log("Pandas processing time = %.4fs, first time = %s" % (toc, Timeo))
         return Time
     except:
-        log("Pandas processing failed, first time = %s" % Time[0], opts)
+        log("Pandas processing failed, first time = %s" % Time[0])
 
 
     # Convert from Python byte literals to unicode strings
@@ -307,7 +293,7 @@ def hapitime2datetime(Time, **kwargs):
     try:
         parse_error = True
         for i in range(0, len(Time)):
-            if Time[i][-1] != "Z" and allow_missing_Z == False:
+            if Time[i][-1] != "Z" and not allow_missing_Z:
                 parse_error = False
                 raise
             pythonDateTime[i] = datetime.strptime(Time[i], fmt).replace(tzinfo=tzinfo)
@@ -319,8 +305,7 @@ def hapitime2datetime(Time, **kwargs):
                   + Time[i] + " does not have trailing Z.")
 
     toc = time.time() - tic
-    log("Manual processing time = %.4fs, Input = %s, fmt = %s" % \
-        (toc, Time[0], fmt), opts)
+    log("Manual processing time = %.4fs, Input = %s, fmt = %s" % (toc, Time[0], fmt))
 
     if reshape:
         pythonDateTime = np.reshape(pythonDateTime, shape)
@@ -338,7 +323,7 @@ def datetime2hapitime(dts):
         import datetime
         dts = [datetime.datetime(2000, 1, 1), datetime.datetime(2000, 1, 2)]
         hapi_times = datetime2hapitime(dts)
-        print(hapi_times) 
+        print(hapi_times)
         # ['2000-01-01T00:00:00.000000Z', '2000-01-02T00:00:00.000000Z']
 
     Parameter
@@ -354,13 +339,13 @@ def datetime2hapitime(dts):
     """
 
     single = False
-    if isinstance(dts, list) == False:
+    if not isinstance(dts, list):
         single = True
         dts = [dts]
 
     hapi_times = [dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ') for dt in dts]
 
-    if single == True:
+    if single:
         return hapi_times[0]
     else:
         return hapi_times

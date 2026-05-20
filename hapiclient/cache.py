@@ -10,19 +10,23 @@ def server2dirname(server):
 def cachedir(*args):
   """HAPI cache directory.
 
-  cachedir() returns tempfile.gettempdir() + os.path.sep + 'hapi-data'
+  cachedir() returns os.path.join(tempfile.gettempdir(), 'hapi-data')
 
-  cachdir(basedir, server) returns basedir + os.path.sep + server2dirname(server)
+  cachedir(basedir, server) returns os.path.join(basedir, server2dirname(server))
   """
   import os
   import tempfile
 
+  if len(args) != 0 and len(args) != 2:
+    raise ValueError('cachedir() takes either 0 or 2 arguments.')
+
+  if len(args) == 0:
+    # cachedir()
+    return os.path.join(tempfile.gettempdir(), 'hapi-data')
+
   if len(args) == 2:
     # cachedir(base_dir, server)
-    return args[0] + os.path.sep + server2dirname(args[1])
-  else:
-    # cachedir()
-    return tempfile.gettempdir() + os.path.sep + 'hapi-data'
+    return os.path.join(args[0], server2dirname(args[1]))
 
 
 def request2path(*args):
@@ -79,11 +83,13 @@ def request2path(*args):
     return os.path.join(cachedirectory, urldirectory, fname)
 
 
-def meta_cache_paths(SERVER, DATASET, opts):
-  """Return (urld, fnamejson, fnamepkl) for metadata cache files."""
-  urld = cachedir(opts["cachedir"], SERVER)
-  fname_root = request2path(SERVER, DATASET, '', '', '', opts['cachedir'])
-  return urld, fname_root + '.json', fname_root + '.pkl'
+def meta_cache_paths(SERVER, DATASET, cachedir):
+  """Return dict with metadata cache directory and file names."""
+  fname_root = request2path(SERVER, DATASET, '', '', '', cachedir)
+  return {
+    'json': fname_root + '.json',
+    'pkl': fname_root + '.pkl'
+  }
 
 
 def meta_cache_read(SERVER, DATASET, opts):
@@ -96,14 +102,14 @@ def meta_cache_read(SERVER, DATASET, opts):
     log('Not checking metadata cache because usecache is False.')
     return None
 
-  urld, _, fnamepkl = meta_cache_paths(SERVER, DATASET, opts)
+  fnamepkl = meta_cache_paths(SERVER, DATASET, opts['cachedir'])['pkl']
   if os.path.isfile(fnamepkl):
-    log('Reading %s' % fnamepkl.replace(urld + '/', ''), opts)
+    log('Reading %s' % os.path.basename(fnamepkl))
     with open(fnamepkl, 'rb') as f:
       return pickle.load(f)
 
   if opts["usecache"]:
-    log('No metadata cache file found: %s' % fnamepkl.replace(urld + '/', ''), opts)
+    log('No metadata cache file found: %s' % os.path.basename(fnamepkl))
 
   return None
 
@@ -118,24 +124,31 @@ def meta_cache_write(meta, SERVER, DATASET, opts):
   if not opts["cache"]:
     return
 
-  urld, fnamejson, fnamepkl = meta_cache_paths(SERVER, DATASET, opts)
-  if not os.path.exists(urld):
-    os.makedirs(urld)
+  paths = meta_cache_paths(SERVER, DATASET, opts['cachedir'])
+  fnamejson, fnamepkl = paths['json'], paths['pkl']
 
-  log('Writing %s ' % fnamejson.replace(urld + '/', ''), opts)
+  server_dir = cachedir(opts["cachedir"], SERVER)
+  os.makedirs(server_dir, exist_ok=True)
+
+  log('Writing %s ' % os.path.basename(fnamejson))
   with open(fnamejson, 'w') as f:
     json.dump(meta, f, indent=4)
 
-  log('Writing %s ' % fnamepkl.replace(urld + '/', ''), opts)
+  log('Writing %s ' % os.path.basename(fnamepkl))
   with open(fnamepkl, 'wb') as f:
     # protocol=2 used for Python 2.7 compatibility.
     pickle.dump(meta, f, protocol=2)
 
 
-def data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts):
-  """Return (fnamecsv, fnamebin, fnamenpy, fnamepklx) for data cache files."""
-  fname_root = request2path(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])
-  return fname_root + '.csv', fname_root + '.bin', fname_root + '.npy', fname_root + '.pkl'
+def data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, cachedir):
+  """Return dict with data cache file names."""
+  fname_root = request2path(SERVER, DATASET, PARAMETERS, START, STOP, cachedir)
+  return {
+    'csv': fname_root + '.csv',
+    'bin': fname_root + '.bin',
+    'npy': fname_root + '.npy',
+    'pkl': fname_root + '.pkl'
+  }
 
 
 def data_cache_read_metax(SERVER, DATASET, PARAMETERS, START, STOP, opts):
@@ -148,14 +161,13 @@ def data_cache_read_metax(SERVER, DATASET, PARAMETERS, START, STOP, opts):
     log('Not checking data cache because usecache is False.')
     return None
 
-  urld = cachedir(opts["cachedir"], SERVER)
-  _, _, _, fnamepklx = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts)
+  fnamepklx = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])['pkl']
   if os.path.isfile(fnamepklx):
-    log('Reading %s' % fnamepklx.replace(urld + '/', ''), opts)
+    log('Reading subsetted metadata cache %s' % os.path.basename(fnamepklx))
     with open(fnamepklx, 'rb') as f:
       return pickle.load(f)
   if opts["usecache"]:
-    log('No data cache file found: %s' % fnamepklx.replace(urld + '/', ''), opts)
+    log('No subsetted metadata cache file found: %s' % os.path.basename(fnamepklx))
 
   return None
 
@@ -169,13 +181,12 @@ def data_cache_read_npy(SERVER, DATASET, PARAMETERS, START, STOP, opts):
   if not opts["usecache"]:
     return None
 
-  urld = cachedir(opts["cachedir"], SERVER)
-  _, _, fnamenpy, _ = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts)
+  fnamenpy = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])['npy']
 
   if not os.path.isfile(fnamenpy):
     return None
 
-  log('Reading %s ' % fnamenpy.replace(urld + '/', ''))
+  log('Reading %s ' % os.path.basename(fnamenpy))
   with open(fnamenpy, 'rb') as f:
     data = np.load(f)
 
@@ -193,9 +204,11 @@ def data_cache_write(data_result, meta, SERVER, DATASET, PARAMETERS, START, STOP
   import numpy as np
   from hapiclient.util import log
 
-  urld = cachedir(opts["cachedir"], SERVER)
-  fnamecsv, fnamebin, fnamenpy, fnamepklx = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts)
-  _, fnamejson, fnamepkl = meta_cache_paths(SERVER, DATASET, opts)
+  data_paths = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])
+  fnamecsv, fnamebin, fnamenpy, fnamepklx = data_paths['csv'], data_paths['bin'], data_paths['npy'], data_paths['pkl']
+
+  meta_paths = meta_cache_paths(SERVER, DATASET, opts['cachedir'])
+  fnamejson, fnamepkl = meta_paths['json'], meta_paths['pkl']
 
   meta.update({"x_metaFileParsed": fnamepkl})
   meta.update({"x_dataFileParsed": fnamenpy})
@@ -203,46 +216,26 @@ def data_cache_write(data_result, meta, SERVER, DATASET, PARAMETERS, START, STOP
   meta.update({"x_dataFile": fnamebin if opts['format'] == 'binary' else fnamecsv})
 
   if not opts["cache"]:
+    # Need to return after meta is updated.
     return
-  if not os.path.exists(opts["cachedir"]):
-    os.makedirs(opts["cachedir"])
-  if not os.path.exists(urld):
-    os.makedirs(urld)
 
-  log('Writing %s' % fnamepklx, opts)
+  server_dir = cachedir(opts["cachedir"], SERVER)
+  os.makedirs(server_dir, exist_ok=True)
+
+  log('Writing %s' % os.path.basename(fnamepklx))
   with open(fnamepklx, 'wb') as f:
     pickle.dump(meta, f, protocol=2)
 
-  log('Writing %s' % fnamenpy, opts)
+  log('Writing %s' % os.path.basename(fnamenpy))
   with warnings.catch_warnings():
     # Ignore warning that occurs when saving Unicode data.
-    warnings.filterwarnings("ignore",
-        message=r"Stored array in format 3\.0.*",
-        category=UserWarning,
-        module=r"numpy\.lib\.format",
-    )
+    kwargs = {
+        'message': r"Stored array in format 3\.0.*",
+        'category': UserWarning,
+        'module': r"numpy\.lib\.format"
+    }
+    warnings.filterwarnings("ignore", **kwargs)
     np.save(fnamenpy, data_result)
-
-
-def _missing_length(meta, opts):
-  """Return True if any string or isotime parameter is missing length attribute in metadata."""
-
-  """
-  missing_length = True will be set if HAPI String or ISOTime
-  parameter has no length attribute in metadata (length attribute is
-  required for both in binary but only for primary time column in CSV).
-  When missing_length=True the CSV read gets more complicated.
-  """
-
-  if opts['format'] == 'csv':
-    if opts['method'] == 'numpynolength' or opts['method'] == 'pandasnolength':
-      return True
-
-  for param in meta['parameters']:
-    if param['type'] in ['string', 'isotime'] and 'length' not in param:
-      return True
-
-  return False
 
 
 def _compute_dt(meta, opts):

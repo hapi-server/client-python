@@ -224,7 +224,7 @@ def hapi(*args, **kwargs):
     assert (opts['dt_chunk'] in [None, 'infer', 'PT1H', 'P1D', 'P1M', 'P1Y'])
 
     from hapiclient import __version__
-    log('Running hapi.py version %s' % __version__, opts)
+    log('Running hapi.py version %s' % __version__)
 
     if nin == 4:
         error('A stop time is required if a start time is given.')

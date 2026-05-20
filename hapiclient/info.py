@@ -1,6 +1,6 @@
 def info(SERVER, DATASET, PARAMETERS, opts):
 
-  from hapiclient.util import log, urlopen, jsonparse, subset, unicode_check, fix_parameters, query_name
+  from hapiclient.util import urlopen, subset, unicode_check, fix_parameters, query_name
   from hapiclient.cache import meta_cache_read, meta_cache_write
   from hapiclient.catalog import catalog
 
@@ -13,9 +13,7 @@ def info(SERVER, DATASET, PARAMETERS, opts):
 
   cat = catalog(SERVER)
   url = SERVER + '/info?' + query_name(cat, 'dataset') + '=' + DATASET
-  log('Reading %s' % url, opts)
-  res = urlopen(url)
-  meta = jsonparse(res, url)
+  meta = urlopen(url, parse_json=True)
 
   meta_cache_write(meta, SERVER, DATASET, opts)
 
