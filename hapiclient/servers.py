@@ -1,4 +1,5 @@
-from hapiclient.util import log, urlopen
+from hapiclient.log import log
+from hapiclient.util import urlopen
 
 
 def servers():

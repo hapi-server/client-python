@@ -6,7 +6,8 @@ import pandas
 import isodate
 import numpy as np
 
-from hapiclient.util import error, log
+from hapiclient.log import log
+from hapiclient.util import error
 
 def hapitime_reformat(form_to_match, given_form):
     """Reformat a given HAPI time to match format of another HAPI time.

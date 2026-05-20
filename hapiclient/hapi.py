@@ -1,4 +1,5 @@
-from hapiclient.util import setopts, log, error, configure_logging
+from hapiclient.log import log, configure_logging
+from hapiclient.util import setopts, error
 from hapiclient.cache import cachedir
 from hapiclient.servers import servers
 from hapiclient.catalog import catalog

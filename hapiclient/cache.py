@@ -1,6 +1,8 @@
 def server2dirname(server):
   """Convert a server URL to a directory name."""
+
   import re
+
   urld = re.sub(r"https*://", "", server)
   urld = re.sub(r'/', '_', urld)
 
@@ -14,6 +16,7 @@ def cachedir(*args):
 
   cachedir(basedir, server) returns os.path.join(basedir, server2dirname(server))
   """
+
   import os
   import tempfile
 
@@ -30,62 +33,64 @@ def cachedir(*args):
 
 
 def request2path(*args):
-    # request2path(server, dataset, parameters, start, stop)
-    # request2path(server, dataset, parameters, start, stop, cachedir)
-    import os
-    import re
+  # request2path(server, dataset, parameters, start, stop)
+  # request2path(server, dataset, parameters, start, stop, cachedir)
+  import os
+  import re
+  import platform
 
-    if len(args) == 5:
-        # Use default if cachedir not given.
-        cachedirectory = cachedir()
-    else:
-        cachedirectory = args[5]
+  if len(args) == 5:
+    # Use default if cachedir not given.
+    cachedirectory = cachedir()
+  else:
+    cachedirectory = args[5]
 
-    args = list(args)
+  args = list(args)
 
-    # Replace forbidden characters in directory and filename
-    # Replacements assume that there will be no name collisions,
-    # e.g., one parameter named abc-< and another abc-@lt@.
-    # This also introduces an incompatability between caches on Windows
-    # Unix.
-    import platform
-    if platform.system() == 'Windows':
-        # List and code from responses in
-        # https://stackoverflow.com/q/1976007
-        reps = (
-                    ('<', '@lt@'),
-                    ('>', '@gt@'),
-                    (':', '@colon@'),
-                    ('"', '@doublequote@'),
-                    ('/', '@forwardslash@'),
-                    ('/', '@backslash@'),
-                    ('\\|', '@pipe@'),
-                    ('\\?', '@questionmark@'),
-                    ('\\*', '@asterisk@')
-                )
+  # Replace forbidden characters in directory and filename
+  # Replacements assume that there will be no name collisions,
+  # e.g., one parameter named abc-< and another abc-@lt@.
+  # This also introduces an incompatibility between caches on Windows
+  # Unix.
+  if platform.system() == 'Windows':
+    # List and code from responses in
+    # https://stackoverflow.com/q/1976007
+    reps = (
+              ('<', '@lt@'),
+              ('>', '@gt@'),
+              (':', '@colon@'),
+              ('"', '@doublequote@'),
+              ('/', '@forwardslash@'),
+              ('/', '@backslash@'),
+              ('\\|', '@pipe@'),
+              ('\\?', '@questionmark@'),
+              ('\\*', '@asterisk@')
+          )
 
-        for element in reps:
-            args[1] = re.sub(element[0], element[1], args[1])
-            args[2] = re.sub(element[0], element[1], args[2])
+    for element in reps:
+      args[1] = re.sub(element[0], element[1], args[1])
+      args[2] = re.sub(element[0], element[1], args[2])
 
-    else:
-        args[1] = re.sub('/','@forwardslash@',args[1])
-        args[2] = re.sub('/','@forwardslash@',args[2])
+  else:
+    args[1] = re.sub('/','@forwardslash@',args[1])
+    args[2] = re.sub('/','@forwardslash@',args[2])
 
-    # To shorten filenames.
-    args[3] = re.sub(r'-|:|\.|Z', '', args[3])
-    args[4] = re.sub(r'-|:|\.|Z', '', args[4])
+  # To shorten filenames.
+  args[3] = re.sub(r'-|:|\.|Z', '', args[3])
+  args[4] = re.sub(r'-|:|\.|Z', '', args[4])
 
-    # URL subdirectory
-    urldirectory = server2dirname(args[0])
-    fname = '%s_%s_%s_%s' % (args[1], args[2], args[3], args[4])
+  # URL subdirectory
+  urldirectory = server2dirname(args[0])
+  fname = '%s_%s_%s_%s' % (args[1], args[2], args[3], args[4])
 
-    return os.path.join(cachedirectory, urldirectory, fname)
+  return os.path.join(cachedirectory, urldirectory, fname)
 
 
 def meta_cache_paths(SERVER, DATASET, cachedir):
   """Return dict with metadata cache directory and file names."""
+
   fname_root = request2path(SERVER, DATASET, '', '', '', cachedir)
+
   return {
     'json': fname_root + '.json',
     'pkl': fname_root + '.pkl'
@@ -94,9 +99,11 @@ def meta_cache_paths(SERVER, DATASET, cachedir):
 
 def meta_cache_read(SERVER, DATASET, opts):
   """Read metadata from PKL cache. Returns meta dict or None."""
+
   import os
   import pickle
-  from hapiclient.util import log
+
+  from hapiclient.log import log
 
   if not opts["usecache"]:
     log('Not checking metadata cache because usecache is False.')
@@ -116,10 +123,12 @@ def meta_cache_read(SERVER, DATASET, opts):
 
 def meta_cache_write(meta, SERVER, DATASET, opts):
   """Write metadata to JSON and PKL cache files."""
+
   import os
   import json
   import pickle
-  from hapiclient.util import log
+
+  from hapiclient.log import log
 
   if not opts["cache"]:
     return
@@ -142,7 +151,9 @@ def meta_cache_write(meta, SERVER, DATASET, opts):
 
 def data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, cachedir):
   """Return dict with data cache file names."""
+
   fname_root = request2path(SERVER, DATASET, PARAMETERS, START, STOP, cachedir)
+
   return {
     'csv': fname_root + '.csv',
     'bin': fname_root + '.bin',
@@ -153,9 +164,11 @@ def data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, cachedir):
 
 def data_cache_read_metax(SERVER, DATASET, PARAMETERS, START, STOP, opts):
   """Read extended request metadata from PKL cache. Returns meta dict or None."""
+
   import os
   import pickle
-  from hapiclient.util import log
+
+  from hapiclient.log import log
 
   if not opts["usecache"]:
     log('Not checking data cache because usecache is False.')
@@ -174,9 +187,11 @@ def data_cache_read_metax(SERVER, DATASET, PARAMETERS, START, STOP, opts):
 
 def data_cache_read_npy(SERVER, DATASET, PARAMETERS, START, STOP, opts):
   """Read cached numpy data array. Returns None if not cached."""
+
   import os
   import numpy as np
-  from hapiclient.util import log
+
+  from hapiclient.log import log
 
   if not opts["usecache"]:
     return None
@@ -198,11 +213,13 @@ def data_cache_write(data_result, meta, SERVER, DATASET, PARAMETERS, START, STOP
 
   Also updates meta with file-related x_ fields before writing.
   """
+
   import os
   import pickle
   import warnings
   import numpy as np
-  from hapiclient.util import log
+
+  from hapiclient.log import log
 
   data_paths = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])
   fnamecsv, fnamebin, fnamenpy, fnamepklx = data_paths['csv'], data_paths['bin'], data_paths['npy'], data_paths['pkl']
@@ -236,80 +253,3 @@ def data_cache_write(data_result, meta, SERVER, DATASET, PARAMETERS, START, STOP
     }
     warnings.filterwarnings("ignore", **kwargs)
     np.save(fnamenpy, data_result)
-
-
-def _compute_dt(meta, opts):
-  import numpy as np
-
-  # Compute data type variable dt used to read HAPI response into
-  # a data structure.
-  pnames, psizes, ptypes, dt = [], [], [], []
-
-  # Each element of cols is an array with start/end column number of
-  # parameter.
-  cols = np.zeros([len(meta["parameters"]), 2], dtype=np.int32)
-  ss = 0  # running sum of prod(size)
-
-  # Extract sizes and types of parameters.
-  for i in range(0, len(meta["parameters"])):
-      ptype = meta["parameters"][i]["type"]
-
-      ptypes.append(ptype)
-
-      pnames.append(str(meta["parameters"][i]["name"]))
-      if 'size' in meta["parameters"][i]:
-          psizes.append(meta["parameters"][i]['size'])
-      else:
-          psizes.append(1)
-
-      # For size = [N] case, readers want
-      # dtype = ('name', type, N)
-      # not
-      # dtype = ('name', type, [N])
-      if type(psizes[i]) is list and len(psizes[i]) == 1:
-          psizes[i] = psizes[i][0]
-
-      if type(psizes[i]) is list and len(psizes[i]) > 1:
-          # psizes[i] = list(reversed(psizes[i]))
-          psizes[i] = list(psizes[i])
-
-      # First column of ith parameter.
-      cols[i][0] = ss
-      # Last column of ith parameter.
-      cols[i][1] = ss + np.prod(psizes[i]) - 1
-      # Running sum of columns.
-      ss = cols[i][1] + 1
-
-      # HAPI numerical formats are 64-bit LE floating point and 32-bit LE
-      # signed integers.
-      if ptype == 'double':
-          dtype = (pnames[i], '<d', psizes[i])
-      if ptype == 'integer':
-          dtype = (pnames[i], np.dtype('<i4'), psizes[i])
-
-      if ptype == 'string' or ptype == 'isotime':
-          if 'length' in meta["parameters"][i]:
-              # length is specified for parameter in metadata. Use it.
-              if ptype == 'string':
-                  dtype = (pnames[i], 'U' + str(meta["parameters"][i]["length"]), psizes[i])
-              if ptype == 'isotime':
-                  dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
-          else:
-              # A string or isotime parameter did not have a length.
-              # Will need to use slower CSV read method.
-              if ptype == 'string' or ptype == 'isotime':
-                  dtype = (pnames[i], object, psizes[i])
-
-      # For testing reader. Force use of slow read method.
-      if opts['format'] == 'csv':
-          if opts['method'] == 'numpynolength' or opts['method'] == 'pandasnolength':
-            if ptype == 'string' or ptype == 'isotime':
-              dtype = (pnames[i], object, psizes[i])
-
-      # https://numpy.org/doc/stable/release/1.17.0-notes.html#shape-1-fields-in-dtypes-won-t-be-collapsed-to-scalars-in-a-future-version
-      if dtype[2] == 1:
-        dtype = dtype[0:2]
-
-      dt.append(dtype)
-
-  return dt, cols, psizes, pnames, ptypes

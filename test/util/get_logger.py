@@ -1,10 +1,8 @@
-import os
-import sys
-import logging
-import inspect
-
-
 def get_logger(name):
+  import os
+  import sys
+  import logging
+  import inspect
 
   if name == '__main__':
     log_level = logging.INFO

@@ -3,10 +3,13 @@ def data(SERVER, DATASET, PARAMETERS, START, STOP, opts):
   import os
   import time
   from datetime import datetime
-  from hapiclient.util import log, warning, error, urlopen, subset, unicode_check, fix_parameters, missing_length
+
+  from hapiclient.log import log
+  from hapiclient.util import warning, subset_meta, unicode_check, fix_parameters, missing_length
   from hapiclient.cache import cachedir, data_cache_read_metax, data_cache_read_npy, data_cache_write
   from hapiclient.get import get_binary, get_csv
   from hapiclient.info import info
+  from hapiclient.capabilities import get_format
 
   unicode_check(DATASET, PARAMETERS)
   PARAMETERS = fix_parameters(PARAMETERS)
@@ -46,7 +49,7 @@ def data(SERVER, DATASET, PARAMETERS, START, STOP, opts):
       return chunk_result
 
   if not metaFromCache:
-    meta = subset(meta, PARAMETERS)
+    meta = subset_meta(meta, PARAMETERS)
 
   tic = time.time()
   data_cached = data_cache_read_npy(SERVER, DATASET, PARAMETERS, START, STOP, opts)
@@ -56,24 +59,7 @@ def data(SERVER, DATASET, PARAMETERS, START, STOP, opts):
     meta['x_downloadTime'] = 0
     return data_cached, meta
 
-  cformats = ['csv', 'binary']  # client formats
-  if opts['format'] not in cformats:
-    # Check if requested format is implemented by this client.
-    error('This client does not handle transport '
-          'format "%s".  Available options: %s'
-          % (opts['format'], ', '.join(cformats)))
-
-  # See if server supports binary
-  if opts['format'] != 'csv':
-    caps = urlopen(SERVER + '/capabilities', parse_json=True)
-    sformats = caps["outputFormats"]  # Server formats
-    if opts['format'] not in sformats:
-      warning("hapi", 'Requested transport format "%s" not avaiable '
-                      'from %s. Will use "csv". Available options: %s'
-              % (opts['format'], SERVER, ', '.join(sformats)))
-      opts['format'] = 'csv'
-    if 'binary' not in sformats:
-      opts['format'] = 'csv'
+  opts['format'] = get_format(SERVER, opts['format'])
 
   # length attribute required for all parameters when serving binary but
   # is only required for time parameter when serving CSV. This catches
@@ -152,7 +138,7 @@ def _get_chunks(SERVER, DATASET, PARAMETERS, START, STOP, opts, tic_totalTime):
 
   from datetime import datetime, timedelta
   from joblib import Parallel, delayed
-  from hapiclient.util import log
+  from hapiclient.log import log
   from hapiclient.hapitime import hapitime2datetime, hapitime_reformat
 
   def padz(value):

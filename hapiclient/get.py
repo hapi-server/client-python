@@ -6,8 +6,82 @@ import warnings
 import pandas
 import numpy as np
 
-from hapiclient.util import log, error, urlopen, urlretrieve, query_name, missing_length
-from hapiclient.cache import data_cache_paths, _compute_dt
+from hapiclient.log import log
+from hapiclient.util import error, urlopen, urlretrieve, query_name, missing_length
+from hapiclient.cache import data_cache_paths
+
+
+def _compute_dt(meta, opts):
+  import numpy as np
+
+  # Compute data type variable dt used to read HAPI response into
+  # a data structure.
+  pnames, psizes, ptypes, dt = [], [], [], []
+
+  # Each element of cols is an array with start/end column number of
+  # parameter.
+  cols = np.zeros([len(meta["parameters"]), 2], dtype=np.int32)
+  ss = 0  # running sum of prod(size)
+
+  # Extract sizes and types of parameters.
+  for i in range(0, len(meta["parameters"])):
+      ptype = meta["parameters"][i]["type"]
+
+      ptypes.append(ptype)
+
+      pnames.append(str(meta["parameters"][i]["name"]))
+      if 'size' in meta["parameters"][i]:
+          psizes.append(meta["parameters"][i]['size'])
+      else:
+          psizes.append(1)
+
+      # For size = [N] case, readers want
+      # dtype = ('name', type, N)
+      # not
+      # dtype = ('name', type, [N])
+      if type(psizes[i]) is list and len(psizes[i]) == 1:
+          psizes[i] = psizes[i][0]
+
+      if type(psizes[i]) is list and len(psizes[i]) > 1:
+          psizes[i] = list(psizes[i])
+
+      # First column of ith parameter.
+      cols[i][0] = ss
+      # Last column of ith parameter.
+      cols[i][1] = ss + np.prod(psizes[i]) - 1
+      # Running sum of columns.
+      ss = cols[i][1] + 1
+
+      # HAPI numerical formats are 64-bit LE floating point and 32-bit LE
+      # signed integers.
+      if ptype == 'double':
+          dtype = (pnames[i], '<d', psizes[i])
+      if ptype == 'integer':
+          dtype = (pnames[i], np.dtype('<i4'), psizes[i])
+
+      if ptype == 'string' or ptype == 'isotime':
+          if 'length' in meta["parameters"][i]:
+              if ptype == 'string':
+                  dtype = (pnames[i], 'U' + str(meta["parameters"][i]["length"]), psizes[i])
+              if ptype == 'isotime':
+                  dtype = (pnames[i], 'S' + str(meta["parameters"][i]["length"]), psizes[i])
+          else:
+              if ptype == 'string' or ptype == 'isotime':
+                  dtype = (pnames[i], object, psizes[i])
+
+      # For testing reader. Force use of slow read method.
+      if opts['format'] == 'csv':
+          if opts['method'] == 'numpynolength' or opts['method'] == 'pandasnolength':
+            if ptype == 'string' or ptype == 'isotime':
+              dtype = (pnames[i], object, psizes[i])
+
+      # https://numpy.org/doc/stable/release/1.17.0-notes.html#shape-1-fields-in-dtypes-won-t-be-collapsed-to-scalars-in-a-future-version
+      if dtype[2] == 1:
+        dtype = dtype[0:2]
+
+      dt.append(dtype)
+
+  return dt, cols, psizes, pnames, ptypes
 
 
 def get_binary(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
@@ -20,8 +94,6 @@ def get_binary(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
             + '&' + query_name(meta, 'stop') + '=' + STOP)
   urlbin = urlcsv + '&format=binary'
 
-  dt, _, _, _, _ = _compute_dt(meta, opts)
-
   if opts['method'] != '':
     warnings.warn("Method argument is ignored when format='binary.")
 
@@ -31,7 +103,7 @@ def get_binary(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
     toc0 = time.time() - tic0
     log('Reading and parsing %s' % os.path.basename(fnamebin))
     tic = time.time()
-    data = _parse_binary(fnamebin, dt, meta, opts, urlbin)
+    data = _parse_binary(fnamebin, meta, opts, urlbin)
   else:
     from io import BytesIO
     log('Writing %s to buffer' % urlbin)
@@ -40,14 +112,15 @@ def get_binary(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
     toc0 = time.time() - tic0
     log('Parsing BytesIO buffer.')
     tic = time.time()
-    data = _parse_binary(buff, dt, meta, opts, urlbin)
+    data = _parse_binary(buff, meta, opts, urlbin)
 
   toc = time.time() - tic
 
   return data, toc0, toc
 
 
-def _parse_binary(source, dt, meta, opts, urlbin):
+def _parse_binary(source, meta, opts, urlbin):
+  dt, _, _, _, _ = _compute_dt(meta, opts)
   # Handle Unicode strings (since HAPI 3.1)
   dto = []
   for i in range(len(dt)):
@@ -96,8 +169,6 @@ def get_csv(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
             + '&' + query_name(meta, 'start') + '=' + START
             + '&' + query_name(meta, 'stop') + '=' + STOP)
 
-  dt, cols, psizes, pnames, ptypes = _compute_dt(meta, opts)
-
   file_empty = False
 
   if opts["cache"]:
@@ -126,16 +197,17 @@ def get_csv(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
 
   if not file_empty:
     if missing_length(meta, opts):
-      data = _parse_csv_missing_length(fnamecsv, dt, cols, psizes, pnames, ptypes, opts, urlcsv)
+      data = _parse_csv_missing_length(fnamecsv, meta, opts, urlcsv)
     else:
-      data = _parse_csv(fnamecsv, dt, cols, psizes, pnames, ptypes, opts, urlcsv)
+      data = _parse_csv(fnamecsv, meta, opts, urlcsv)
 
   toc = time.time() - tic
 
   return data, toc0, toc
 
 
-def _parse_csv(fnamecsv, dt, cols, psizes, pnames, ptypes, opts, urlcsv):
+def _parse_csv(fnamecsv, meta, opts, urlcsv):
+  dt, cols, psizes, pnames, ptypes = _compute_dt(meta, opts)
   # All string and isotime parameters have a length in metadata.
   if opts['method'] == 'numpy':
     try:
@@ -193,7 +265,8 @@ def _parse_csv(fnamecsv, dt, cols, psizes, pnames, ptypes, opts, urlcsv):
   return data
 
 
-def _parse_csv_missing_length(fnamecsv, dt, cols, psizes, pnames, ptypes, opts, urlcsv):
+def _parse_csv_missing_length(fnamecsv, meta, opts, urlcsv):
+  dt, cols, psizes, pnames, ptypes = _compute_dt(meta, opts)
 
   # At least one requested string or isotime parameter does not
   # have a length in metadata. More work to do to read.
