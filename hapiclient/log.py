@@ -40,11 +40,12 @@ def configure_logging(opts):
             setattr(_logger, _INTERNAL_LEVEL_ATTR, _logging.WARNING)
 
 
-def log(msg):
-    """Log message using the 'hapiclient' logger."""
+def log(msg, opts=None):
+    """Log message using the 'hapiclient' logger.
+    """
 
+    # opts is not used but kept for backward compatibility
     import sys
 
     pre = sys._getframe(1).f_code.co_name + '(): '
-
     _logger.info("hapiclient." + pre + msg)

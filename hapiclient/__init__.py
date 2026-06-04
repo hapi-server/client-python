@@ -1,6 +1,9 @@
 # Allow "from hapiclient import hapi"
 from hapiclient.hapi import hapi
 
+# Allow "from hapiclient import request2path"
+from hapiclient.hapi import request2path
+
 # Allow "from hapiclient import hapitime2datetime"
 from hapiclient.hapitime import hapitime2datetime
 
@@ -10,7 +13,7 @@ from hapiclient.hapitime import datetime2hapitime
 # Allow "from hapiclient import HAPIError"
 from hapiclient.util import HAPIError
 
-__version__ = '0.2.8b2'
+__version__ = '0.2.8'
 
 import sys
 import platform

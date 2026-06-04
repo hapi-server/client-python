@@ -6,6 +6,9 @@ from hapiclient.catalog import catalog
 from hapiclient.info import info
 from hapiclient.data import data
 
+# Backward compatibility: older code imports request2path from hapiclient.hapi
+from hapiclient.cache import request2path
+
 
 
 def hapiopts():
@@ -42,7 +45,7 @@ def hapiopts():
 def hapi(*args, **kwargs):
     """Request data from a HAPI server.
 
-    Version: 0.2.8b2
+    Version: 0.2.8
 
 
     Examples
