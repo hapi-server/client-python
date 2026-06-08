@@ -174,12 +174,9 @@ def get_csv(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
   if opts["cache"]:
     tic0 = time.time()
     urlretrieve(urlcsv, fnamecsv)
-    toc0 = time.time() - tic0
     log('Reading and parsing %s' % os.path.basename(fnamecsv))
-    tic = time.time()
     if os.path.getsize(fnamecsv) == 0:
       file_empty = True
-      data = np.array([], dtype=dt)
   else:
     from io import StringIO
     log('Writing %s to buffer' % urlcsv)
@@ -188,22 +185,27 @@ def get_csv(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
     fnamecsv.seek(0, os.SEEK_END)
     if fnamecsv.tell() == 0:
       file_empty = True
-      data = np.array([], dtype=dt)
     else:
       fnamecsv.seek(0)
-    toc0 = time.time() - tic0
     log('Parsing StringIO buffer.')
-    tic = time.time()
 
-  if not file_empty:
+  toc0 = time.time() - tic0
+
+  tic1 = time.time()
+
+  if file_empty:
+    log("Response is empty. Returning empty data array.")
+    dt, _, _, _, _ = _compute_dt(meta, opts)
+    data = np.array([], dtype=dt)
+  else:
     if missing_length(meta, opts):
       data = _parse_csv_missing_length(fnamecsv, meta, opts, urlcsv)
     else:
       data = _parse_csv(fnamecsv, meta, opts, urlcsv)
 
-  toc = time.time() - tic
+  toc1 = time.time() - tic1
 
-  return data, toc0, toc
+  return data, toc0, toc1
 
 
 def _parse_csv(fnamecsv, meta, opts, urlcsv):
