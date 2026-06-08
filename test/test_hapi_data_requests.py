@@ -212,8 +212,38 @@ def test_unicode():
             assert compare.read(server, dataset, parameter, run, opts.copy(), logger=logger)
             assert compare.cache(server, dataset, parameter, opts.copy(), logger=logger)
 
+def test_empty_response():
+    from hapiclient import hapi
+
+    server  = 'http://hapi-server.org/servers/TestData2.0/hapi'
+    dataset = 'dataset1'
+
+    # Time range with no data.
+    start   = '1970-01-01T00:00:00.1Z'
+    stop    = '1970-01-01T00:00:00.2Z'
+
+    _kwargs = kwargs.copy()
+    _kwargs['cache'] = False
+    _kwargs['usecache'] = False
+    data_csv, meta = hapi(server, dataset, '', start, stop, format='csv', **_kwargs)
+    data_bin, meta = hapi(server, dataset, '', start, stop, format='binary', **_kwargs)
+
+    assert len(data_csv) == 0
+    assert compare.equal(data_csv, data_bin)
+
+    for i in range(2):
+        _kwargs = kwargs.copy()
+        _kwargs['cache'] = True
+        _kwargs['usecache'] = True
+        data_csv, meta = hapi(server, dataset, '', start, stop, format='csv', **_kwargs)
+        data_bin, meta = hapi(server, dataset, '', start, stop, format='binary', **_kwargs)
+
+        assert len(data_csv) == 0
+        assert compare.equal(data_csv, data_bin)
+
 
 if __name__ == '__main__':
+    test_empty_response()
     test_subset_short()
     test_reader_timing_short()
     test_reader_timing_long()

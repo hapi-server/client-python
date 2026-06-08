@@ -171,7 +171,7 @@ def data_cache_read_metax(SERVER, DATASET, PARAMETERS, START, STOP, opts):
   from hapiclient.log import log
 
   if not opts["usecache"]:
-    log('Not checking data cache because usecache is False.')
+    log('Not checking subsetted metadata cache because usecache is False.')
     return None
 
   fnamepklx = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])['pkl']
