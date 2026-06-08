@@ -274,7 +274,8 @@ def hapitime2datetime(Time, **kwargs):
         toc = time.time() - tic
         log("Pandas processing time = %.4fs, first time = %s" % (toc, Timeo))
         return Time
-    except:
+    except Exception as e:
+        log("Pandas processing failed with error: " + str(e))
         log("Pandas processing failed, first time = %s" % Time[0])
 
 
