@@ -120,7 +120,7 @@ v0.2.8b2:
 	2026-05-20 -- Refactor
 v0.2.8:
 	2026-06-04 -- Compat. fixes for hapiplot package.
-v0.2.8b0
+v0.2.8b0:
 	2026-06-08 -- Show time parsing error message
-v0.2.9
+v0.2.9:
 	2026-06-08 -- 93-occasional-crashes-due-to-undefined-variable-dt-in-get_csv-hapiclient-version-028
