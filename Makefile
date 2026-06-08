@@ -22,6 +22,7 @@
 #  1. make release
 #  2. Manually create a release at https://github.com/hapi-server/client-python/releases 
 #     (could do this automatically using https://stackoverflow.com/questions/21214562/how-to-release-versions-on-github-through-the-command-line)
+#     To test: gh release create <tagname> --target <branchname>
 #  3. Wait ~5 minutes and execute
 #  4. make release-test-all
 #     (Will fail until new version is available at pypi.org for pip install.
