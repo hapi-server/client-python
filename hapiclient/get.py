@@ -209,31 +209,40 @@ def get_csv(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
 
 
 def _parse_csv(fnamecsv, meta, opts, urlcsv):
-  dt, cols, psizes, pnames, ptypes = _compute_dt(meta, opts)
+
   # All string and isotime parameters have a length in metadata.
-  if opts['method'] == 'numpy':
+
+  dt, cols, psizes, pnames, ptypes = _compute_dt(meta, opts)
+
+  kwargs_numpy = {
+      'dtype': dt,
+      'delimiter': ',',
+      'replace_space': ' ',
+      'deletechars': '',
+      'encoding': 'utf-8'
+  }
+
+  kwargs_pandas = {
+      'sep': ',',
+      'header': None,
+      'encoding': 'utf-8',
+      'skipinitialspace': True,
+      'keep_default_na': False,
+      'na_values': ['NaN', 'nan', 'Nan', 'naN', ' "NaN"', ' "nan"', ' "Nan"', ' "naN"', '"NaN"', '"nan"', '"Nan"', '"naN"']
+  }
+
+  def _numpy(fname_csv):
     try:
-      kwargs = {
-          'dtype': dt,
-          'delimiter': ',',
-          'replace_space': ' ',
-          'deletechars': '',
-          'encoding': 'utf-8'
-      }
-      data = np.genfromtxt(fnamecsv, **kwargs)
+      data = np.genfromtxt(fnamecsv, **kwargs_numpy)
+      return data
     except Exception as e:
       error('np.genfromtxt({}) gave {} using data from {}'.format(fnamecsv, e, urlcsv))
 
+  if opts['method'] == 'numpy':
+    return _numpy(fnamecsv)
+
   if opts['method'] == '' or opts['method'] == 'pandas':
     # Read file into Pandas DataFrame
-    kwargs = {
-        'sep': ',',
-        'header': None,
-        'encoding': 'utf-8',
-        'skipinitialspace': True,
-        'keep_default_na': False,
-        'na_values': ['NaN', 'nan', 'Nan', 'naN', ' "NaN"', ' "nan"', ' "Nan"', ' "naN"', '"NaN"', '"nan"', '"Nan"', '"naN"']
-    }
     """
     Note that this does not handle trailing whitespace after
     any of the na_values. (There is no skiptrailingspace option).
@@ -248,21 +257,26 @@ def _parse_csv(fnamecsv, meta, opts, urlcsv):
         csv_kwargs["converters"] = {i: strip_field for i in range(ncols)}
     """
     try:
-      df = pandas.read_csv(fnamecsv, **kwargs)
+      df = pandas.read_csv(fnamecsv, **kwargs_pandas)
     except Exception as e:
-      error('pandas.read_csv({}) gave {} using data from {}'.format(fnamecsv, e, urlcsv))
+      error('\npandas.read_csv("{}")\nwith kwargs\n   {}\ngave\n   "{}"\nusing data from\n   {}'.format(fnamecsv, kwargs_pandas, e, urlcsv))
 
-    # Allocate output N-D array (It is not possible to pass dtype=dt
-    # as computed to pandas.read_csv; pandas dtype is different
-    # from numpy's dtype.)
-    data = np.ndarray(shape=(len(df)), dtype=dt)
-    # Insert data from dataframe 'df' columns into N-D array 'data'
-    for i in range(0, len(pnames)):
-      shape = np.append(len(data), psizes[i])
-      # In numpy 1.8.2 and Python 2.7, this throws an error
-      # for no apparent reason. Works as expected in numpy 1.10.4
-      datap = df.values[:, np.arange(cols[i][0], cols[i][1] + 1)]
-      data[pnames[i]] = np.squeeze(np.reshape(datap, shape))
+    # Allocate output N-D array (It is not possible to pass dtype=dt as computed
+    # to pandas.read_csv; pandas dtypes are different from numpy's dtypes.)
+    try:
+      data = np.ndarray(shape=(len(df)), dtype=dt)
+      # Insert data from dataframe 'df' columns into N-D array 'data'
+      for i in range(0, len(pnames)):
+        shape = np.append(len(data), psizes[i])
+        datap = df.values[:, np.arange(cols[i][0], cols[i][1] + 1)]
+        data[pnames[i]] = np.squeeze(np.reshape(datap, shape))
+    except Exception as e:
+      try:
+        data = _numpy(fnamecsv)
+      except Exception as e2:
+        emsg = '\nError converting CSV response read using\n   pandas.read_csv("{}")\nwith\n   kwargs = {}\nto a ndarray:\n  "{}".'
+        emsg += '\nAlso,\n   np.genfromtxt("{}")\nwith kwargs\n   {}\ngave\n   "{}".'
+        error(emsg.format(urlcsv, kwargs_pandas, e, fnamecsv, kwargs_numpy, e2))
 
   return data
 
