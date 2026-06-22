@@ -124,3 +124,7 @@ v0.2.8b0:
 	2026-06-08 -- Show time parsing error message
 v0.2.9:
 	2026-06-08 -- 93-occasional-crashes-due-to-undefined-variable-dt-in-get_csv-hapiclient-version-028
+v0.3.0b0:
+	2026-06-22 -- Try numpy if pandas csv read fails. https://github.com/hapi-server/client-python/pull/98
+	2026-06-22 -- Fix logging broken by refactor. https://github.com/hapi-server/client-python/pull/96
+	2026-06-22 -- Fix so test/test_logging.py passes (issue with using tox)

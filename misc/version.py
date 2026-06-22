@@ -16,7 +16,7 @@ print("Finding version information from CHANGES.txt")
 fin = open("CHANGES.txt")
 version = '0.0.0'
 for line in fin:
-	(repl, n) = re.subn(r"^v(.*):.*", r"\1", line)
+	(repl, n) = re.subn(r"^v(.*).*", r"\1", line)
 	if n > 0:
 		version = repl
 fin.close()
