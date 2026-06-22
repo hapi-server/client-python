@@ -1,4 +1,4 @@
-from hapiclient.log import log, configure_logging
+from hapiclient.log import log
 
 
 def setopts(defaults, given):
@@ -148,7 +148,7 @@ def warning(*args):
         import platform
         prefix = "\x1b[31mHAPIWarning:\x1b[0m "
         if platform.system() == 'Windows' and pythonshell() == 'shell':
-            prefix = "HAPIWarning: "        
+            prefix = "HAPIWarning: "
 
         return prefix
 

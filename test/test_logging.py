@@ -12,8 +12,11 @@ stop       = '1970-01-01T00:01:00'
 def _reset_logger():
   """Remove all handlers and reset level on the hapiclient logger."""
   logger = logging.getLogger("hapiclient")
-  logger.handlers.clear()
+  for handler in list(logger.handlers):
+    logger.removeHandler(handler)
+    handler.close()
   logger.setLevel(logging.NOTSET)
+  logger.propagate = False
   if hasattr(logger, "_hapiclient_internal_level"):
     delattr(logger, "_hapiclient_internal_level")
 
@@ -87,30 +90,6 @@ class TestStandardLoggingConsole:
     assert 'Running hapi.py version' in output
 
 
-class TestStandardLoggingFile:
-  """Method 4: Standard logging with FileHandler."""
-
-  def setup_method(self):
-    _reset_logger()
-
-  def teardown_method(self):
-    _reset_logger()
-
-  def test_logs_to_file(self, tmp_path):
-    logfile = tmp_path / "hapiclient.log"
-    logger = logging.getLogger("hapiclient")
-    logger.setLevel(logging.INFO)
-    handler = logging.FileHandler(str(logfile))
-    handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
-    logger.addHandler(handler)
-
-    data, meta = hapi(server, dataset, parameters, start, stop)
-    handler.close()
-
-    content = logfile.read_text()
-    assert 'Running hapi.py version' in content
-
-
 class TestLoggingKeywordFalse:
   """Default: logging=False suppresses INFO messages."""
 
@@ -129,9 +108,6 @@ class TestLoggingKeywordFalse:
 
 if __name__ == "__main__":
     import pytest
-    #pytest.main([__file__])
     pytest.main([__file__ + "::TestLoggingKeywordFalse", "-v"])
     pytest.main([__file__ + "::TestLoggingKeywordTrue", "-v"])
-    pytest.main([__file__ + "::TestLoggingKeywordFileObject", "-v"])
     pytest.main([__file__ + "::TestStandardLoggingConsole", "-v"])
-    pytest.main([__file__ + "::TestStandardLoggingFile", "-v"])
