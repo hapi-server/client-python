@@ -35,11 +35,13 @@ def configure_logging(logging):
             _logger.addHandler(_handler)
     if logging is False:
         if has_user_level or has_user_handlers:
-            from .util import warning
+            #from .util import warning
             if has_user_handlers:
-                warning("Ignoring logging=False because standard Python logger for 'hapiclient' already configured with handlers.")
+                pass
+                #warning("Ignoring logging=False because standard Python logger for 'hapiclient' already configured with handlers.")
             else:
-                warning("Ignoring logging=False because standard Python logger for 'hapiclient' already configured with log_level != NOTSET.")
+                pass
+                #warning("Ignoring logging=False because standard Python logger for 'hapiclient' already configured with log_level != NOTSET.")
         else:
             _logger.setLevel(_logging.WARNING)
             setattr(_logger, _INTERNAL_LEVEL_ATTR, _logging.WARNING)
