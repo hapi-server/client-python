@@ -5,22 +5,16 @@ _logger = _logging.getLogger("hapiclient")
 _INTERNAL_HANDLER_ATTR = "_hapiclient_internal_handler"
 _INTERNAL_LEVEL_ATTR = "_hapiclient_internal_level"
 
-# Disable propagation and add NullHandler by default so hapiclient
-# is silent unless explicitly configured by user. This is the standard
-# practice for library loggers.
+# Disable propagation by default so hapiclient logs don't bubble up
+# to root logger (e.g., pytest's logger). Can be re-enabled by user.
 _logger.propagate = False
-_logger.setLevel(_logging.NOTSET)
-if not _logger.handlers:
-    _null_handler = _logging.NullHandler()
-    setattr(_null_handler, _INTERNAL_HANDLER_ATTR, True)
-    _logger.addHandler(_null_handler)
 
 
-def configure_logging(opts):
+def configure_logging(logging):
     """Configure the hapiclient logger based on opts['logging'].
 
     If the hapiclient logger has been configured externally (level != NOTSET
-    or handlers present), the logging kwarg.
+    or handlers present), the logging kwarg is ignored and a warning is logged.
     """
     has_user_level = _logger.level != _logging.NOTSET and \
                      _logger.level != getattr(_logger, _INTERNAL_LEVEL_ATTR, None)
@@ -29,7 +23,7 @@ def configure_logging(opts):
         for handler in _logger.handlers
     )
 
-    if opts['logging']:
+    if logging is True:
         _logger.setLevel(_logging.INFO)
         setattr(_logger, _INTERNAL_LEVEL_ATTR, _logging.INFO)
         _logger.propagate = False
@@ -39,13 +33,16 @@ def configure_logging(opts):
             _handler.setFormatter(_logging.Formatter("%(message)s"))
             setattr(_handler, _INTERNAL_HANDLER_ATTR, True)
             _logger.addHandler(_handler)
-    else:
+    if logging is False:
         if has_user_level or has_user_handlers:
-            # Don't log when logging is disabled - would cause output during tests
-            pass
+            from .util import warning
+            if has_user_handlers:
+                warning("Ignoring logging=False because standard Python logger for 'hapiclient' already configured with handlers.")
+            else:
+                warning("Ignoring logging=False because standard Python logger for 'hapiclient' already configured with log_level != NOTSET.")
         else:
-            _logger.setLevel(_logging.NOTSET)
-            setattr(_logger, _INTERNAL_LEVEL_ATTR, _logging.NOTSET)
+            _logger.setLevel(_logging.WARNING)
+            setattr(_logger, _INTERNAL_LEVEL_ATTR, _logging.WARNING)
 
 
 def log(msg, opts=None):

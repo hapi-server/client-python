@@ -210,13 +210,14 @@ def hapi(*args, **kwargs):
             # TODO: Consider warning.
             STOP = STOP + 'Z'
 
+
+    if 'logging' in kwargs and not isinstance(kwargs['logging'], bool):
+        raise ValueError("logging keyword must be True or False")
+
+    configure_logging(kwargs.get('logging', None))
+
     # Override defaults
     opts = setopts(hapiopts(), kwargs)
-
-    msg = "logging keyword must be True, False, or a file-like object"
-    assert (isinstance(opts['logging'], bool) or hasattr(opts['logging'], 'write')), msg
-
-    configure_logging(opts)
 
     assert (opts['cache'] in [True, False]), "cache keyword must be True of False"
     assert (opts['usecache'] in [True, False]), "usecache keyword must be True of False"
