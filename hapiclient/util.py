@@ -347,26 +347,19 @@ def urlopen(url, parse_json=False):
 
 
 def urlretrieve(url, fname):
-    """Download URL to file
+    """Download URL to file atomically.
 
     res = urlretrieve(url, fname)
     """
 
-    import os
-    import shutil
+    log('Writing')
+    log('  %s' % url)
+    log('to')
+    log('  %s' % fname)
+    res = urlopen(url)
+    write_atomic(fname, res)
 
-    dirname = os.path.dirname(fname)
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-
-    with open(fname, 'wb') as out:
-        res = urlopen(url)
-        log('Writing')
-        log('%s' % url)
-        log('to')
-        log('%s' % os.path.basename(fname))
-        shutil.copyfileobj(res, out)
-        return res
+    return res
 
 
 def subset_meta(meta, params):
@@ -454,3 +447,59 @@ def missing_length(meta, opts):
             return True
 
     return False
+
+
+def write_atomic(path, data):
+
+  import os
+  import json
+  import pathlib
+  import pickle
+  import secrets
+
+  path = pathlib.Path(path)
+  path.parent.mkdir(parents=True, exist_ok=True)
+  tmp_ext = f".{secrets.token_hex(6)}.tmp"
+  tmp_path = path.with_suffix(path.suffix + tmp_ext)
+
+  try:
+
+    if path.suffix == '.json':
+      with tmp_path.open('w') as f:
+        json.dump(data, f, indent=2)
+
+    if path.suffix == '.pkl':
+      with tmp_path.open('wb') as f:
+        pickle.dump(data, f, protocol=2)
+
+    if path.suffix == '.npy':
+      import numpy as np
+      import warnings
+      with warnings.catch_warnings():
+        # Ignore warning that occurs when saving Unicode data.
+        kwargs = {
+            'message': r"Stored array in format 3\.0.*",
+            'category': UserWarning,
+            'module': r"numpy\.lib\.format"
+        }
+        warnings.filterwarnings("ignore", **kwargs)
+        with tmp_path.open('wb') as f:
+          np.save(f, data)
+
+    if path.suffix in ('.bin', '.csv'):
+      with tmp_path.open('wb') as f:
+        if isinstance(data, (bytes, bytearray)):
+          f.write(data)
+        else:
+          # Assume a file-like / streaming response object.
+          import shutil
+          shutil.copyfileobj(data, f)
+
+    os.replace(tmp_path, path)
+
+  except Exception:
+    warning(f"Failed to write cache file {path}.")
+    try:
+      tmp_path.unlink()
+    except OSError:
+      warning(f"Failed to remove temporary cache file {tmp_path}.")
