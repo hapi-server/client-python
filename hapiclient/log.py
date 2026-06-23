@@ -14,7 +14,7 @@ def configure_logging(logging):
     """Configure the hapiclient logger based on opts['logging'].
 
     If the hapiclient logger has been configured externally (level != NOTSET
-    or handlers present), the logging kwarg is ignored and a warning is logged.
+    or handlers present) and logging=False, the logging kwarg is ignored.
     """
     has_user_level = _logger.level != _logging.NOTSET and \
                      _logger.level != getattr(_logger, _INTERNAL_LEVEL_ATTR, None)
@@ -27,7 +27,8 @@ def configure_logging(logging):
         _logger.setLevel(_logging.INFO)
         setattr(_logger, _INTERNAL_LEVEL_ATTR, _logging.INFO)
         _logger.propagate = False
-        if not _logger.handlers:
+        _has_internal = any(getattr(h, _INTERNAL_HANDLER_ATTR, False) for h in _logger.handlers)
+        if not _has_internal:
             import sys
             _handler = _logging.StreamHandler(sys.stdout)
             _handler.setFormatter(_logging.Formatter("%(message)s"))

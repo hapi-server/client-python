@@ -2,7 +2,7 @@
     "description": "Python client for HAPI", 
     "license": "other-open", 
     "title": "hapi-server/client-python:", 
-    "version": "0.2.9", 
+    "version": "0.3.0b0", 
     "upload_type": "software", 
     "publication_date": "2021-10-06", 
     "creators": [

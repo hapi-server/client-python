@@ -7,7 +7,7 @@ from hapiclient.info import info
 from hapiclient.data import data
 
 # Backward compatibility: older code imports request2path from hapiclient.hapi
-from hapiclient.cache import request2path
+from hapiclient.cache import request2path # Do not remove.
 
 
 
@@ -45,7 +45,7 @@ def hapiopts():
 def hapi(*args, **kwargs):
     """Request data from a HAPI server.
 
-    Version: 0.2.9
+    Version: 0.3.0b0
 
 
     Examples
