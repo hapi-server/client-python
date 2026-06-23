@@ -7,7 +7,7 @@ from hapiclient.info import info
 from hapiclient.data import data
 
 # Backward compatibility: older code imports request2path from hapiclient.hapi
-from hapiclient.cache import request2path
+from hapiclient.cache import request2path # Do not remove.
 
 
 
@@ -45,7 +45,7 @@ def hapiopts():
 def hapi(*args, **kwargs):
     """Request data from a HAPI server.
 
-    Version: 0.3.0b0:
+    Version: 0.3.0b0
 
 
     Examples
@@ -66,9 +66,9 @@ def hapi(*args, **kwargs):
     stop: str or None
         The end time of the requested data; end times are exclusive - the
         last data record returned by a HAPI server should have a timestamp
-        before `start`. If `None`, `stopDate` is used.
+        before `stop`. If `None`, `stopDate` is used.
     options: dict
-            `logging` (``False``) - Log to console
+            `logging` (``False``) - If ``True``, add a stdout handler to the Python ``logging`` module and set log level to INFO. If the Python ``logging`` module has already been configured for the ``hapiclient`` logger (external handlers or log level set), the ``logging`` kwarg is ignored.
 
             `cache` (``True``) - Save responses and processed responses in cachedir
 
