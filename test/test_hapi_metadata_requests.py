@@ -13,7 +13,7 @@ kwargs = {
     'cache': False,
     'usecache': False,
     'cachedir': '/tmp/hapi-data',
-    'logging': logger.getEffectiveLevel() >= logging.INFO
+    'logging': False
 }
 
 serverbad = 'http://hapi-server.org/servers/TestData/xhapi'

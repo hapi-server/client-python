@@ -31,12 +31,19 @@ def get_format(SERVER, format):
 
   if format != 'csv':
     caps = capabilities(SERVER)
-    sformats = caps["outputFormats"]  # Server formats
-    if format not in sformats:
+    if "outputFormats" not in caps:
+      return 'csv'
+
+    formats = caps.get("outputFormats", [])  # Server formats
+    if len(formats) == 0:
+      return 'csv'
+
+    if format not in formats:
       msg = 'Requested transport format "%s" not avaiable from %s. Will use "csv". Available options: %s'
-      warning(msg % (format, SERVER, ', '.join(sformats)))
+      warning(msg % (format, SERVER, ', '.join(formats)))
       format = 'csv'
-    if 'binary' not in sformats:
+
+    if 'binary' not in formats:
       format = 'csv'
 
   return format
