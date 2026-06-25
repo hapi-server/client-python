@@ -2,7 +2,6 @@
 import os
 import json
 import pytest
-import logging
 
 from hapiclient.hapi import hapi
 
