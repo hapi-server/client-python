@@ -214,7 +214,7 @@ def error(msg, debug=False):
         import platform
         prefix = "\033[0;31mHAPIError:\033[0m "
         if platform.system() == 'Windows' and pythonshell() == 'shell':
-            prefix = "HAPIError: "        
+            prefix = "HAPIError: "
 
         return prefix
 
@@ -222,7 +222,7 @@ def error(msg, debug=False):
                                   filename=None, tb_offset=None,
                                   exception_only=False,
                                   running_compiled_code=False):
-        
+
         exception = sys.exc_info()
         if not debug and exception[0].__name__ == "HAPIError":
             sys.stderr.write(prefix() + str(exception[1]))
@@ -387,7 +387,7 @@ def subset_meta(meta, params):
     pa = [meta['parameters'][0]]  # First parameter is always the time parameter
 
     params_reordered = []  # Re-ordered params
-    # If time parameter explicity requested, put it first in params_reordered.
+    # If time parameter explicitly requested, put it first in params_reordered.
     if meta['parameters'][0]['name'] in p:
         params_reordered = [meta['parameters'][0]['name']]
 
@@ -453,13 +453,16 @@ def write_atomic(path, data):
 
   import os
   import json
-  import pathlib
   import pickle
+  import pathlib
   import secrets
+  import warnings
+
+  import numpy
 
   path = pathlib.Path(path)
   path.parent.mkdir(parents=True, exist_ok=True)
-  tmp_ext = f".{secrets.token_hex(6)}.tmp"
+  tmp_ext = f".{secrets.token_hex(3)}.tmp"
   tmp_path = path.with_suffix(path.suffix + tmp_ext)
 
   try:
@@ -473,8 +476,6 @@ def write_atomic(path, data):
         pickle.dump(data, f, protocol=2)
 
     if path.suffix == '.npy':
-      import numpy as np
-      import warnings
       with warnings.catch_warnings():
         # Ignore warning that occurs when saving Unicode data.
         kwargs = {
@@ -484,7 +485,7 @@ def write_atomic(path, data):
         }
         warnings.filterwarnings("ignore", **kwargs)
         with tmp_path.open('wb') as f:
-          np.save(f, data)
+          numpy.save(f, data)
 
     if path.suffix in ('.bin', '.csv'):
       with tmp_path.open('wb') as f:
@@ -495,11 +496,14 @@ def write_atomic(path, data):
           import shutil
           shutil.copyfileobj(data, f)
 
-    os.replace(tmp_path, path)
+    try:
+      os.replace(tmp_path, path)
+    except Exception as e:
+      warning(f"Failed to rename cache file from {tmp_path} to {path}: {e}")
 
-  except Exception:
-    warning(f"Failed to write cache file {path}.")
+  except Exception as e:
+    warning(f"Failed to write cache file {tmp_path}: {e}")
     try:
       tmp_path.unlink()
     except OSError:
-      warning(f"Failed to remove temporary cache file {tmp_path}.")
+        warning(f"Failed to remove temporary cache file {tmp_path}")

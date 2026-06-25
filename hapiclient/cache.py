@@ -232,4 +232,3 @@ def data_cache_write(data_result, meta, SERVER, DATASET, PARAMETERS, START, STOP
 
   log('Writing %s' % os.path.basename(fnamenpy))
   write_atomic(fnamenpy, data_result)
-
