@@ -27,7 +27,7 @@ def test_api():
   ]
 
   for Time in times:
-    logger.info("  Testing hapitime2datetime(" + str(Time) + ")")
+    logger.debug("  Testing hapitime2datetime(" + str(Time) + ")")
     t = hapitime2datetime(Time)
     assert t[0].strftime("%Y-%m-%dT%H:%M:%S.%fZ") == expected
     _assert_utc(t[0])
@@ -35,7 +35,7 @@ def test_api():
 
 def test_parsing():
 
-  logger.info("test_parsing()")
+  logger.debug("test_parsing()")
 
   expected = '1989-01-01T00:00:00.000000Z'
 
@@ -76,7 +76,7 @@ def test_parsing():
   ]
 
   for i in range(len(dts)):
-    logger.info("  Testing hapitime2datetime('" + str(dts[i]) + "')")
+    logger.debug("  Testing hapitime2datetime('" + str(dts[i]) + "')")
     t = hapitime2datetime(dts[i])
     assert t[0].strftime("%Y-%m-%dT%H:%M:%S.%fZ") == expected
     _assert_utc(t[0])
