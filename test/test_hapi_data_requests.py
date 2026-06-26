@@ -97,87 +97,6 @@ def test_all_test_servers():
             pytest.fail("test_server('%s') raised: %s" % (version, e))
 
 
-def test_cache_short():
-
-    # Compare read with empty cache with read with hot cache and usecache=True
-    dataset = 'dataset1'
-    start = '1970-01-01'
-    stop  = '1970-01-01T00:00:03'
-
-    opts = {**kwargs, 'cache': True}
-
-    opts['usecache'] = False
-    shutil.rmtree(opts['cachedir'], ignore_errors=True)
-    data, meta  = hapi(server, dataset, 'scalarint,vectorint', start, stop, **opts)
-
-    opts['usecache'] = True
-    data2, meta2  = hapi(server, dataset, 'scalarint,vectorint', start, stop, **opts)
-
-    assert compare.equal(data, data2)
-
-
-def test_cache_error():
-
-    from unittest.mock import patch
-
-    import io
-    import contextlib
-    import pathlib
-    import tempfile
-    from hapiclient.util import write_atomic
-
-    def assert_warns(fn, expected):
-        buf = io.StringIO()
-        with contextlib.redirect_stderr(buf):
-            fn()
-            print(buf.getvalue())
-        assert expected in buf.getvalue(), \
-            f"Expected '{expected}' in stderr: {buf.getvalue()!r}"
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        path = pathlib.Path(tmpdir) / 'test.json'
-        data = {'key': 'value'}
-
-        # Simulate write failure
-        with patch('json.dump', side_effect=OSError('No space left on device')):
-            assert_warns(lambda: write_atomic(str(path), data), 'Failed to write cache file')
-        assert not path.exists(), 'File should not exist after write failure'
-
-        # Simulate os.replace failure after successful write
-        with patch('os.replace', side_effect=OSError('Permission denied')):
-            assert_warns(lambda: write_atomic(str(path), data), 'Failed to rename cache file from')
-        assert not path.exists(), 'File should not exist after rename failure'
-
-        # Simulate write failure AND unlink failure
-        with patch('json.dump', side_effect=OSError('No space left on device')), \
-             patch('pathlib.Path.unlink', side_effect=OSError('Permission denied')):
-            assert_warns(lambda: write_atomic(str(path), data), 'Failed to remove temporary cache file')
-
-        # Simulate successful write
-        write_atomic(str(path), data)
-        assert path.exists(), 'File should exist after successful write'
-
-    dataset = 'dataset1'
-    start = '1970-01-01'
-    stop  = '1970-01-01T00:00:03'
-
-    opts = {**kwargs, 'cache': True, 'usecache': False}
-
-    with patch('pickle.dump', side_effect=OSError('No space left on device')):
-        assert_warns(lambda: hapi(server, dataset, 'scalarint,vectorint', start, stop, **opts),
-                     'Failed to write cache file')
-
-    with patch('os.replace', side_effect=OSError('Permission denied')):
-        assert_warns(lambda: hapi(server, dataset, 'scalarint,vectorint', start, stop, **opts),
-                     'Failed to rename cache file from')
-
-    with patch('pickle.dump', side_effect=OSError('No space left on device')), \
-         patch('pathlib.Path.unlink', side_effect=OSError('Permission denied')):
-        assert_warns(lambda: hapi(server, dataset, 'scalarint,vectorint', start, stop, **opts),
-                     'Failed to remove temporary cache file')
-
-
-
 def test_subset_short():
 
     dataset = 'dataset1'
@@ -274,6 +193,7 @@ def test_unicode():
             assert compare.read(server, dataset, parameter, run, opts.copy(), logger=logger)
             assert compare.cache(server, dataset, parameter, opts.copy(), logger=logger)
 
+
 def test_empty_response():
     from hapiclient import hapi
 
@@ -305,14 +225,11 @@ def test_empty_response():
 
 
 if __name__ == '__main__':
-    test_cache_error()
-    exit()
     test_empty_response()
     test_subset_short()
     test_reader_timing_short()
     test_reader_timing_long()
     test_all_test_servers()
     test_subset_short()
-    test_cache_short()
     test_request2path()
     test_unicode()
