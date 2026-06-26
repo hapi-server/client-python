@@ -197,7 +197,6 @@ def error(msg, debug=False):
     from inspect import stack
     from os import path
 
-    debug = False
     if pythonshell() != 'shell':
         try:
             from IPython.core.interactiveshell import InteractiveShell
