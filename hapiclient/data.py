@@ -22,7 +22,7 @@ def data(SERVER, DATASET, PARAMETERS, START, STOP, opts):
     log('STOP was given as None. Getting stopDate for dataset.')
     meta = info(SERVER, DATASET, None, opts)
     STOP = meta['stopDate']
-    log('Using STOP = {STOP}')
+    log(f'Using STOP = {STOP}')
 
   tic_totalTime = time.time()
 

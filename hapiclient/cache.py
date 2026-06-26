@@ -125,10 +125,9 @@ def meta_cache_write(meta, SERVER, DATASET, opts):
   """Write metadata to JSON and PKL cache files."""
 
   import os
-  import json
-  import pickle
 
   from hapiclient.log import log
+  from hapiclient.util import write_atomic
 
   if not opts["cache"]:
     return
@@ -136,17 +135,11 @@ def meta_cache_write(meta, SERVER, DATASET, opts):
   paths = meta_cache_paths(SERVER, DATASET, opts['cachedir'])
   fnamejson, fnamepkl = paths['json'], paths['pkl']
 
-  server_dir = cachedir(opts["cachedir"], SERVER)
-  os.makedirs(server_dir, exist_ok=True)
-
   log('Writing %s ' % os.path.basename(fnamejson))
-  with open(fnamejson, 'w') as f:
-    json.dump(meta, f, indent=4)
+  write_atomic(fnamejson, meta)
 
   log('Writing %s ' % os.path.basename(fnamepkl))
-  with open(fnamepkl, 'wb') as f:
-    # protocol=2 used for Python 2.7 compatibility.
-    pickle.dump(meta, f, protocol=2)
+  write_atomic(fnamepkl, meta)
 
 
 def data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, cachedir):
@@ -215,11 +208,9 @@ def data_cache_write(data_result, meta, SERVER, DATASET, PARAMETERS, START, STOP
   """
 
   import os
-  import pickle
-  import warnings
-  import numpy as np
 
   from hapiclient.log import log
+  from hapiclient.util import write_atomic
 
   data_paths = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])
   fnamecsv, fnamebin, fnamenpy, fnamepklx = data_paths['csv'], data_paths['bin'], data_paths['npy'], data_paths['pkl']
@@ -236,20 +227,8 @@ def data_cache_write(data_result, meta, SERVER, DATASET, PARAMETERS, START, STOP
     # Need to return after meta is updated.
     return
 
-  server_dir = cachedir(opts["cachedir"], SERVER)
-  os.makedirs(server_dir, exist_ok=True)
-
   log('Writing %s' % os.path.basename(fnamepklx))
-  with open(fnamepklx, 'wb') as f:
-    pickle.dump(meta, f, protocol=2)
+  write_atomic(fnamepklx, meta)
 
   log('Writing %s' % os.path.basename(fnamenpy))
-  with warnings.catch_warnings():
-    # Ignore warning that occurs when saving Unicode data.
-    kwargs = {
-        'message': r"Stored array in format 3\.0.*",
-        'category': UserWarning,
-        'module': r"numpy\.lib\.format"
-    }
-    warnings.filterwarnings("ignore", **kwargs)
-    np.save(fnamenpy, data_result)
+  write_atomic(fnamenpy, data_result)

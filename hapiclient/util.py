@@ -197,7 +197,6 @@ def error(msg, debug=False):
     from inspect import stack
     from os import path
 
-    debug = False
     if pythonshell() != 'shell':
         try:
             from IPython.core.interactiveshell import InteractiveShell
@@ -214,7 +213,7 @@ def error(msg, debug=False):
         import platform
         prefix = "\033[0;31mHAPIError:\033[0m "
         if platform.system() == 'Windows' and pythonshell() == 'shell':
-            prefix = "HAPIError: "        
+            prefix = "HAPIError: "
 
         return prefix
 
@@ -222,7 +221,7 @@ def error(msg, debug=False):
                                   filename=None, tb_offset=None,
                                   exception_only=False,
                                   running_compiled_code=False):
-        
+
         exception = sys.exc_info()
         if not debug and exception[0].__name__ == "HAPIError":
             sys.stderr.write(prefix() + str(exception[1]))
@@ -347,26 +346,19 @@ def urlopen(url, parse_json=False):
 
 
 def urlretrieve(url, fname):
-    """Download URL to file
+    """Download URL to file atomically.
 
     res = urlretrieve(url, fname)
     """
 
-    import os
-    import shutil
+    log('Writing')
+    log('  %s' % url)
+    log('to')
+    log('  %s' % fname)
+    res = urlopen(url)
+    write_atomic(fname, res)
 
-    dirname = os.path.dirname(fname)
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-
-    with open(fname, 'wb') as out:
-        res = urlopen(url)
-        log('Writing')
-        log('%s' % url)
-        log('to')
-        log('%s' % os.path.basename(fname))
-        shutil.copyfileobj(res, out)
-        return res
+    return res
 
 
 def subset_meta(meta, params):
@@ -394,7 +386,7 @@ def subset_meta(meta, params):
     pa = [meta['parameters'][0]]  # First parameter is always the time parameter
 
     params_reordered = []  # Re-ordered params
-    # If time parameter explicity requested, put it first in params_reordered.
+    # If time parameter explicitly requested, put it first in params_reordered.
     if meta['parameters'][0]['name'] in p:
         params_reordered = [meta['parameters'][0]['name']]
 
@@ -454,3 +446,63 @@ def missing_length(meta, opts):
             return True
 
     return False
+
+
+def write_atomic(path, data):
+
+  import os
+  import json
+  import pickle
+  import pathlib
+  import secrets
+  import warnings
+
+  import numpy
+
+  path = pathlib.Path(path)
+  path.parent.mkdir(parents=True, exist_ok=True)
+  tmp_ext = f".{secrets.token_hex(3)}.tmp"
+  tmp_path = path.with_suffix(path.suffix + tmp_ext)
+
+  try:
+
+    if path.suffix == '.json':
+      with tmp_path.open('w') as f:
+        json.dump(data, f, indent=2)
+
+    if path.suffix == '.pkl':
+      with tmp_path.open('wb') as f:
+        pickle.dump(data, f, protocol=2)
+
+    if path.suffix == '.npy':
+      with warnings.catch_warnings():
+        # Ignore warning that occurs when saving Unicode data.
+        kwargs = {
+            'message': r"Stored array in format 3\.0.*",
+            'category': UserWarning,
+            'module': r"numpy\.lib\.format"
+        }
+        warnings.filterwarnings("ignore", **kwargs)
+        with tmp_path.open('wb') as f:
+          numpy.save(f, data)
+
+    if path.suffix in ('.bin', '.csv'):
+      with tmp_path.open('wb') as f:
+        if isinstance(data, (bytes, bytearray)):
+          f.write(data)
+        else:
+          # Assume a file-like / streaming response object.
+          import shutil
+          shutil.copyfileobj(data, f)
+
+    try:
+      os.replace(tmp_path, path)
+    except Exception as e:
+      warning(f"Failed to rename cache file from {tmp_path} to {path}: {e}")
+
+  except Exception as e:
+    warning(f"Failed to write cache file {tmp_path}: {e}")
+    try:
+      tmp_path.unlink()
+    except OSError:
+        warning(f"Failed to remove temporary cache file {tmp_path}")
