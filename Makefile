@@ -8,36 +8,28 @@
 # Beta releases:
 # 1. tox
 # 2. make repository-test-all # (To be deprecated)
-# 2. For non-doc/formatting changes, update version in CHANGES.txt.
+# 2. For non-doc/formatting changes, update bX in version in CHANGES.txt.
 # 3. run `make version-update` if version changed in CHANGES.txt.
 # 4. Commit and push
 #
-# Making a local package:
-#  1. Update CHANGES.txt to have a new version line
-#  2. make package
-#  3. make package-test-all
-#
-# Upload package to pypi.org
+# Tag the repo, create a GitHub release, and upload package to pypi.org
 #  0. Remove the "b" in the version in CHANGES.txt
 #  1. make release
-#  2. Manually create a release at https://github.com/hapi-server/client-python/releases 
-#     (could do this automatically using https://stackoverflow.com/questions/21214562/how-to-release-versions-on-github-through-the-command-line)
-#     To test and then add to make release target:
-#				gh release create v0.3.0 --target master --notes "Release 0.3.0" --title "Release 0.3.0"
-#  3. Wait ~5 minutes and execute make release-test-all
+#  2. Wait ~5 minutes and execute make pypi-release-test-all
 #     (Will fail until new version is available at pypi.org for pip install.
 #      Sometimes takes ~5 minutes even though web page is immediately
 #      updated.)
-#  4. After package is finalized, create new version number in CHANGES.txt ending
-#     with "b0" in setup.py and then run
+#  3. After package is finalized, create new version number in CHANGES.txt ending
+#     with b0 and then:
 #       make version-update
 #       git commit -a -m "Update version for next release"
 #     This will update the version information in the repository to indicate it
 #     is now in a pre-release state.
-#  Notes:
-#   *  make repository-test tests with Anaconda virtual environment
-#      make package-test and release-test tests with native Python virtual
-#      environment.
+#
+# Making and testing a local package:
+#  1. Update CHANGES.txt to have a new version line
+#  2. make package
+#  3. make package-test-all
 
 URL=https://upload.pypi.org/
 REP=pypi
@@ -51,7 +43,7 @@ PYTHONVERS=python3.14 python3.13 python3.12 python3.11 python3.10 python3.9 pyth
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.3.0
+VERSION=0.3.1b0
 SHELL:= /bin/bash
 
 LONG_TESTS=false
@@ -216,20 +208,24 @@ package-venv-test:
 release:
 	make package
 	make version-tag
-	make release-upload
+	make gh-release
+	make pypi-release
 
-release-upload:
+gh-release:
+	gh release create $(VERSION) --target master --notes "Release $(VERSION)" --title "Release $(VERSION)"
+
+pypi-release:
 	pip install twine
 	twine upload \
 		-r $(REP) dist/hapiclient-$(VERSION).tar.gz -u __token__ \
 		&& echo Uploaded to $(subst upload.,,$(URL))/project/hapiclient/
 
-release-test-all:
+pypi-release-test-all:
 	@ for version in $(PYTHONVERS) ; do \
-		make release-test PYTHON=$$version ; \
+		make pypi-release-test PYTHON=$$version ; \
 	done
 
-release-test:
+pypi-release-test:
 	make env-$(PYTHON)
 	make release-venv-test PYTHON=$(PYTHON)
 
