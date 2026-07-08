@@ -364,46 +364,75 @@ def urlretrieve(url, fname):
 def subset_meta(meta, params):
     """Extract subset of parameters from meta object returned by hapi().
 
-    ``metar = subset_meta(meta, parameters)`` modifies ``meta["parameters"]`` array
-    so that it only contains elements for the time variable and the parameters
-    in the comma-separated string ``parameters``.
+    ``subset_meta(meta, parameters)`` modifies ``meta["parameters"]`` list
+    in place so that it only contains elements for the time variable and the
+    parameters in the comma-separated string ``parameters``.
     """
+
+    # Note that tests for subset_meta() are in test_subset_meta.py, which also
+    # has tests for error message strings. If error message strings change,
+    # update tests in test_subset_meta.py.
 
     if params == '':
         return meta
 
-    p = params.split(',')
-    pm = []  # Parameter names in metadata
-    for i in range(0, len(meta['parameters'])):
-        pm.append(meta['parameters'][i]['name'])
+    pw = params.split(',') # Wanted parameters names as list
 
-    # Check for parameters requested that are not in metadata
-    for i in range(0, len(p)):
-        if p[i] not in pm:
-            error('Parameter %s is not in meta' % p[i] + '\n')
+    # Check for duplicate parameters in pw
+    if len(pw) != len(set(pw)):
+        # Print duplicate parameters
+        duplicates = ','.join([x for x in pw if pw.count(x) > 1])
+        error("Duplicate parameters in requested parameter list: '" + duplicates + "'")
+
+    # Check for errors in pw
+    for p in pw:
+        if p == '':
+            error("Empty parameter name in requested parameter list: '" + params + "'")
+        if p.startswith(' '):
+            error("Leading space before parameter name '" + p + "'")
+        if p.endswith(' '):
+            error("Trailing space after parameter name '" + p + "'")
+
+    pa = [] # Available parameter names in metadata as list
+    for i in range(0, len(meta['parameters'])):
+        pa.append(meta['parameters'][i]['name'])
+
+    # Check if meta has duplicate parameter names.
+    if len(pa) != len(set(pa)):
+        duplicates = ','.join([x for x in pa if pa.count(x) > 1])
+        error('Duplicate parameter names in metadata returned by server: ' + duplicates)
+
+    # Check for parameters wanted that are not available
+    for i in range(0, len(pw)):
+        if pw[i] not in pa:
+            error("Parameter '%s' is not in metadata from server" % pw[i])
             return
 
-    pa = [meta['parameters'][0]]  # First parameter is always the time parameter
+    # Keep first parameter, which is always the primary time parameter
+    pa = [meta['parameters'][0]]
 
-    params_reordered = []  # Re-ordered params
-    # If time parameter explicitly requested, put it first in params_reordered.
-    if meta['parameters'][0]['name'] in p:
-        params_reordered = [meta['parameters'][0]['name']]
+    pw_reordered = []  # Re-ordered params
+    # If time parameter explicitly requested, put it first in pw_reordered.
+    if meta['parameters'][0]['name'] in pw:
+        pw_reordered = [meta['parameters'][0]['name']]
 
     # Create subset of parameter metadata
-    for i in range(1, len(pm)):
-        if pm[i] in p:
+    for i in range(1, len(meta['parameters'])):
+        if meta['parameters'][i]['name'] in pw:
             pa.append(meta['parameters'][i])
-            params_reordered.append(pm[i])
+            pw_reordered.append(meta['parameters'][i]['name'])
+
+    pw_reordered_str = ','.join(pw_reordered)
+
+    if not params == pw_reordered_str:
+        msg = 'Order of requested parameters does not match order of '
+        msg += 'parameters in server info metadata. '
+        msg += "\n  "      + "Order requested: " + params
+        msg += "\n  " + "Order required:  " + pw_reordered_str
+        error(msg)
+
+    # Modify meta to only include time parameter and parameters in pw.
     meta['parameters'] = pa
-
-    params_reordered_str = ','.join(params_reordered)
-
-    if not params == params_reordered_str:
-        msg = "\n  " + "Order requested: " + params
-        msg = msg + "\n  " + "Order required: " + params_reordered_str
-        error('Order of requested parameters does not match order of ' \
-              'parameters in server info metadata.' + msg + '\n')
 
     return meta
 
