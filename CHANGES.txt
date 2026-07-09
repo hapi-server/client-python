@@ -129,5 +129,5 @@ v0.3.0:
 	2026-06-22 -- Fix logging broken by refactor. https://github.com/hapi-server/client-python/pull/96
 	2026-06-22 -- Fix so test/test_logging.py passes (issue with using tox)
 	2026-07-08 -- 94-cache-files-can-be-corrupted-by-interrupted-writes
-v0.3.1b0:
-
+v0.3.1:
+	2026-07-08 -- 80-subset-error-message-wrong-when-duplicate-parameters

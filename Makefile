@@ -17,8 +17,7 @@
 #  1. make release
 #  2. Wait ~5 minutes and execute make pypi-release-test-all
 #     (Will fail until new version is available at pypi.org for pip install.
-#      Sometimes takes ~5 minutes even though web page is immediately
-#      updated.)
+#     Sometimes takes ~5 minutes even though web page is immediately updated.)
 #  3. After package is finalized, create new version number in CHANGES.txt ending
 #     with b0 and then:
 #       make version-update
@@ -43,7 +42,7 @@ PYTHONVERS=python3.14 python3.13 python3.12 python3.11 python3.10 python3.9 pyth
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.3.1b0
+VERSION=0.3.1
 SHELL:= /bin/bash
 
 LONG_TESTS=false
