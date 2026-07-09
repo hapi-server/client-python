@@ -21,6 +21,7 @@ def info(SERVER, DATASET, PARAMETERS, opts):
   meta.update({"x_dataset": DATASET})
 
   if PARAMETERS is not None:
-    return subset_meta(meta, PARAMETERS)
+    subset_meta(meta, PARAMETERS)
+    return meta
   else:
     return meta
