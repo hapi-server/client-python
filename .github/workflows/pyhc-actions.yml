@@ -28,3 +28,5 @@ jobs:
 
       - name: Check PyHC Environment Compatibility
         uses: heliophysicsPy/pyhc-actions/pyhc-env-compat@v1
+        with:
+          pyhc-packages-url: ".github/pyhc-packages.txt"

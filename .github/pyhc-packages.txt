@@ -1,0 +1,97 @@
+# ============================================
+# PyHC Environment Package List
+# ============================================
+# This is a local copy of the PyHC packages list used by the
+# pyhc-env-compat workflow step. It mirrors:
+#   https://raw.githubusercontent.com/heliophysicsPy/pyhc-docker-environment/main/docker/pyhc-environment/contents/packages.txt
+#
+# Packages excluded here are packages that are present in the upstream
+# packages.txt but are not available on PyPI, which prevents uv from
+# resolving the full dependency set.
+#
+# When the upstream packages.txt is fixed, this file can be removed
+# and the pyhc-actions.yml workflow reverted to use the default URL.
+# ============================================
+
+# --- Core Packages ---
+pyhc-core[tests]==0.0.8
+hapiclient==0.2.9
+plasmapy==2026.2.0
+pysat==3.2.2
+pyspedas==2.1.3
+spacepy==0.7.0
+sunpy==8.0.0
+
+# --- Community Packages ---
+aacgmv2==2.7.1
+aiapy==0.12.1
+apexpy==2.1.1
+asilib==0.30.1
+# astrometry-azel==1.3.0  # Excluded: not available on PyPI (returns 404)
+ccsdspy==2.0.0
+cdflib==1.3.12
+cloudcatalog==1.2.1
+dascutils==2.3.0
+dbprocessing==0.1.0
+dmsp==0.6.0
+enlilviz==0.2.0
+EUVpy==1.0.0
+fiasco==0.8.1
+gcmprocpy==1.5.2
+geopack==1.0.13
+georinex==1.16.2
+geospacelab==0.14.15
+goesutils==1.0.8
+hapiplot==0.2.2
+hissw==2.3
+igrf==13.0.2
+iri2016==1.11.1
+irispy-lmsal==0.7.0
+kaipy==1.1.4
+lofarSun==0.3.32
+lowtran==3.1.0
+madrigalWeb==3.3.7
+maidenhead==1.8.0
+mcalf==1.0.0
+msise00==1.11.1
+ndcube==2.4.1
+nexradutils==1.0.0
+ocbpy==0.7.0
+OMMBV==1.1.0
+pyaurorax==1.22.0
+pycdfpp==0.11.0
+pydarn==4.3
+pyflct==0.3.1
+pyIntensityFeatures==0.2.0
+pymap3d==3.2.0
+pyrfu==2.4.21
+pytplot==1.7.28
+pytplot-mpl-temp==2.2.79
+pyzenodo3==1.0.2
+reesaurora==1.0.5
+regularizepsf==1.2.0
+sammi-cdf==1.1.0
+savic==1.2.7
+sciencedates==1.5.0
+SciQLop==0.12.0
+SkyWinder==0.0.3
+solarmach==0.5.3
+solo-epd-loader==0.4.4
+space-packet-parser==6.1.2
+speasy==1.7.1
+spiceypy==8.1.2
+sunkit-image==0.7.0
+sunkit-instruments==0.6.2
+sunraster==0.7.0
+swxsoc==0.2.3
+themisasi==1.2.0
+viresclient==0.16.0
+wmm2015==1.1.1
+wmm2020==1.1.1
+
+# --- Excluded Packages ---
+# amisrsynthdata  # No Python 3.12 support
+# kamodo          # No Python 3.12 support
+# pysatCDF        # pip install broken
+# heliopy         # Deprecated, incompatible with Python 3.12
+# aidapy          # Depends on heliopy which is deprecated
