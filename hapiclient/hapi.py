@@ -45,7 +45,7 @@ def hapiopts():
 def hapi(*args, **kwargs):
     """Request data from a HAPI server.
 
-    Version: 0.3.1
+    Version: 0.3.2b0
 
 
     Examples

@@ -13,7 +13,7 @@ from hapiclient.hapitime import datetime2hapitime
 # Allow "from hapiclient import HAPIError"
 from hapiclient.util import HAPIError
 
-__version__ = '0.3.1'
+__version__ = '0.3.2b0'
 
 import sys
 import platform

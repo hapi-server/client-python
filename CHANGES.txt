@@ -131,3 +131,4 @@ v0.3.0:
 	2026-07-08 -- 94-cache-files-can-be-corrupted-by-interrupted-writes
 v0.3.1:
 	2026-07-08 -- 80-subset-error-message-wrong-when-duplicate-parameters
+v0.3.2b0:

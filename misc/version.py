@@ -1,6 +1,6 @@
 """
 Reads CHANGES.txt and finds last version. Updates version strings in Makefile,
-setup.py, hapi.py, and hapiclient.py to match this version.
+setup.py, pyproject.toml, hapi.py, and hapiclient.py to match this version.
 
 TODO: Find better way to manage this.
 TODO: Update copyright year in LICENSE.txt
@@ -26,6 +26,7 @@ print("Using version = " + version)
 fnames = {
 	"Makefile": r"^(VERSION=)(.*)$",
 	"setup.py": r"^(\s*version=')(.*)(',\s*)$",
+	"pyproject.toml": r'^(version = ")(.*)("$)',
 	"hapiclient/hapi.py": r"^(\s*Version: )(.*)$",
 	"hapiclient/__init__.py": r"^(__version__ = ')(.*)('$)",
 	".zenodo.json": r'^(\s*"version": ")(.*)(",?\s*)$'
