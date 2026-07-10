@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hapiclient"
+version = "0.3.2b0"
+authors = [
+    { name = "Bob Weigel", email = "rweigel@gmu.edu" }
+]
+description = "Client for Heliophysics API servers"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { file = "LICENSE.txt" }
+requires-python = ">=3.5"
+dependencies = [
+    "joblib",
+    "urllib3",
+
+    "numpy>=1.14.3;         python_version >= '3.6'",
+    "pandas>=0.23;          python_version >= '3.6'",
+    "isodate>=0.6.0;        python_version >= '3.6'",
+
+    "numpy<1.17;            python_version == '3.5'",
+    "pandas<1.0;            python_version == '3.5'",
+    "isodate>=0.6.0,<0.7.0; python_version == '3.5'",
+    "kiwisolver<=1.2;       python_version == '3.6'",
+]
+
+[project.optional-dependencies]
+dev = [
+    "deepdiff",
+    "pytest; python_version >= '3.6'",
+    "pytest<5.0.0; python_version == '3.5'",
+]
+
+[project.urls]
+Homepage = "http://pypi.python.org/pypi/hapiclient/"
+
+[tool.setuptools.packages.find]
+where = ["."]
