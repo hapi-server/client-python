@@ -1,7 +1,3 @@
-# Test in Conda virtual environments (to be deprecated):
-#   make repository-test PYTHON=_PYTHON_ # Test using _PYTHON_ (e.g, python3.6)
-#   make repository-test-all             # Test on all versions in $(PYTHONVERS) var below
-#
 # Test using tox (See also README.md for additional instructions):
 #   tox
 #
@@ -12,13 +8,14 @@
 # 3. run `make version-update` if version changed in CHANGES.txt.
 # 4. Commit and push
 #
+# Releases
 # Tag the repo, create a GitHub release, and upload package to pypi.org
-#  0. Remove the "b" in the version in CHANGES.txt
-#  1. make release
-#  2. Wait ~5 minutes and execute make pypi-release-test-all
+#  1. Remove the "b" in the version in CHANGES.txt
+#  2. make release
+#  3. Wait ~5 minutes and execute make pypi-release-test-all
 #     (Will fail until new version is available at pypi.org for pip install.
 #     Sometimes takes ~5 minutes even though web page is immediately updated.)
-#  3. After package is finalized, create new version number in CHANGES.txt ending
+#  4. After package is finalized, create new version number in CHANGES.txt ending
 #     with b0 and then:
 #       make version-update
 #       git commit -a -m "Update version for next release"
@@ -29,6 +26,11 @@
 #  1. Update CHANGES.txt to have a new version line
 #  2. make package
 #  3. make package-test-all
+#
+# Test in Conda virtual environments (to be deprecated):
+#   make repository-test PYTHON=_PYTHON_ # Test using _PYTHON_ (e.g, python3.6)
+#   make repository-test-all             # Test on all versions in $(PYTHONVERS) var below
+#
 
 URL=https://upload.pypi.org/
 REP=pypi

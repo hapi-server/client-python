@@ -76,7 +76,8 @@ See also the examples in the [Data Model section](https://colab.research.google.
 3. Creating an Astropy NDArray
 
 A request for data of the form
-```
+
+```python
 data, meta = hapi(server, dataset, parameters, start, stop)
 ```
 
