@@ -43,13 +43,8 @@ for method in range(1, 7):
   # 2. Log to console using Python's standard logging module
   if 4 <= method <= 6:
     import logging
-    logger = logging.getLogger("hapiclient")
-    logger.setLevel(logging.INFO)
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter("%(asctime)s [%(name)s] %(message)s", datefmt="%Y-%m-%dT%H:%M:%S")
-    formatter.default_msec_format = '%s.%03d'
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s", datefmt="%Y-%m-%dT%H:%M:%S")
 
     if method == 4:
       # Use standard logging because defined

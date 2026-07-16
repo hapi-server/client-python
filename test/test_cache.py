@@ -20,6 +20,8 @@ dataset = 'dataset1'
 start = '1970-01-01'
 stop  = '1970-01-01T00:00:03'
 
+import pytest
+
 def test_cache_short():
 
     # Compare read with empty cache with read with hot cache and usecache=True
@@ -36,23 +38,21 @@ def test_cache_short():
     assert compare.equal(data, data2)
 
 
+@pytest.mark.filterwarnings("ignore::hapiclient.util.HAPIWarning")
 def test_cache_error():
 
     from unittest.mock import patch
 
-    import io
-    import contextlib
     import pathlib
     import tempfile
     from hapiclient.util import write_atomic
 
+    from hapiclient.util import HAPIWarning
+
     def assert_warns(fn, expected):
-        buf = io.StringIO()
-        with contextlib.redirect_stderr(buf):
+        import pytest
+        with pytest.warns(HAPIWarning, match=expected):
             result = fn()
-            print(buf.getvalue())
-        msg = f"Expected '{expected}' in stderr: {buf.getvalue()!r}"
-        assert expected in buf.getvalue(), msg
         return result
 
     # Direct calls to write_atomic()

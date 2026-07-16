@@ -26,7 +26,7 @@ def configure_logging(logging):
     has_user_handlers = any(
         not getattr(handler, _INTERNAL_HANDLER_ATTR, False)
         for handler in _logger.handlers
-    )
+    ) or bool(_logging.root.handlers)
 
     if logging is True:
         _logger.setLevel(_logging.INFO)
@@ -39,8 +39,10 @@ def configure_logging(logging):
             _handler.setFormatter(_logging.Formatter("%(message)s"))
             setattr(_handler, _INTERNAL_HANDLER_ATTR, True)
             _logger.addHandler(_handler)
+
     if logging is False:
         if has_user_level or has_user_handlers:
+            _logger.propagate = True  # ensure messages reach the user-configured handler
             #from .util import warning
             if has_user_handlers:
                 pass
