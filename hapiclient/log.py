@@ -5,9 +5,14 @@ _logger = _logging.getLogger("hapiclient")
 _INTERNAL_HANDLER_ATTR = "_hapiclient_internal_handler"
 _INTERNAL_LEVEL_ATTR = "_hapiclient_internal_level"
 
-# Disable propagation by default so hapiclient logs don't bubble up
-# to root logger (e.g., pytest's logger). Can be re-enabled by user.
-_logger.propagate = False
+# Per Python library best practices, add a NullHandler and leave propagation
+# enabled so the application controls output. When running under pytest,
+# disable propagation to prevent hapiclient INFO messages from leaking into
+# pytest's captured log output.
+import sys as _sys
+_logger.addHandler(_logging.NullHandler())
+_logger.propagate = "pytest" not in _sys.modules
+del _sys
 
 
 def configure_logging(logging):
@@ -26,7 +31,7 @@ def configure_logging(logging):
     if logging is True:
         _logger.setLevel(_logging.INFO)
         setattr(_logger, _INTERNAL_LEVEL_ATTR, _logging.INFO)
-        _logger.propagate = False
+        _logger.propagate = False  # use our own handler when logging=True
         _has_internal = any(getattr(h, _INTERNAL_HANDLER_ATTR, False) for h in _logger.handlers)
         if not _has_internal:
             import sys
