@@ -1,5 +1,6 @@
 # See ../README.md for instructions on running tests.
 import shutil
+import pytest
 
 from hapiclient.hapi import hapi
 
@@ -20,7 +21,6 @@ dataset = 'dataset1'
 start = '1970-01-01'
 stop  = '1970-01-01T00:00:03'
 
-import pytest
 
 def test_cache_short():
 
