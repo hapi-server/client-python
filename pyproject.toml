@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hapiclient"
-version = "0.3.3b0"
+version = "0.3.2"
 authors = [
     { name = "Bob Weigel", email = "rweigel@gmu.edu" }
 ]
