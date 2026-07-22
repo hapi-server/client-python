@@ -25,7 +25,6 @@ print("Using version = " + version)
 
 fnames = {
 	"Makefile": r"^(VERSION=)(.*)$",
-	"setup.py": r"^(\s*version=')(.*)(',\s*)$",
 	"pyproject.toml": r'^(version = ")(.*)("$)',
 	"hapiclient/hapi.py": r"^(\s*Version: )(.*)$",
 	"hapiclient/__init__.py": r"^(__version__ = ')(.*)('$)",
