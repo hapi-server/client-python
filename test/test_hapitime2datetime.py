@@ -84,6 +84,7 @@ def test_parsing():
 
 def test_error_conditions():
   from hapiclient import HAPIError
+
   logger.info("test_error_conditions()")
 
   Time = "1999"
@@ -96,7 +97,43 @@ def test_error_conditions():
     assert False, "HAPIError not raised for hapitime2datetime(" + str(Time) + ")."
 
 
+  Time = "2001-01-01T00:00:00"
+  logger.info("  Checking that hapitime2datetime('" + str(Time) + "', allow_missing_Z=False) throws HAPIError")
+  try:
+    hapitime2datetime(Time, allow_missing_Z=False)
+  except HAPIError:
+    pass
+  else:
+    assert False, "HAPIError not raised for hapitime2datetime(" + str(Time) + ", allow_missing_Z=False)."
+
+
+def test_warning_conditions():
+
+  import io
+  import logging
+
+  logger.info("test_warning_conditions()")
+
+  stream = io.StringIO()
+  handler = logging.StreamHandler(stream)
+  logger2 = logging.getLogger("hapiclient")
+  logger2.setLevel(logging.DEBUG)
+  logger2.addHandler(handler)
+  logger2.propagate = False
+
+  try:
+    Time = "2001-001T00:00:00Z"
+    hapitime2datetime(Time)
+    output = stream.getvalue()
+    assert "Pandas processing failed with error" in output, \
+        f"Expected 'Pandas processing failed with error' in log output, got:\n{output}"
+  finally:
+    logger2.removeHandler(handler)
+    logger2.propagate = True
+
+
 if __name__ == '__main__':
   test_api()
   test_parsing()
   test_error_conditions()
+  test_warning_conditions()

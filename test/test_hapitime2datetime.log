@@ -1,0 +1,5 @@
+test_api()
+test_error_conditions()
+  Checking that hapitime2datetime('1999') throws HAPIError
+  Checking that hapitime2datetime('2001-01-01T00:00:00', allow_missing_Z=False) throws HAPIError
+test_warning_conditions()

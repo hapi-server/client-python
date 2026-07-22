@@ -1,6 +1,7 @@
 """Functions for manipulating HAPI times (restricted ISO 8601 strings)."""
 import re
 import time
+import warnings
 
 import pandas
 import isodate
@@ -268,7 +269,9 @@ def hapitime2datetime(Time, **kwargs):
         if pandas_major_version < 2:
             Time = pandas.to_datetime(Time, infer_datetime_format=True).tz_convert(tzinfo).to_pydatetime()
         else:
-            Time = pandas.to_datetime(Time).tz_convert(tzinfo).to_pydatetime()
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', message='Could not infer format')
+                Time = pandas.to_datetime(Time).tz_convert(tzinfo).to_pydatetime()
         if reshape:
             Time = np.reshape(Time, shape)
         toc = time.time() - tic

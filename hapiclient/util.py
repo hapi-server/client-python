@@ -104,6 +104,46 @@ def unicode_error_message(name):
     return msg
 
 
+class HAPIWarning(Warning):
+    pass
+
+
+def warning(*args):
+    """Display a short warning message.
+
+    warning(message) raises a warning of type HAPIWarning and displays
+    "HAPIWarning: " + message. Use for warnings when a full stack trace is not
+    needed.
+    """
+
+    import logging
+    import warnings
+    import platform
+
+    message = args[0]
+
+    if logging.getLogger("hapiclient").level == logging.DEBUG:
+        warnings.warn(message, stacklevel=2)
+        return
+
+    _prefix = "\x1b[31mHAPIWarning:\x1b[0m "
+    if platform.system() == 'Windows' and pythonshell() == 'shell':
+        _prefix = "HAPIWarning: "
+
+    _orig_formatwarning = warnings.formatwarning
+
+    def _formatwarning(msg, category, filename, lineno, line=None):
+        if issubclass(category, HAPIWarning):
+            return _prefix + str(msg) + "\n"
+        return _orig_formatwarning(msg, category, filename, lineno, line)
+
+    warnings.formatwarning = _formatwarning
+    try:
+        warnings.warn(message, HAPIWarning, stacklevel=2)
+    finally:
+        warnings.formatwarning = _orig_formatwarning
+
+
 def warning_test():
     """For testing warning function."""
 
@@ -121,63 +161,8 @@ def warning_test():
     warn('Normal warning 4')
 
 
-def warning(*args):
-    """Display a short warning message.
-
-    warning(message) raises a warning of type HAPIWarning and displays
-    "Warning: " + message. Use for warnings when a full stack trace is not
-    needed.
-    """
-
-    import warnings
-    from os import path
-    from sys import stderr
-    from inspect import stack
-
-    message = args[0]
-    if len(args) > 1:
-        fname = args[1]
-    else:
-        fname = stack()[1][1]
-
-    #line = stack()[1][2]
-
-    fname = path.basename(fname)
-
-    def prefix():
-        import platform
-        prefix = "\x1b[31mHAPIWarning:\x1b[0m "
-        if platform.system() == 'Windows' and pythonshell() == 'shell':
-            prefix = "HAPIWarning: "
-
-        return prefix
-
-    # Custom warning format function
-    def _warning(message, category=UserWarning, filename='', lineno=-1, file=None, line=''):
-        if category.__name__ == "HAPIWarning":
-            stderr.write(prefix() + str(message) + "\n")
-        else:
-            # Use default showwarning function.
-            showwarning_default(message, category=UserWarning,
-                                filename='', lineno=-1,
-                                file=None, line='')
-
-        stderr.flush()
-
-        # Reset showwarning function to default
-        warnings.showwarning = showwarning_default
-
-    class HAPIWarning(Warning):
-        pass
-
-    # Copy default showwarning function
-    showwarning_default = warnings.showwarning
-
-    # Use custom warning function instead of default
-    warnings.showwarning = _warning
-
-    # Raise warning
-    warnings.warn(message, HAPIWarning)
+if __name__ == "__main__":
+    warning_test()
 
 
 class HAPIError(Exception):
