@@ -1,246 +1,47 @@
 # Test using tox (See also README.md for additional instructions):
 #   tox
 #
-# Beta releases:
-# 1. tox
-# 2. make repository-test-all # (To be deprecated)
-# 2. For non-doc/formatting changes, update bX in version in CHANGES.txt.
-# 3. run `make version-update` if version changed in CHANGES.txt.
-# 4. Commit and push
+# Beta versions (not released to pypi.org).
+# 	1. tox
+# 	2. Update bX in version in CHANGES.txt.
+# 	3. Run `make version-update` if version changed in CHANGES.txt.
+# 	4. Commit and push
 #
 # Releases
-# Tag the repo, create a GitHub release, and upload package to pypi.org
-#  1. Remove the "b" in the version in CHANGES.txt
-#  2. make release
-#  3. Wait ~5 minutes and execute make pypi-release-test-all
-#     (Will fail until new version is available at pypi.org for pip install.
-#     Sometimes takes ~5 minutes even though web page is immediately updated.)
-#  4. After package is finalized, create new version number in CHANGES.txt ending
-#     with b0 and then:
-#       make version-update
-#       git commit -a -m "Update version for next release"
-#     This will update the version information in the repository to indicate it
-#     is now in a pre-release state.
-#
-# Making and testing a local package:
-#  1. Update CHANGES.txt to have a new version line
-#  2. make package
-#  3. make package-test-all
-#
-# Test in Conda virtual environments (to be deprecated):
-#   make repository-test PYTHON=_PYTHON_ # Test using _PYTHON_ (e.g, python3.6)
-#   make repository-test-all             # Test on all versions in $(PYTHONVERS) var below
-#
+# 	Tag the repo, create a GitHub release, and upload package to pypi.org
+#  	1. Remove the "b" in the version in CHANGES.txt
+#  	2. make release
+#  	3. Wait ~5 minutes and execute
+#        make pypi-release-test
+#      or
+#        make pypi-release-test-all
+#  	4. Create new version number in CHANGES.txt ending with b0 and then:
+#        make version-update
+#        git commit -a -m "Update version for next release"
+#      This will update the version information in the repository to indicate it
+#      is now in a pre-release state.
 
 URL=https://upload.pypi.org/
 REP=pypi
 
-# Default Python version to use for tests
-PYTHON=python3.8
+# Default to the first Python environment configured in tox.ini.
+PYTHON=$(shell tox list --no-desc | sed -n 's/^py3\([0-9][0-9]*\)$$/python3.\1/p' | sed -n '1p')
 PYTHON_VER=$(subst python,,$(PYTHON))
-
-# Python versions to test
-PYTHONVERS=python3.14 python3.13 python3.12 python3.11 python3.10 python3.9 python3.8 python3.7 python3.6
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
 VERSION=0.3.3b0
 SHELL:= /bin/bash
 
-LONG_TESTS=false
-
-CONDA=$(CURDIR)/anaconda3
-
-ifeq ($(OS),Windows_NT)
-	CONDA=$(CURDIR)/anaconda3
-endif
-#TOS1=conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
-#TOS2=conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
-CONDA_ACTIVATE=source $(CONDA)/etc/profile.d/conda.sh; conda activate
-
-ifeq ($(OS),Windows_NT)
-	CONDA_RUN=$(CONDA)/Scripts/conda.exe run -n $(PYTHON)
-else
-	CONDA_RUN=$(CONDA_ACTIVATE) $(PYTHON);
-endif
-
 ################################################################################
-install: $(CONDA)/envs/$(PYTHON)
-	$(CONDA_ACTIVATE) $(PYTHON); pip install --editable .
-	@printf "\n--------------------------------------------------------------------------------\n"
-	@printf "To use created Anaconda environment, execute\n  $(CONDA_ACTIVATE) $(PYTHON)"
-	@printf "\n--------------------------------------------------------------------------------\n"
+.PHONY: install test
 
 test:
-	make repository-test-all
+	tox
 
-# Test contents in repository using different Python versions
-repository-test-all:
-	@make clean
-	#rm -rf $(CONDA)
-	@ for version in $(PYTHONVERS) ; do \
-		make repository-test PYTHON=$$version ; \
-	done
-
-repository-test:
-	@make clean
-	make condaenv PYTHON=$(PYTHON)
-	$(CONDA_RUN) pip install pytest deepdiff
-	$(CONDA_RUN) pip install .
-
-ifeq ($(LONG_TESTS),true)
-	$(CONDA_RUN) python -m pytest -m "long" test
-else
-	$(CONDA_RUN) python -m pytest -m "not long" test
-endif
+install:
+	python -m pip install --editable .
 ################################################################################
-
-################################################################################
-# Anaconda install
-ifeq ($(OS),Windows_NT)
-CONDA_PKG=Miniconda3-latest-Windows-x86_64.exe
-CONDA_PKG_PATH=C:/tmp/$(CONDA_PKG)
-else
-UNAME_S:=$(shell uname -s)
-UNAME_M:=$(shell uname -m)
-
-ifeq ($(UNAME_S),Linux)
-CONDA_PKG=Miniconda3-latest-Linux-x86_64.sh
-ifeq ($(UNAME_M),aarch64)
-CONDA_PKG=Miniconda3-latest-Linux-aarch64.sh
-endif
-endif
-
-ifeq ($(UNAME_S),Darwin)
-CONDA_PKG=Miniconda3-latest-MacOSX-x86_64.sh
-ifeq ($(UNAME_M),arm64)
-CONDA_PKG=Miniconda3-latest-MacOSX-arm64.sh
-endif
-endif
-
-CONDA_PKG_PATH=/tmp/$(CONDA_PKG)
-endif
-
-activate:
-	@echo "On command line enter:"
-	@echo "$(CONDA_ACTIVATE) $(PYTHON)"
-
-condaenv:
-	$(MAKE) $(CONDA)/envs/$(PYTHON) PYTHON=$(PYTHON)
-
-$(CONDA)/envs/$(PYTHON): $(CONDA)
-ifeq ($(OS),Windows_NT)
-	$(CONDA)/Scripts/conda.exe tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
-	$(CONDA)/Scripts/conda.exe tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
-	$(CONDA)/Scripts/conda.exe tos accept --override-channels --channel https://repo.anaconda.com/pkgs/msys2
-	$(CONDA)/Scripts/conda.exe create -y --name $(PYTHON) python=$(PYTHON_VER)
-else
-	$(CONDA_ACTIVATE); \
-		$(CONDA)/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main; \
-		$(CONDA)/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r; \
-		$(CONDA)/bin/conda \
-		create -y --name $(PYTHON) python=$(PYTHON_VER)
-endif
-
-ifeq ($(OS),Windows_NT)
-$(CONDA):
-	@powershell -NoProfile -Command "$$ErrorActionPreference='Stop'; \
-		$$pkg = '$(CONDA_PKG)'; \
-		if ([string]::IsNullOrWhiteSpace($$pkg)) { $$pkg = 'Miniconda3-latest-Windows-x86_64.exe' }; \
-		$$tempDir = [System.IO.Path]::GetTempPath(); \
-		if ([string]::IsNullOrWhiteSpace($$tempDir)) { $$tempDir = 'C:\\Windows\\Temp' }; \
-		New-Item -ItemType Directory -Force -Path $$tempDir | Out-Null; \
-		$$installer = Join-Path $$tempDir $$pkg; \
-		$$url = 'https://repo.anaconda.com/miniconda/' + $$pkg; \
-		$$condaExe = Join-Path '$(CONDA)' 'Scripts/conda.exe'; \
-		if (Test-Path $$condaExe) { exit 0 }; \
-		if (!(Test-Path $$installer)) { Invoke-WebRequest -Uri $$url -OutFile $$installer }; \
-		$$target = [System.IO.Path]::GetFullPath('$(CONDA)').Replace('/','\\'); \
-		Start-Process -FilePath $$installer -ArgumentList '/InstallationType=JustMe','/RegisterPython=0','/AddToPath=0','/S',('/D=' + $$target) -Wait -NoNewWindow; \
-		if (!(Test-Path $$condaExe)) { throw 'Miniconda install failed.' }"
-else
-$(CONDA): $(CONDA_PKG_PATH)
-	test -d anaconda3 || bash $(CONDA_PKG_PATH) -b -p $(CONDA)
-
-$(CONDA_PKG_PATH):
-	curl -L -o $(CONDA_PKG_PATH) https://repo.anaconda.com/miniconda/$(CONDA_PKG)
-endif
-################################################################################
-
-################################################################################
-# Packaging
-package:
-	make clean
-	make version-update
-	python -m build --sdist
-
-package-test-all:
-	@ for version in $(PYTHONVERS) ; do \
-		make repository-test PYTHON=$$version ; \
-	done
-
-env-$(PYTHON):
-	rm -rf env-$(PYTHON)
-	$(CONDA_ACTIVATE) $(PYTHON); \
-		conda install -y virtualenv; \
-		$(PYTHON) -m virtualenv env-$(PYTHON)
-
-package-test:
-	make package
-	make env-$(PYTHON)
-	make package-venv-test PACKAGE='dist/hapiclient-$(VERSION).tar.gz'
-
-package-venv-test:
-	cp hapi_demo.py /tmp # TODO: Explain why needed.
-	cp hapi_demo.py /tmp
-	source env-$(PYTHON)/bin/activate && \
-		pip install pytest deepdiff ipython && \
-		pip uninstall -y hapiplot && \
-		pip install --pre hapiplot && \
-		pip uninstall -y hapiclient && \
-		pip install --pre '$(PACKAGE)' \
-			--index-url $(URL)/simple  \
-			--extra-index-url https://pypi.org/simple && \
-		env-$(PYTHON)/bin/pytest -v -m 'short' hapiclient/test/test_hapi.py
-		env-$(PYTHON)/bin/ipython /tmp/hapi_demo.py
-
-################################################################################
-# Release a package to pypi.org
-release:
-	make package
-	make version-tag
-	make gh-release
-	make pypi-release
-
-gh-release:
-	gh release create $(VERSION) --target master --notes "Release $(VERSION)" --title "Release $(VERSION)"
-
-pypi-release:
-	pip install twine
-	twine upload \
-		-r $(REP) dist/hapiclient-$(VERSION).tar.gz -u __token__ \
-		&& echo Uploaded to $(subst upload.,,$(URL))/project/hapiclient/
-
-pypi-release-test-all:
-	@ for version in $(PYTHONVERS) ; do \
-		make pypi-release-test PYTHON=$$version ; \
-	done
-
-pypi-release-test:
-	make env-$(PYTHON)
-	make release-venv-test PYTHON=$(PYTHON)
-
-release-venv-test:
-	cp hapi_demo.py /tmp # TODO: Explain why needed.
-	cp hapi_demo.py /tmp
-	source env-$(PYTHON)/bin/activate && \
-		pip install pytest deepdiff ipython && \
-		pip uninstall -y hapiplot && \
-		pip install --pre hapiplot && \
-		pip uninstall -y hapiclient && \
-		pip install hapiclient && \
-		env-$(PYTHON)/bin/pytest -v -m 'short' hapiclient/test/test_hapi.py && \
-		env-$(PYTHON)/bin/ipython /tmp/hapi_demo.py
 
 ################################################################################
 # Update version based on content of CHANGES.txt
@@ -255,33 +56,76 @@ version-tag:
 ################################################################################
 
 ################################################################################
-# Install package in local directory (symlinks made to local dir)
-install-pip:
-	pip install 'hapiclient==$(VERSION)' --index-url $(URL)/simple
-	conda list | grep hapiclient
-	pip list | grep hapiclient
+# Packaging
+.PHONY: package package-test package-test-all package-smoke-test
+
+package:
+	make clean
+	make version-update
+	python -m pip install --upgrade build twine
+	python -m build
+	python -m twine check dist/*
+
+package-test-all:
+	make package
+	@tmpdir=$$(mktemp -d); \
+	trap 'rm -rf "$$tmpdir"' EXIT; \
+	tox run \
+		--installpkg dist/hapiclient-$(VERSION)-py3-none-any.whl \
+		--override "testenv.changedir=$$tmpdir" \
+		-- $(CURDIR)/test/test_datetime2hapitime.py
+	make package-smoke-test
+
+package-test:
+	make package
+	make package-smoke-test
+
+package-smoke-test:
+	@tmpdir=$$(mktemp -d); \
+	trap 'rm -rf "$$tmpdir"' EXIT; \
+	python -m venv "$$tmpdir/venv"; \
+	venv_python="$$tmpdir/venv/bin/python"; \
+	"$$venv_python" -m pip install "$(CURDIR)/dist/hapiclient-$(VERSION)-py3-none-any.whl"; \
+	cd "$$tmpdir"; "$$venv_python" "$(CURDIR)/misc/smoke.py" "$(VERSION)" --exclude-path "$(CURDIR)"; \
+	"$$venv_python" -m pip install --force-reinstall --no-deps "$(CURDIR)/dist/hapiclient-$(VERSION).tar.gz"; \
+	"$$venv_python" "$(CURDIR)/misc/smoke.py" "$(VERSION)" --exclude-path "$(CURDIR)"
 ################################################################################
 
 ################################################################################
-# Recreate reference response files. Use this if server response changes
-# Run pytest twice because first run creates test files that
-# subsequent tests use for comparison.
-test-clean:
-	rm -f hapiclient/test/data/*
-	pytest -v hapiclient/test/test_hapi.py
-	pytest -v hapiclient/test/test_hapi.py
+# Release a package to pypi.org
+release:
+	make package-test
+	make version-tag
+	make gh-release
+	make pypi-release
+
+gh-release:
+	gh release create $(VERSION) --target master --notes "Release $(VERSION)" --title "Release $(VERSION)"
+
+pypi-release:
+	pip install twine
+	twine upload \
+		-r $(REP) dist/hapiclient-$(VERSION).tar.gz -u __token__ \
+		&& echo Uploaded to $(subst upload.,,$(URL))/project/hapiclient/
+
+pypi-release-test-all:
+	@set -e; \
+	tox list --no-desc | sed -n 's/^py3\([0-9][0-9]*\)$$/\1/p' | while read minor; do \
+		make pypi-release-test PYTHON=python3.$$minor; \
+	done
+
+pypi-release-test:
+	@set -e; \
+	tmpdir=$$(mktemp -d); \
+	trap 'rm -rf "$$tmpdir"' EXIT; \
+	uv venv --python $(PYTHON_VER) "$$tmpdir/venv"; \
+	venv_python="$$tmpdir/venv/bin/python"; \
+	uv pip install --python "$$venv_python" 'hapiclient==$(VERSION)'; \
+	cd "$$tmpdir"; \
+	"$$venv_python" "$(CURDIR)/misc/smoke.py" "$(VERSION)" --exclude-path "$(CURDIR)"
 ################################################################################
 
 clean:
-
-ifeq ($(OS),Windows_NT)
-	- @powershell -NoProfile -Command "Get-ChildItem -Path . -Recurse -Directory -Filter '__pycache__' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue"
-	- @powershell -NoProfile -Command "Get-ChildItem -Path . -Recurse -File -Include '*.pyc','*.DS_Store' -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue"
-	- @powershell -NoProfile -Command "Remove-Item -Path '*~' -Force -ErrorAction SilentlyContinue"
-	- @powershell -NoProfile -Command "Remove-Item -Path '#*#' -Force -ErrorAction SilentlyContinue"
-	- @powershell -NoProfile -Command "Remove-Item -Path 'env','dist','.pytest_cache','hapiclient.egg-info' -Recurse -Force -ErrorAction SilentlyContinue"
-	- @powershell -NoProfile -Command "Remove-Item -Path '/c/tools/miniconda3/envs/python3.6/Scripts/wheel.exe*','/c/tools/miniconda3/envs/python3.6/vcruntime140.dll.*' -Force -ErrorAction SilentlyContinue"
-else
 	- @find . -type d -name __pycache__ -exec rm -rf {} +
 	- @find . -type f -name '*.pyc' -exec rm -f {} +
 	- @find . -type f -name '*.DS_Store' -exec rm -f {} +
@@ -292,4 +136,3 @@ else
 	- @rm -f MANIFEST
 	- @rm -rf .pytest_cache/
 	- @rm -rf hapiclient.egg-info/
-endif

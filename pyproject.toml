@@ -11,7 +11,7 @@ authors = [
 description = "Client for Heliophysics API servers"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { file = "LICENSE.txt" }
-requires-python = ">=3.5"
+requires-python = ">=3.8"
 dependencies = [
     "joblib",
     "urllib3",
