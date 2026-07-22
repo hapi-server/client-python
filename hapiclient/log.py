@@ -62,5 +62,7 @@ def log(msg, opts=None):
     # opts is not used but kept for backward compatibility
     import sys
 
-    pre = sys._getframe(1).f_code.co_name + '(): '
-    _logger.info("hapiclient." + pre + msg)
+    frame = sys._getframe(1)
+    module = frame.f_globals.get('__name__', 'hapiclient').split('.')[0]
+    pre = frame.f_code.co_name + '(): '
+    _logger.info(module + "." + pre + msg)
