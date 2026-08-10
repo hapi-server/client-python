@@ -135,3 +135,4 @@ v0.3.2:
 	2026-07-08 -- Date parsing warning https://github.com/hapi-server/client-python/pull/104
 v0.3.3b0:
 	2026-07-22 -- Makefile and related updates
+	2026-08-10 -- Don't warn if no binary in capabilities https://github.com/hapi-server/client-python/issues/106
