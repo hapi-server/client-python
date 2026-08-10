@@ -9,7 +9,7 @@ def info(SERVER, DATASET, PARAMETERS, opts):
 
   meta = meta_cache_read(SERVER, DATASET, opts)
   if meta is not None:
-      return meta
+    return meta
 
   cat = catalog(SERVER)
   url = SERVER + '/info?' + query_name(cat, 'dataset') + '=' + DATASET

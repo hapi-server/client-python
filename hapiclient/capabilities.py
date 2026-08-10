@@ -18,15 +18,14 @@ def capabilities(SERVER):
 def get_format(SERVER, format):
   """Return the transport format to use, accounting for server capabilities.
 
-  If the requested format is not supported by the server, falls back to 'csv'
-  with a warning.
+  If the requested format is not supported by the server, falls back to 'csv'.
   """
 
-  from hapiclient.util import error, warning
+  from hapiclient.util import error
 
   cformats = ['csv', 'binary']  # client formats
   if format not in cformats:
-    msg = 'This client does not handle transport format "%s". Available options: %s'
+    msg = 'This client does not handle streaming format "%s". Available options: %s'
     error(msg % (format, ', '.join(cformats)))
 
   if format != 'csv':
@@ -39,8 +38,9 @@ def get_format(SERVER, format):
       return 'csv'
 
     if format not in formats:
-      msg = 'Requested transport format "%s" not avaiable from %s. Will use "csv". Available options: %s'
-      warning(msg % (format, SERVER, ', '.join(formats)))
+      #from hapiclient.util import warning
+      #msg = 'Requested streaming format "%s" not available from %s. Will use "csv". Available options: %s'
+      #warning(msg % (format, SERVER, ', '.join(formats)))
       format = 'csv'
 
     if 'binary' not in formats:
