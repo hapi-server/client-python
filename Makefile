@@ -30,7 +30,7 @@ PYTHON_VER=$(subst python,,$(PYTHON))
 
 # VERSION is updated in "make version-update" step and derived
 # from CHANGES.txt. Do not edit.
-VERSION=0.3.3b0
+VERSION=0.3.3
 SHELL:= /bin/bash
 
 ################################################################################
