@@ -138,3 +138,4 @@ v0.3.3b0:
 	2026-08-10 -- Don't warn if binary not available
 v0.3.3:
 	2026-08-11 -- Cache catalog and capabilities https://github.com/hapi-server/client-python/pull/108
+v0.3.4b0:
