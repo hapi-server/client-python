@@ -240,7 +240,7 @@ def hapi(*args, **kwargs):
 
     # hapi(SERVER)
     if nin == 1:
-        return catalog(SERVER)
+        return catalog(SERVER, opts)
 
     # hapi(SERVER, DATASET)
     if nin == 2:

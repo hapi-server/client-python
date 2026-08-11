@@ -1,10 +1,14 @@
-from hapiclient.log import log
-from hapiclient.util import urlopen
+def catalog(SERVER, opts):
 
+  import hapiclient as hc
 
-def catalog(SERVER):
-  # TODO: Cache
+  cat = hc.cache.meta_cache_read(SERVER, None, 'catalog', opts)
+  if cat is not None:
+    return cat
+
   url = SERVER + '/catalog'
-  meta = urlopen(url, parse_json=True)
+  cat = hc.util.urlopen(url, parse_json=True)
 
-  return meta
+  hc.cache.meta_cache_write(cat, SERVER, None, 'catalog', opts)
+
+  return cat

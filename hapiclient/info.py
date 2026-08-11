@@ -1,27 +1,25 @@
-def info(SERVER, DATASET, PARAMETERS, opts):
+def info(server, dataset, parameters, opts):
 
-  from hapiclient.util import urlopen, subset_meta, unicode_check, fix_parameters, query_name
-  from hapiclient.cache import meta_cache_read, meta_cache_write
-  from hapiclient.catalog import catalog
+  import hapiclient as hc
 
-  unicode_check(DATASET, PARAMETERS)
-  PARAMETERS = fix_parameters(PARAMETERS)
+  hc.util.unicode_check(dataset, parameters)
+  parameters = hc.util.fix_parameters(parameters)
 
-  meta = meta_cache_read(SERVER, DATASET, opts)
+  meta = hc.cache.meta_cache_read(server, dataset, 'info', opts)
   if meta is not None:
     return meta
 
-  cat = catalog(SERVER)
-  url = SERVER + '/info?' + query_name(cat, 'dataset') + '=' + DATASET
-  meta = urlopen(url, parse_json=True)
+  cat = hc.catalog.catalog(server, opts)
+  url = server + '/info?' + hc.util.query_name(cat, 'dataset') + '=' + dataset
+  meta = hc.util.urlopen(url, parse_json=True)
 
-  meta_cache_write(meta, SERVER, DATASET, opts)
+  hc.cache.meta_cache_write(meta, server, dataset, 'info', opts)
 
-  meta.update({"x_server": SERVER})
-  meta.update({"x_dataset": DATASET})
+  meta.update({"x_server": server})
+  meta.update({"x_dataset": dataset})
 
-  if PARAMETERS is not None:
-    subset_meta(meta, PARAMETERS)
+  if parameters is not None:
+    hc.util.subset_meta(meta, parameters)
     return meta
   else:
     return meta
