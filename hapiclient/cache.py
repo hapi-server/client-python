@@ -32,20 +32,19 @@ def cachedir(*args):
     return os.path.join(args[0], server2dirname(args[1]))
 
 
-def request2path(*args):
-  # request2path(server, dataset, parameters, start, stop)
-  # request2path(server, dataset, parameters, start, stop, cachedir)
+def request2path(server, dataset=None, parameters=None, start=None, stop=None, cache_dir=None, endpoint=None):
+
   import os
   import re
   import platform
 
-  if len(args) == 5:
-    # Use default if cachedir not given.
+  if cache_dir is None:
+    # Use default if cache_dir not given.
     cachedirectory = cachedir()
   else:
-    cachedirectory = args[5]
+    cachedirectory = cache_dir
 
-  args = list(args)
+  args = [server, dataset, parameters, start, stop]
 
   # Replace forbidden characters in directory and filename
   # Replacements assume that there will be no name collisions,
@@ -68,28 +67,50 @@ def request2path(*args):
           )
 
     for element in reps:
-      args[1] = re.sub(element[0], element[1], args[1])
-      args[2] = re.sub(element[0], element[1], args[2])
+      if dataset is not None:
+        dataset = re.sub(element[0], element[1], dataset)
+      if parameters is not None:
+        parameters = re.sub(element[0], element[1], parameters)
 
   else:
-    args[1] = re.sub('/','@forwardslash@',args[1])
-    args[2] = re.sub('/','@forwardslash@',args[2])
+    if dataset is not None:
+      dataset = re.sub('/','@forwardslash@', dataset)
+    if parameters is not None:
+      parameters = re.sub('/','@forwardslash@', parameters)
 
   # To shorten filenames.
-  args[3] = re.sub(r'-|:|\.|Z', '', args[3])
-  args[4] = re.sub(r'-|:|\.|Z', '', args[4])
+  if start is not None:
+    start = re.sub(r'-|:|\.|Z', '', start)
+  if stop is not None:
+    stop = re.sub(r'-|:|\.|Z', '', stop)
 
   # URL subdirectory
   urldirectory = server2dirname(args[0])
-  fname = '%s_%s_%s_%s' % (args[1], args[2], args[3], args[4])
 
-  return os.path.join(cachedirectory, urldirectory, fname)
+  if not dataset and not endpoint:
+    raise ValueError('Either dataset or endpoint must be specified.')
+
+  if endpoint is None:
+    endpoint = ''
+
+  if dataset is None:
+    fname = endpoint
+  else:
+    fname = dataset
+    if parameters is not None:
+      fname += '_' + parameters
+    if start is not None:
+      fname += '_' + start
+    if stop is not None:
+      fname += '_' + stop
+
+  return os.path.join(cachedirectory, urldirectory, endpoint, fname)
 
 
-def meta_cache_paths(SERVER, DATASET, cachedir):
+def meta_cache_paths(server, dataset, endpoint, cache_dir):
   """Return dict with metadata cache directory and file names."""
 
-  fname_root = request2path(SERVER, DATASET, '', '', '', cachedir)
+  fname_root = request2path(server, dataset, cache_dir=cache_dir, endpoint=endpoint)
 
   return {
     'json': fname_root + '.json',
@@ -97,7 +118,7 @@ def meta_cache_paths(SERVER, DATASET, cachedir):
   }
 
 
-def meta_cache_read(SERVER, DATASET, opts):
+def meta_cache_read(server, dataset, endpoint, opts):
   """Read metadata from PKL cache. Returns meta dict or None."""
 
   import os
@@ -106,10 +127,13 @@ def meta_cache_read(SERVER, DATASET, opts):
   from hapiclient.log import log
 
   if not opts["usecache"]:
-    log('Not checking metadata cache because usecache is False.')
+    if endpoint in ['', 'info']:
+      log(f'Not checking metadata cache for /info?dataset={dataset} response because usecache is False.')
+    else:
+      log(f'Not checking metadata cache for /{endpoint} response because usecache is False.')
     return None
 
-  fnamepkl = meta_cache_paths(SERVER, DATASET, opts['cachedir'])['pkl']
+  fnamepkl = meta_cache_paths(server, dataset, endpoint, opts['cachedir'])['pkl']
   if os.path.isfile(fnamepkl):
     log('Reading %s' % os.path.basename(fnamepkl))
     with open(fnamepkl, 'rb') as f:
@@ -121,7 +145,7 @@ def meta_cache_read(SERVER, DATASET, opts):
   return None
 
 
-def meta_cache_write(meta, SERVER, DATASET, opts):
+def meta_cache_write(meta, server, dataset, endpoint, opts):
   """Write metadata to JSON and PKL cache files."""
 
   import os
@@ -132,7 +156,7 @@ def meta_cache_write(meta, SERVER, DATASET, opts):
   if not opts["cache"]:
     return
 
-  paths = meta_cache_paths(SERVER, DATASET, opts['cachedir'])
+  paths = meta_cache_paths(server, dataset, endpoint, opts['cachedir'])
   fnamejson, fnamepkl = paths['json'], paths['pkl']
 
   log('Writing %s ' % os.path.basename(fnamejson))
@@ -142,10 +166,10 @@ def meta_cache_write(meta, SERVER, DATASET, opts):
   write_atomic(fnamepkl, meta)
 
 
-def data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, cachedir):
+def data_cache_paths(server, dataset, parameters, start, stop, cache_dir):
   """Return dict with data cache file names."""
 
-  fname_root = request2path(SERVER, DATASET, PARAMETERS, START, STOP, cachedir)
+  fname_root = request2path(server, dataset, parameters, start, stop, cache_dir, 'data')
 
   return {
     'csv': fname_root + '.csv',
@@ -155,7 +179,7 @@ def data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, cachedir):
   }
 
 
-def data_cache_read_metax(SERVER, DATASET, PARAMETERS, START, STOP, opts):
+def data_cache_read_metax(server, dataset, parameters, start, stop, opts):
   """Read extended request metadata from PKL cache. Returns meta dict or None."""
 
   import os
@@ -167,7 +191,7 @@ def data_cache_read_metax(SERVER, DATASET, PARAMETERS, START, STOP, opts):
     log('Not checking subsetted metadata cache because usecache is False.')
     return None
 
-  fnamepklx = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])['pkl']
+  fnamepklx = data_cache_paths(server, dataset, parameters, start, stop, opts['cachedir'])['pkl']
   if os.path.isfile(fnamepklx):
     log('Reading subsetted metadata cache %s' % os.path.basename(fnamepklx))
     with open(fnamepklx, 'rb') as f:
@@ -178,7 +202,7 @@ def data_cache_read_metax(SERVER, DATASET, PARAMETERS, START, STOP, opts):
   return None
 
 
-def data_cache_read_npy(SERVER, DATASET, PARAMETERS, START, STOP, opts):
+def data_cache_read_npy(server, dataset, parameters, start, stop, opts):
   """Read cached numpy data array. Returns None if not cached."""
 
   import os
@@ -189,7 +213,7 @@ def data_cache_read_npy(SERVER, DATASET, PARAMETERS, START, STOP, opts):
   if not opts["usecache"]:
     return None
 
-  fnamenpy = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])['npy']
+  fnamenpy = data_cache_paths(server, dataset, parameters, start, stop, opts['cachedir'])['npy']
 
   if not os.path.isfile(fnamenpy):
     return None
@@ -201,7 +225,7 @@ def data_cache_read_npy(SERVER, DATASET, PARAMETERS, START, STOP, opts):
   return data
 
 
-def data_cache_write(data_result, meta, SERVER, DATASET, PARAMETERS, START, STOP, opts):
+def data_cache_write(data_result, meta, server, dataset, parameters, start, stop, opts):
   """Write data array and extended metadata to cache files.
 
   Also updates meta with file-related x_ fields before writing.
@@ -212,10 +236,10 @@ def data_cache_write(data_result, meta, SERVER, DATASET, PARAMETERS, START, STOP
   from hapiclient.log import log
   from hapiclient.util import write_atomic
 
-  data_paths = data_cache_paths(SERVER, DATASET, PARAMETERS, START, STOP, opts['cachedir'])
+  data_paths = data_cache_paths(server, dataset, parameters, start, stop, opts['cachedir'])
   fnamecsv, fnamebin, fnamenpy, fnamepklx = data_paths['csv'], data_paths['bin'], data_paths['npy'], data_paths['pkl']
 
-  meta_paths = meta_cache_paths(SERVER, DATASET, opts['cachedir'])
+  meta_paths = meta_cache_paths(server, dataset, 'info', opts['cachedir'])
   fnamejson, fnamepkl = meta_paths['json'], meta_paths['pkl']
 
   meta.update({"x_metaFileParsed": fnamepkl})

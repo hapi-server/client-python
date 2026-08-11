@@ -1,7 +1,8 @@
-def data(SERVER, DATASET, PARAMETERS, START, STOP, opts):
+def data(server, dataset, parameters, start, stop, opts):
 
   import os
   import time
+
   from datetime import datetime
 
   from hapiclient.log import log
@@ -9,32 +10,32 @@ def data(SERVER, DATASET, PARAMETERS, START, STOP, opts):
   from hapiclient.cache import cachedir, data_cache_read_metax, data_cache_read_npy, data_cache_write
   from hapiclient.get import get_binary, get_csv
   from hapiclient.info import info
-  from hapiclient.capabilities import get_format
+  from hapiclient.capabilities import capabilities
 
-  unicode_check(DATASET, PARAMETERS)
-  PARAMETERS = fix_parameters(PARAMETERS)
+  unicode_check(dataset, parameters)
+  parameters = fix_parameters(parameters)
 
-  urld = cachedir(opts["cachedir"], SERVER)
+  urld = cachedir(opts["cachedir"], server)
   if opts['usecache'] or opts['cache']:
     log('cache subdirectory = %s' % urld)
 
-  if STOP is None:
+  if stop is None:
     log('STOP was given as None. Getting stopDate for dataset.')
-    meta = info(SERVER, DATASET, None, opts)
-    STOP = meta['stopDate']
-    log(f'Using STOP = {STOP}')
+    meta = info(server, dataset, None, opts)
+    stop = meta['stopDate']
+    log(f'Using STOP = {stop}')
 
   tic_totalTime = time.time()
 
-  meta = data_cache_read_metax(SERVER, DATASET, PARAMETERS, START, STOP, opts)
+  meta = data_cache_read_metax(server, dataset, parameters, start, stop, opts)
   metaFromCache = meta is not None
   if not metaFromCache:
-    meta = info(SERVER, DATASET, None, opts)
+    meta = info(server, dataset, None, opts)
 
   # Add information to metadata so we can figure out the request needed
   # to generate it. Will also be used for labeling plots by hapiplot().
-  meta.update({"x_server": SERVER})
-  meta.update({"x_dataset": DATASET})
+  meta.update({"x_server": server})
+  meta.update({"x_dataset": dataset})
 
   if opts["cache"]:
     if not os.path.exists(urld):
@@ -44,22 +45,23 @@ def data(SERVER, DATASET, PARAMETERS, START, STOP, opts):
     opts['dt_chunk'] = _dt_chunk_infer(meta, opts)
 
   if opts['n_chunks'] is not None or opts['dt_chunk'] is not None:
-    chunk_result = _get_chunks(SERVER, DATASET, PARAMETERS, START, STOP, opts, tic_totalTime)
+    chunk_result = _get_chunks(server, dataset, parameters, start, stop, opts, tic_totalTime)
     if chunk_result is not None:
       return chunk_result
 
   if not metaFromCache:
-    meta = subset_meta(meta, PARAMETERS)
+    meta = subset_meta(meta, parameters)
 
   tic = time.time()
-  data_cached = data_cache_read_npy(SERVER, DATASET, PARAMETERS, START, STOP, opts)
+  data_cached = data_cache_read_npy(server, dataset, parameters, start, stop, opts)
   if data_cached is not None:
     meta['x_totalTime'] = time.time() - tic_totalTime
     meta['x_readTime'] = tic - tic_totalTime
     meta['x_downloadTime'] = 0
     return data_cached, meta
 
-  opts['format'] = get_format(SERVER, opts['format'])
+  caps = capabilities(server, opts)
+  opts['format'] = _get_format(caps, opts)
 
   # length attribute required for all parameters when serving binary but
   # is only required for time parameter when serving CSV. This catches
@@ -73,27 +75,66 @@ def data(SERVER, DATASET, PARAMETERS, START, STOP, opts):
   # Read the data. toc0 is time to download to file or into buffer;
   # toc is time to parse.
   if opts['format'] == 'binary':
-    data_result, toc0, toc = get_binary(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts)
+    data_result, toc0, toc = get_binary(meta, server, dataset, parameters, start, stop, opts)
   else:
-    data_result, toc0, toc = get_csv(meta, SERVER, DATASET, PARAMETERS, START, STOP, opts)
+    data_result, toc0, toc = get_csv(meta, server, dataset, parameters, start, stop, opts)
 
   # Extra metadata associated with request will be saved in
   # a pkl file with same base name as npy data file.
-  meta.update({"x_server": SERVER})
-  meta.update({"x_dataset": DATASET})
-  meta.update({"x_parameters": PARAMETERS})
-  meta.update({"x_time.min": START})
-  meta.update({"x_time.max": STOP})
+  meta.update({"x_server": server})
+  meta.update({"x_dataset": dataset})
+  meta.update({"x_parameters": parameters})
+  meta.update({"x_time.min": start})
+  meta.update({"x_time.max": stop})
   meta.update({"x_requestDate": datetime.now().isoformat()[0:19]})
+  meta.update({"x_capabilities": caps})
   meta.update({"x_cacheDir": urld})
   meta.update({"x_downloadTime": toc0})
   meta.update({"x_readTime": toc})
 
-  data_cache_write(data_result, meta, SERVER, DATASET, PARAMETERS, START, STOP, opts)
+  data_cache_write(data_result, meta, server, dataset, parameters, start, stop, opts)
 
   meta['x_totalTime'] = time.time() - tic_totalTime
 
   return data_result, meta
+
+
+def _get_format(caps, opts):
+  """Return the streaming format to use, accounting for server capabilities.
+
+  If the requested format is not supported by the server, falls back to 'csv'.
+  """
+
+  from hapiclient.util import error
+
+  format = opts['format']
+
+  cformats = ['csv', 'binary']  # client formats
+  if format not in cformats:
+    msg = 'This client does not handle streaming format "%s". Available options: %s'
+    error(msg % (format, ', '.join(cformats)))
+
+  if format == 'csv':
+    # All servers must support CSV, so no need to check capabilities.
+    return format
+
+  if "outputFormats" not in caps:
+    return 'csv'
+
+  formats = caps.get("outputFormats", [])  # Server formats
+  if len(formats) == 0:
+    return 'csv'
+
+  if format not in formats:
+    #from hapiclient.util import warning
+    #msg = 'Requested streaming format "%s" not available from %s. Will use "csv". Available options: %s'
+    #warning(msg % (format, SERVER, ', '.join(formats)))
+    format = 'csv'
+
+  if 'binary' not in formats:
+    format = 'csv'
+
+  return format
 
 
 def _dt_chunk_infer(meta, opts):
@@ -129,7 +170,7 @@ def _dt_chunk_infer(meta, opts):
     return 'P1Y'
 
 
-def _get_chunks(SERVER, DATASET, PARAMETERS, START, STOP, opts, tic_totalTime):
+def _get_chunks(server, dataset, parameters, start, stop, opts, tic_totalTime):
 
   import sys
   import time
@@ -144,8 +185,8 @@ def _get_chunks(SERVER, DATASET, PARAMETERS, START, STOP, opts, tic_totalTime):
   def padz(value):
     return value if 'Z' in value else value + 'Z'
 
-  pSTART = hapitime2datetime(padz(START))[0]
-  pSTOP = hapitime2datetime(padz(STOP))[0]
+  pSTART = hapitime2datetime(padz(start))[0]
+  pSTOP = hapitime2datetime(padz(stop))[0]
 
   if opts['dt_chunk']:
     pDELTA = isodate.parse_duration(opts['dt_chunk'])
@@ -160,7 +201,7 @@ def _get_chunks(SERVER, DATASET, PARAMETERS, START, STOP, opts, tic_totalTime):
     if (pSTOP - pSTART) < half:
       opts['n_chunks'] = None
       opts['dt_chunk'] = None
-      return data(SERVER, DATASET, PARAMETERS, START, STOP, opts)
+      return data(server, dataset, parameters, start, stop, opts)
 
     if opts['dt_chunk'] == 'P1Y':
       pSTART = datetime(pSTART.year, 1, 1)
@@ -202,29 +243,22 @@ def _get_chunks(SERVER, DATASET, PARAMETERS, START, STOP, opts, tic_totalTime):
   if opts.get('logging'):
     verbose = 100
 
-  def nhapi(SERVER, DATASET, PARAMETERS, pSTART, pDELTA, i, **opts):
-    START = pSTART + (i * pDELTA)
-    START = str(START.date())+'T'+str(START.time())
+  def nhapi(server, dataset, parameters, pSTART, pDELTA, i, **opts):
+    start = pSTART + (i * pDELTA)
+    start = str(start.date())+'T'+str(start.time())
 
-    STOP = pSTART + ((i + 1) * pDELTA)
-    STOP = str(STOP.date()) + 'T' + str(STOP.time())
+    stop = pSTART + ((i + 1) * pDELTA)
+    stop = str(stop.date()) + 'T' + str(stop.time())
 
-    data_chunk, meta = data(
-        SERVER,
-        DATASET,
-        PARAMETERS,
-        START,
-        STOP,
-        opts
-    )
+    data_chunk, meta = data(server, dataset, parameters, start, stop, opts)
     return data_chunk, meta
 
   resD, resM = zip(
     *Parallel(n_jobs=opts['n_parallel'], verbose=verbose, backend=backend)(
       delayed(nhapi)(
-          SERVER,
-          DATASET,
-          PARAMETERS,
+          server,
+          dataset,
+          parameters,
           pSTART,
           pDELTA,
           i,
@@ -236,18 +270,13 @@ def _get_chunks(SERVER, DATASET, PARAMETERS, START, STOP, opts, tic_totalTime):
   resD = list(resD)
 
   tic_trimTime = time.time()
-  if sys.version_info < (3, ):
-    START = hapitime_reformat(str(resD[0]['Time'][0]), START)
-    resD[0] = resD[0][resD[0]['Time'] >= START]
 
-    STOP = hapitime_reformat(str(resD[-1]['Time'][0]), STOP)
-    resD[-1] = resD[-1][resD[-1]['Time'] < STOP]
-  else:
-    START = hapitime_reformat(resD[0]['Time'][0].decode('UTF-8'), START)
-    resD[0] = resD[0][resD[0]['Time'] >= bytes(START, 'UTF-8')]
+  start = hapitime_reformat(resD[0]['Time'][0].decode('UTF-8'), start)
+  resD[0] = resD[0][resD[0]['Time'] >= bytes(start, 'UTF-8')]
 
-    STOP = hapitime_reformat(resD[-1]['Time'][0].decode('UTF-8'), STOP)
-    resD[-1] = resD[-1][resD[-1]['Time'] < bytes(STOP, 'UTF-8')]
+  stop = hapitime_reformat(resD[-1]['Time'][0].decode('UTF-8'), stop)
+  resD[-1] = resD[-1][resD[-1]['Time'] < bytes(stop, 'UTF-8')]
+
   trimTime = time.time() - tic_trimTime
 
   tic_catTime = time.time()

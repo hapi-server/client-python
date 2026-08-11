@@ -11,7 +11,7 @@ def setopts(defaults, given):
 
     # Override defaults
     for key, value in given.items():
-        if type(given[key]) == dict:
+        if isinstance(given[key], dict):
             setopts(defaults[key], given[key])
             continue
         if key in defaults:
@@ -26,10 +26,11 @@ def jsonparse(res, url):
     """Try/catch of json.loads() function with short error message."""
 
     from json import loads
+
     try:
         return loads(res.read().decode('utf-8'))
-    except:
-        error('Could not parse JSON from %s' % url)
+    except Exception as e:
+        error('Could not parse JSON from %s: %s' % (url, str(e)))
 
 
 def pythonshell():
