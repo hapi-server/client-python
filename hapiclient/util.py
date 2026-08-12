@@ -498,7 +498,7 @@ def write_atomic(path, data):
         kwargs = {
             'message': r"Stored array in format 3\.0.*",
             'category': UserWarning,
-            'module': r"numpy\.lib\.format"
+            'module': r"numpy\.lib\.(format|_format_impl)"
         }
         warnings.filterwarnings("ignore", **kwargs)
         with tmp_path.open('wb') as f:
