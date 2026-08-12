@@ -264,21 +264,18 @@ def urlopen(url, parse_json=False):
 
     import urllib3
 
-    log('Opening %s' % url)
+    # Will send "accept-encoding: gzip, deflate, br" in HTTP request header.
+    accept_encoding = True
 
-    # https://stackoverflow.com/a/2020083
-    def get_full_class_name(obj):
-        module = obj.__class__.__module__
-        if module is None or module == str.__class__.__module__:
-            return obj.__class__.__name__
-        return module + '.' + obj.__class__.__name__
+    log('Opening %s' % url)
 
     c = " If problem persists, a contact email for the server may be listed "
     c = c + "at http://hapi-server.org/servers/"
     msg = ''
     try:
         http = urllib3.PoolManager()
-        res = http.request('GET', url, preload_content=False, retries=2)
+        headers = urllib3.make_headers(accept_encoding=accept_encoding)
+        res = http.request('GET', url, headers=headers, preload_content=False, retries=2)
         if res.status != 200:
             msgo = "Problem with " + url + \
                    ". Server responded with non-200 HTTP status (" + \
@@ -315,7 +312,13 @@ def urlopen(url, parse_json=False):
     except urllib3.exceptions.LocationValueError:
         error('Invalid URL: ' + url)
     except urllib3.exceptions.HTTPError as e:
-        error('Exception ' + get_full_class_name(e) + " for: " + url)
+        # https://stackoverflow.com/a/2020083
+        module = e.__class__.__module__
+        if module is None or module == str.__class__.__module__:
+            full_class_name = e.__class__.__name__
+        else:
+            full_class_name = module + '.' + e.__class__.__name__
+        error('Exception ' + full_class_name + " for: " + url)
     except Exception as e:
         import sys
         print(type(sys.exc_info()[1]).__name__ + ': ' + str(e) + ' for URL: ' + url)

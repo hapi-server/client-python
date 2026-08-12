@@ -23,7 +23,7 @@ server = 'http://hapi-server.org/servers/TestData2.0/hapi'
 def _reader_run(run):
 
     def rmcache(cacheopt):
-         shutil.rmtree(kwargs['cachedir'], ignore_errors=True)
+        shutil.rmtree(kwargs['cachedir'], ignore_errors=True)
 
     dataset = 'dataset1'
 
